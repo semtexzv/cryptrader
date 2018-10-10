@@ -1,0 +1,6 @@
+[package]
+name = "dp"
+version = "0.0.0"
+authors = ["Michal Hornický <semtexzv@gmail.com>"]
+
+[dependencies]

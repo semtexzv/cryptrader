@@ -1,0 +1,4 @@
+Literature for assignment:
+
+Kshemkalyani, Singhal: Distributed Computing, Cambridge Press, 2008.
+Tanenbaum, A., Steen, M.: Distributed Systems: Principles and Paradigms. Prentice Hall, 2002, ISBN: 0130888931
