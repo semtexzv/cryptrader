@@ -1,0 +1,8 @@
+version: '2'
+services:
+  timescale:
+    ports:
+      - "5432:5433"
+    image: timescale/timescaledb:0.8.0-pg10
+    volumes:
+      - /pg/cryptrader:/var/lib/postgresql

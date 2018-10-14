@@ -1,0 +1,14 @@
+[package]
+name = "daemon"
+version = "0.1.0"
+authors = ["Michal Hornický <semtexzv@gmail.com>"]
+
+[dependencies]
+serde_derive = "*"
+serde="*"
+
+common = { path = "../libs/common" }
+apis = { path = "../libs/apis"}
+db = { path = "../libs/db"}
+
+

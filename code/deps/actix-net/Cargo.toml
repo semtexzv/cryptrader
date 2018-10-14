@@ -1,7 +1,15 @@
 [package]
-name = "actix-arch"
+name = "actix-net"
 version = "0.0.0"
 authors = ["Michal Hornický <semtexzv@gmail.com>"]
 
 [dependencies.common]
 path = "../../common"
+
+
+[dependencies]
+serde = "1.0"
+zmq = "0.8"
+tokio-zmq = "0.5.2"
+futures = "0.1.24"
+tokio = "0.1"

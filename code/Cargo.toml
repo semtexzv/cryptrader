@@ -1,9 +1,15 @@
 [workspace]
-members = ["deps/*"]
+members = ["common","deps/*"]
 
 [package]
 name = "dp"
 version = "0.0.0"
 authors = ["Michal Hornický <semtexzv@gmail.com>"]
 
+[dependencies.common]
+path = "./common"
+
+
 [dependencies]
+actix-net = { path = "./deps/actix-net" }
+actix-arch = { path = "./deps/actix-arch" }

@@ -1,0 +1,17 @@
+[package]
+name = "common"
+version = "0.0.0"
+authors = ["Michal Hornický <semtexzv@gmail.com>"]
+
+[dependencies]
+serde = "1.0"
+serde_json = "1.0"
+serde_derive = "1.0"
+log = "*"
+failure = "*"
+bytes = "0.4"
+futures = "0.1"
+url = "*"
+
+actix = "0.7"
+

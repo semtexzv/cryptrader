@@ -10,7 +10,7 @@ Gul Agha. Actors: A Model of Concurrent Computation in Distributed Systems. MIT 
 -- Alternativny model:
 C.A.R. Hoare. Communicating Sequential Processes Prentice Hall. 1985.
 
-Asi najcistejsi actor model
+Asi najpouzivanejsi system zalozeny na actor modele - teleokomunikacie
 Armstrong, J. (2010). Erlang. Commun. ACM, 53(9), 68–75. http://doi.org/10.1145/1810891.1810910
 
 McKee, H. (2016). Designing Reactive Systems: The Role of Actors in Distributed Architecture.

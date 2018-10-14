@@ -1,7 +1,0 @@
-[package]
-name = "actix-remote"
-version = "0.1.0"
-authors = ["Michal Hornický <semtexzv@gmail.com>"]
-edition = "2018"
-
-[dependencies]

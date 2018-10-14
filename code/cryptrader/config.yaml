@@ -1,0 +1,18 @@
+accounts:
+  - name: "semtexzv"
+    exchanges:
+      bitfinex:
+        key: "KPlX4QCvrbjeNSGW9Nqcq2C2OId0qFiKU3zefqjEykN"
+        secret: "LPuWgmx3WEOYwzNIhQbeKhbja37NC1snF9fexiElKib"
+      bittrex:
+        key: ""
+        secret: ""
+      binance:
+        key: ""
+        secret: ""
+strategies:
+  "strategies/test.lua":
+    pattern: "/ohlc/stable/bitfinex/*/5m"
+    account: "semtexzv"
+
+# SQL : INSERT INTO ohlc (SELECT * FROM ohlc_old WHERE NOT(pair = 'bittrex' OR pair = 'bitfinex' OR pair = 'binance')) on CONFLICT DO NOTHING;
