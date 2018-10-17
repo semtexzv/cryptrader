@@ -5,3 +5,6 @@ authors = ["Michal Hornický <semtexzv@gmail.com>"]
 
 [dependencies.common]
 path = "../../common"
+
+[dependencies]
+actix-net= { path = "../actix-net"}

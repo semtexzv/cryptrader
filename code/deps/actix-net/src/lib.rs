@@ -1,17 +1,24 @@
+#![feature(box_syntax, core_intrinsics)]
+
+#![allow(unused_imports)]
 extern crate common;
 
+
 pub extern crate zmq;
-pub extern crate tokio_zmq;
+pub extern crate tokio_zmq as tzmq;
 pub extern crate futures;
 pub extern crate tokio;
+pub extern crate nix;
+extern crate failure;
+
 
 pub mod prelude;
-pub mod msg;
+pub mod msgs;
 pub mod node;
 pub mod remote;
+pub mod recipient;
 
 pub mod comm;
-
 
 
 /// Architecture:
@@ -35,6 +42,8 @@ pub mod comm;
 /// There can be multiple communicators in single process (think primary data stream & monitoring).
 ///
 /// TODO: Have Communicator as some normal struct, or pass it around as actor, and force method calls to be Messages ?
+/// TODO: Communicator, or nodes, who will work with heartbeats
+/// TODO: Is Node an actor, or just internal structure that will forward to desired communicator ?
 ///
 /// Implementation :
 /// Communicator will have one `Router::bind` socket. And one `Dealer::connect` socket per connected node

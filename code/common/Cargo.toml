@@ -7,9 +7,11 @@ authors = ["Michal Hornický <semtexzv@gmail.com>"]
 serde = "1.0"
 serde_json = "1.0"
 serde_derive = "1.0"
+lazy_static= "*"
 log = "*"
 failure = "*"
-bytes = "0.4"
+failure_derive="*"
+bytes = { version = "0.4", features = ["serde"] }
 futures = "0.1"
 url = "*"
 

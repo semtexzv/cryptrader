@@ -9,7 +9,10 @@ path = "../../common"
 
 [dependencies]
 serde = "1.0"
-zmq = "0.8"
-tokio-zmq = "0.5.2"
+zmq = { git = "https://github.com/semtexzv/rust-zmq" } #"0.9"
+tokio-zmq = { git = "https://github.com/semtexzv/tokio-zmq"} #"0.5.2"
 futures = "0.1.24"
 tokio = "0.1"
+failure = "*"
+
+nix = "*"
