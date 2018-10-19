@@ -1,5 +1,5 @@
 use ::prelude::*;
-use super::msgs::*;
+use super::msg::*;
 use std::sync::Arc;
 
 use tzmq::{
@@ -23,6 +23,7 @@ use comm::MessageIdentity;
 /// Struct that holds outgoing connection to one separate node
 /// It sends reqeuests, and receives responses over this connection,
 pub(crate) struct NodeWorker {
+    comm_uuid: Uuid,
     msg_id: u64,
     comm: Addr<CommWorker>,
     dealer_sink: UnboundedSender<Multipart>,
@@ -31,9 +32,27 @@ pub(crate) struct NodeWorker {
     hb: Instant,
 }
 
+
+pub enum NodeConnecting {
+    Connected(),
+    UuidResolved(),
+}
+
+use tokio::prelude::future::ok;
+
+fn test() {
+    let x = async {
+        await!(ok(()))
+    };
+}
+
 impl NodeWorker {
-    pub(crate) fn new(comm: Addr<CommWorker>, node_addr: &str, token: &str) -> Result<Addr<Self>, failure::Error> {
+    async fn connect(addr: &str) -> Result<(), ()> {
+        Ok(())
+    }
+    pub(crate) fn new(comm: Addr<CommWorker>, comm_uuid: Uuid, node_addr: &str, _token: &str) -> Result<Addr<Self>, failure::Error> {
         let dealer = Dealer::builder(::comm::ZMQ_CTXT.clone())
+            .identity(comm_uuid.as_bytes())
             .connect(node_addr)
             .build()?;
 
@@ -42,25 +61,23 @@ impl NodeWorker {
         let stream = stream.map_err(Into::<failure::Error>::into);
         let (tx, rx) = unbounded();
 
-        let forwarder = sink.send_all(rx.map_err(|e| {
-            tzmq::Error::Sink
-        })).map(|_| ());
+        let forwarder = sink.send_all(rx.map_err(|_| { tzmq::Error::Sink })).map(|_| ());
 
-        let mut token = token.to_string();
         Ok(Actor::create(move |ctx| {
             ctx.spawn(wrap_future(forwarder).drop_err());
             Self::add_stream(stream, ctx);
 
-            let mut hello = MessageWrapper::Hello.to_multipart().unwrap();
+            let hello = MessageWrapper::Hello.to_multipart().unwrap();
             tx.unbounded_send(hello).unwrap();
 
-            ctx.run_interval(HEARTBEAT_INTERVAL, |this, ctx| {
-                let mut msg = MessageWrapper::Heartbeat;
+            ctx.run_interval(HEARTBEAT_INTERVAL, |this, _ctx| {
+                let msg = MessageWrapper::Heartbeat;
                 let msg = msg.to_multipart().unwrap();
                 this.dealer_sink.unbounded_send(msg).unwrap();
             });
 
             NodeWorker {
+                comm_uuid,
                 msg_id: 0,
                 comm,
                 dealer_sink: tx,
@@ -71,12 +88,9 @@ impl NodeWorker {
         }))
     }
 
-    pub(crate) fn send(&mut self, mp : Multipart, ctx: &mut Context<Self>) {
-
-    }
     pub(crate) fn resolve_request(&mut self, rid: u64, res: Result<Bytes, RemoteError>) {
         if let Some(sender) = self.requests.remove(&rid) {
-            sender.send(res);
+            sender.send(res).unwrap()
         }
     }
 }
@@ -92,10 +106,11 @@ impl Actor for NodeWorker {
 }
 
 impl StreamHandler<Multipart, failure::Error> for NodeWorker {
-    fn handle(&mut self, item: Multipart, ctx: &mut Self::Context) {
-        let mut msg = MessageWrapper::from_multipart(item).unwrap();
+    fn handle(&mut self, item: Multipart, _ctx: &mut Self::Context) {
+        let msg = MessageWrapper::from_multipart(item).unwrap();
         println!("Message: {:?}", msg);
         match msg {
+            MessageWrapper::HelloReply(uuid) => {}
             MessageWrapper::Heartbeat => {
                 self.hb = Instant::now();
             }
@@ -122,16 +137,16 @@ impl<M> Handler<SendRemoteRequest<M>> for NodeWorker
         self.msg_id += 1;
         let req_id = self.msg_id;
 
-        let mut encoded = M::to_bytes(&msg.0).unwrap();
+        let encoded = M::to_bytes(&msg.0).unwrap();
 
-        let mut wrapped = MessageWrapper::Request(M::type_id().into(), self.msg_id, Bytes::from(encoded));
+        let wrapped = MessageWrapper::Request(M::type_id().into(), self.msg_id, Bytes::from(encoded));
         let multipart = wrapped.to_multipart().unwrap();
 
         let (tx, rx) = oneshot::channel::<Result<Bytes, RemoteError>>();
         self.requests.insert(req_id, tx);
 
         let sent = wrap_future(self.dealer_sink.clone().send(multipart));
-        let resolved = sent.then(move |res: Result<_, _>, this: &mut Self, ctx: &mut Self::Context| {
+        let resolved = sent.then(move |res: Result<_, _>, this: &mut Self, _ctx: &mut Self::Context| {
             match res {
                 Ok(_) => (),
                 Err(_) => {
@@ -148,7 +163,7 @@ impl<M> Handler<SendRemoteRequest<M>> for NodeWorker
         let flat = rx.map_err(|_| MailboxError::Closed).flatten();
         let flat = flat.map(|v| M::res_from_bytes(&v).unwrap());
 
-        return Response::async(flat);
+        return Response::r#async(flat);
     }
 }
 
@@ -165,22 +180,22 @@ impl Node {
     }
 
     pub fn send<M>(&self, msg: M) -> RemoteRequest<M>
-        where M: RemoteMessage + Send + Serialize + DeserializeOwned + 'static + Debug,
-              M::Result: Send + Serialize + DeserializeOwned + 'static + Debug
+        where M: RemoteMessage + Send + Serialize + DeserializeOwned + 'static,
+              M::Result: Send + Serialize + DeserializeOwned + 'static
     {
         RemoteRequest::new(self.addr.send(SendRemoteRequest(msg)))
     }
 
     pub fn do_send<M>(&self, msg: M)
-        where M: RemoteMessage + Send + Serialize + DeserializeOwned + 'static + Debug,
-              M::Result: Send + Serialize + DeserializeOwned + 'static + Debug
+        where M: RemoteMessage + Send + Serialize + DeserializeOwned + 'static,
+              M::Result: Send + Serialize + DeserializeOwned + 'static
     {
         self.addr.do_send(SendRemoteRequest(msg))
     }
 
     pub fn try_send<M>(&self, msg: M) -> Result<(), SendError<M>>
-        where M: RemoteMessage + Send + Serialize + DeserializeOwned + 'static + Debug,
-              M::Result: Send + Serialize + DeserializeOwned + 'static + Debug
+        where M: RemoteMessage + Send + Serialize + DeserializeOwned + 'static,
+              M::Result: Send + Serialize + DeserializeOwned + 'static
     {
         self.addr.try_send(SendRemoteRequest(msg))
             .map_err(|e| {
@@ -190,4 +205,9 @@ impl Node {
                 }
             })
     }
+
+    pub fn subscribe<A, M>(&self, _addr: Addr<A>)
+        where A: StreamHandler<M, ()>,
+              M: Announcement
+    {}
 }

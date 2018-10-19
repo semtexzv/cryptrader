@@ -16,7 +16,7 @@ impl Message for Msg {
     type Result = Result<Msg, String>;
 }
 
-impl actix_net::msgs::RemoteMessage for Msg {
+impl actix_net::msg::RemoteMessage for Msg {
 }
 
 struct Act;
@@ -36,14 +36,14 @@ impl Handler<Msg> for Act {
 fn main() {
     use actix_net::comm::*;
 
-    let sys = common::System::run(|| {
-        let mut c1 = Communicator::create("tcp://*:48001").unwrap();
+    let _ = common::System::run(|| {
+        let c1 = Communicator::create("tcp://*:48001").unwrap();
 
         let c2 = Communicator::create("tcp://*:48002").unwrap();
         let a2 = Act::create(|ctx| Act);
         c2.register::<Msg>(a2.recipient());
 
-        let mut c3 = Communicator::create("tcp://*:48003").unwrap();
+        let c3 = Communicator::create("tcp://*:48003").unwrap();
 
         let c1n2 = c1.connect("tcp://localhost:48002").unwrap();
         let c1n3 = c1.connect("tcp://localhost:48003").unwrap();

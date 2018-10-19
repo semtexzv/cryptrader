@@ -2,6 +2,7 @@
 name = "actix-net"
 version = "0.0.0"
 authors = ["Michal Hornický <semtexzv@gmail.com>"]
+edition = "2018"
 
 [dependencies.common]
 path = "../../common"
@@ -14,5 +15,5 @@ tokio-zmq = { git = "https://github.com/semtexzv/tokio-zmq"} #"0.5.2"
 futures = "0.1.24"
 tokio = "0.1"
 failure = "*"
-
+uuid = { version = "*", features = ["v4","serde"] }
 nix = "*"

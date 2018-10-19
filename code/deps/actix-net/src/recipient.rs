@@ -1,6 +1,6 @@
 use ::prelude::*;
 
-use msgs::*;
+use msg::*;
 use futures::sync::oneshot::{self, Sender};
 use tokio::timer::{
     Delay, Timeout,
@@ -9,6 +9,7 @@ use std::time::{
     Duration, Instant,
 };
 use node::NodeWorker;
+use node::Node;
 
 pub(crate) trait RemoteMessageHandler: Send {
     fn handle(&self, msg: Bytes, sender: Sender<Result<Bytes, RemoteError>>);
@@ -36,18 +37,13 @@ impl<M> RemoteMessageHandler for LocalRecipientHandler<M>
     where M: RemoteMessage + Serialize + DeserializeOwned + Send + 'static,
           M::Result: Serialize + DeserializeOwned + Send {
     fn handle(&self, msg: Bytes, sender: Sender<Result<Bytes, RemoteError>>) {
-        let mut msg = M::from_bytes(&msg).unwrap();
+        let msg = M::from_bytes(&msg).unwrap();
         let fut = self.recipient.send(msg);
         let fut = fut.then(|res| {
-            match res {
-                Ok(data) => {
-                    let mut encoded = M::res_to_bytes(&data).unwrap();
-                    sender.send(Ok(encoded));
-                }
-                Err(e) => {
-                    sender.send(Err(e.into()));
-                }
-            }
+            let reply = res
+                .map(|data| M::res_to_bytes(&data).unwrap())
+                .map_err(Into::into);
+            sender.send(reply).unwrap();
             Ok::<_, ()>(())
         });
 
@@ -89,5 +85,29 @@ impl<M> ::futures::Future for RemoteRequest<M>
             Ok(Async::NotReady) => Ok(Async::NotReady),
             Err(e) => Err(e.into())
         };
+    }
+}
+
+
+pub struct RemoteRecipient<M>
+    where M: RemoteMessage + Send + Serialize + DeserializeOwned,
+          M::Result: Send + Serialize + DeserializeOwned
+{
+    node: Node,
+    _p: PhantomData<M>,
+}
+
+impl<M> RemoteRecipient<M>
+    where M: RemoteMessage + Send + Serialize + DeserializeOwned + 'static,
+          M::Result: Send + Serialize + DeserializeOwned
+{
+    fn send(&self, msg : M) -> RemoteRequest<M> {
+        self.node.send(msg)
+    }
+    fn do_send(&self, msg : M) {
+        self.node.do_send(msg)
+    }
+    fn try_send(&self, msg : M)  -> Result<(),SendError<M>> {
+        self.node.try_send(msg)
     }
 }

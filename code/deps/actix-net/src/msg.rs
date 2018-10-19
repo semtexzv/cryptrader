@@ -3,6 +3,7 @@ use ::prelude::*;
 use node::NodeWorker;
 use common::bytes::Bytes;
 use std::borrow::Cow;
+use actor::RemoteActor;
 
 /// Message that can be sent across Process barrier
 pub trait RemoteMessage: Message + Send + Serialize + DeserializeOwned + Send
@@ -43,20 +44,27 @@ impl Message for ConnectToNode {
 }
 
 
-pub(crate) struct RegisterLocalHandler<M: RemoteMessage>
+pub(crate) struct RegisterRecipientHandler<M: RemoteMessage>
     where M: RemoteMessage + Send + Serialize + DeserializeOwned + 'static,
           M::Result: Send + Serialize + DeserializeOwned + 'static
 {
     pub recipient: Recipient<M>,
 }
 
-impl<M> Message for RegisterLocalHandler<M>
+impl<M> Message for RegisterRecipientHandler<M>
     where M: RemoteMessage + Send + Serialize + DeserializeOwned + 'static,
           M::Result: Send + Serialize + DeserializeOwned + 'static
 {
     type Result = ();
 }
 
+pub(crate) struct RegisterActorHandler<A : RemoteActor> {
+    pub addr : Addr<A>,
+}
+
+impl<A : RemoteActor> Message for RegisterActorHandler<A> {
+    type Result = ();
+}
 
 pub(crate) struct SendRemoteRequest<M>(pub(crate) M)
     where M: RemoteMessage + Send + Serialize + DeserializeOwned + 'static,
@@ -96,6 +104,7 @@ pub(crate) enum MessageWrapper {
     /// Simple Heartbeat message
     Heartbeat,
     Hello,
+    HelloReply(Uuid),
     Capabilities(HashSet<::comm::MessageIdentity>),
     /// Remote request message, consists of message type id, message instance id, and message body
     /// we need to use encoded data here, so we won't pollute whole API with generuc type
@@ -106,15 +115,15 @@ pub(crate) enum MessageWrapper {
 
 impl MessageWrapper {
     pub(crate) fn to_multipart(&self) -> Result<Multipart, failure::Error> {
-        let mut encoded = json::to_vec(&self)?;
-        let mut msg = ::zmq::Message::from_slice(&encoded);
-        let mut multipart = Multipart::from(msg);
+        let encoded = json::to_vec(&self)?;
+        let msg = ::zmq::Message::from_slice(&encoded);
+        let multipart = Multipart::from(msg);
         Ok(multipart)
     }
 
     pub(crate) fn from_multipart(mut msg: Multipart) -> Result<Self, failure::Error> {
-        let mut msg = msg.pop_back().unwrap();
-        let mut decoded = json::from_slice(msg.deref())?;
+        let msg = msg.pop_back().unwrap();
+        let decoded = json::from_slice(msg.deref())?;
         Ok(decoded)
     }
 }

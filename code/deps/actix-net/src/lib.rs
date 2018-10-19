@@ -1,6 +1,8 @@
 #![feature(box_syntax, core_intrinsics)]
+#![feature(specialization)]
+#![feature(async_await, await_macro, futures_api)]
 
-#![allow(unused_imports)]
+#![allow(unused_imports,dead_code)]
 extern crate common;
 
 
@@ -8,12 +10,13 @@ pub extern crate zmq;
 pub extern crate tokio_zmq as tzmq;
 pub extern crate futures;
 pub extern crate tokio;
-pub extern crate nix;
+pub extern crate uuid;
 extern crate failure;
 
 
 pub mod prelude;
-pub mod msgs;
+pub mod actor;
+pub mod msg;
 pub mod node;
 pub mod remote;
 pub mod recipient;
@@ -68,4 +71,4 @@ pub mod comm;
 ///
 /// Dynamic creation of actors on remote machines ? Again, specific actor, `Creator` that will
 /// register itself on `Communicator` and listen to  `Create(Args)` Message
-struct Test;
+struct Test {}

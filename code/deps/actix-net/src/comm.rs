@@ -1,7 +1,7 @@
 use ::prelude::*;
 
 use std::collections::HashMap;
-use msgs::RemoteMessage;
+use msg::RemoteMessage;
 use tzmq::{
     self,
     Multipart,
@@ -14,7 +14,7 @@ use tzmq::{
 use futures::sync::oneshot;
 use common::bytes::Bytes;
 
-use msgs::*;
+use msg::*;
 use node::{NodeWorker, Node};
 use futures::{
     sync::oneshot::Sender,
@@ -27,7 +27,9 @@ use futures::{
 use recipient::{
     RemoteMessageHandler, LocalRecipientHandler,
 };
-use std::time::Duration;
+use actor::{
+    RemoteActor, ActorMessageHandler, LocalActorHandler,
+};
 
 lazy_static! {
     pub static ref ZMQ_CTXT  : Arc<zmq::Context> = Arc::new(zmq::Context::new());
@@ -36,15 +38,20 @@ pub const HEARTBEAT_INTERVAL: Duration = Duration::from_secs(10);
 
 pub type NodeIdentity = Vec<u8>;
 pub type MessageIdentity = Cow<'static, str>;
+pub type ActorIdentity = Cow<'static, str>;
 type IdentifiedMessage = (NodeIdentity, MessageWrapper);
 
-
+// TODO: Each node has an uuid, that is also used as identity in all connections,
+// And send durring hello phase, this is then used to generate Sender Addr for RemoteMessages
 pub struct CommWorker {
+    uuid: Uuid,
     /// Sink that will accept all data from this CommWorker, mainly replies to requests
     /// received on corresponding Stream, and Heartbeat messages
     router_sink: UnboundedSender<Multipart>,
     /// Registry of Handlers for each message type
     registry: HashMap<MessageIdentity, Box<RemoteMessageHandler>>,
+
+    actor_registry: HashMap<ActorIdentity, Box<ActorMessageHandler>>,
     /// Nodes to which we are connected
     node_workers: HashMap<String, Addr<NodeWorker>>,
     /// Nodes that are connected to us
@@ -75,14 +82,16 @@ impl CommWorker {
 
         let (tx, rx) = unbounded();
 
-        let forwarder = sink.send_all(rx.map_err(|e| tzmq::Error::Sink)).map(|_| {});
+        let forwarder = sink.send_all(rx.map_err(|_| tzmq::Error::Sink)).map(|_| {});
 
         Ok(Arbiter::start(|ctx: &mut Context<CommWorker>| {
             ctx.spawn(wrap_future(forwarder).drop_err());
             Self::add_stream(stream, ctx);
 
             CommWorker {
+                uuid: Uuid::new_v4(),
                 registry: HashMap::new(),
+                actor_registry: HashMap::new(),
                 router_sink: tx,
                 node_workers: HashMap::new(),
                 remote_nodes: HashMap::new(),
@@ -95,24 +104,24 @@ impl CommWorker {
     }
 
     pub(crate) fn update_caps(&mut self, node: &NodeIdentity, _ctx: &mut Context<Self>) {
-        let mut msg = MessageWrapper::Capabilities(self.caps());
+        let msg = MessageWrapper::Capabilities(self.caps());
 
         let mut msg = msg.to_multipart().unwrap();
         msg.push_front(zmq::Message::from_slice(node));
 
-        self.router_sink.unbounded_send(msg);
+        self.router_sink.unbounded_send(msg).unwrap();
     }
 
     pub(crate) fn update_all_caps(&mut self, _ctx: &mut Context<Self>) {
-        let mut msg = MessageWrapper::Capabilities(self.caps());
-        let mut now = Instant::now();
+        let msg = MessageWrapper::Capabilities(self.caps());
+
 
         //self.remote_nodes.retain(|n, hb| now.duration_since(*hb) < HEARTBEAT_INTERVAL * 2);
-        for (node, hb) in self.remote_nodes.iter() {
+        for (node, _hb) in self.remote_nodes.iter() {
             let mut msg = msg.to_multipart().unwrap();
             msg.push_front(zmq::Message::from_slice(&node));
 
-            self.router_sink.unbounded_send(msg);
+            self.router_sink.unbounded_send(msg).unwrap()
         }
     }
 }
@@ -150,7 +159,7 @@ impl StreamHandler<(NodeIdentity, MessageWrapper), failure::Error> for CommWorke
                         let rx = rx.map_err(|_| RemoteError::MailboxClosed).flatten();
                         let wrapped = wrap_future(rx);
 
-                        let wrapped = wrapped.then(move |res, this: &mut CommWorker, ctx| {
+                        let wrapped = wrapped.then(move |res, this: &mut CommWorker, _ctx| {
                             let msg = MessageWrapper::Response(msgid, res);
                             let mut multipart = msg.to_multipart().unwrap();
 
@@ -203,29 +212,39 @@ impl Handler<ConnectToNode> for CommWorker {
 
     fn handle(&mut self, msg: ConnectToNode, ctx: &mut Self::Context) -> <Self as Handler<ConnectToNode>>::Result {
         use std::collections::hash_map::{Entry, OccupiedEntry, VacantEntry};
+        let uuid = self.uuid.clone();
         let entry = self.node_workers.entry(msg.node_addr.clone());
 
+
         return Ok(entry.or_insert_with(|| {
-            let addr = NodeWorker::new(ctx.address(), &msg.node_addr, &msg.node_addr).unwrap();
+            let addr = NodeWorker::new(ctx.address(), uuid, &msg.node_addr, &msg.node_addr).unwrap();
 
             addr
         }).clone());
     }
 }
 
-impl<M> Handler<RegisterLocalHandler<M>> for CommWorker
+impl<M> Handler<RegisterRecipientHandler<M>> for CommWorker
     where M: RemoteMessage + Send + Serialize + DeserializeOwned + 'static + Debug,
           M::Result: Send + Serialize + DeserializeOwned + 'static
 
 {
     type Result = ();
 
-    fn handle(&mut self, reg_msg: RegisterLocalHandler<M>, ctx: &mut Self::Context) {
+    fn handle(&mut self, reg_msg: RegisterRecipientHandler<M>, ctx: &mut Self::Context) {
         self.registry.insert(M::type_id(), Box::new(LocalRecipientHandler::new(reg_msg.recipient)));
         self.update_all_caps(ctx);
     }
 }
 
+impl<A: RemoteActor> Handler<RegisterActorHandler<A>> for CommWorker {
+    type Result = ();
+
+    fn handle(&mut self, msg: RegisterActorHandler<A>, ctx: &mut Self::Context) {
+        self.actor_registry.insert(A::type_id(), Box::new(LocalActorHandler::new(msg.addr)));
+        self.update_all_caps(ctx);
+    }
+}
 
 #[derive(Debug, Clone)]
 pub struct Communicator {
@@ -256,8 +275,18 @@ impl Communicator {
         where M: RemoteMessage + Send + Serialize + DeserializeOwned + 'static + Debug,
               M::Result: Send + Send + Serialize + DeserializeOwned + 'static
     {
-        self.addr.do_send(RegisterLocalHandler {
+        self.addr.do_send(RegisterRecipientHandler {
             recipient: rec,
         });
     }
+
+    pub fn register_actor<A>(&self, actor: Addr<A>)
+        where A: Actor<Context=Context<A>> + RemoteActor
+    {
+        let act_name = unsafe { ::std::intrinsics::type_id::<A>() };
+
+        println!("Actor : {:?}", act_name);
+    }
+
+    pub fn publish<M: Announcement>(&self, _ann: M) {}
 }
