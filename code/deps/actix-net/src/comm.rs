@@ -41,6 +41,12 @@ pub type MessageIdentity = Cow<'static, str>;
 pub type ActorIdentity = Cow<'static, str>;
 type IdentifiedMessage = (NodeIdentity, MessageWrapper);
 
+
+struct NodeInfo {
+    addr: Option<Addr<NodeWorker>>,
+    id: Uuid,
+}
+
 // TODO: Each node has an uuid, that is also used as identity in all connections,
 // And send durring hello phase, this is then used to generate Sender Addr for RemoteMessages
 pub struct CommWorker {
@@ -48,10 +54,11 @@ pub struct CommWorker {
     /// Sink that will accept all data from this CommWorker, mainly replies to requests
     /// received on corresponding Stream, and Heartbeat messages
     router_sink: UnboundedSender<Multipart>,
-    /// Registry of Handlers for each message type
-    registry: HashMap<MessageIdentity, Box<RemoteMessageHandler>>,
 
+    registry: HashMap<MessageIdentity, Box<RemoteMessageHandler>>,
     actor_registry: HashMap<ActorIdentity, Box<ActorMessageHandler>>,
+
+    nodes: HashMap<NodeIdentity, NodeInfo>,
     /// Nodes to which we are connected
     node_workers: HashMap<String, Addr<NodeWorker>>,
     /// Nodes that are connected to us
@@ -71,10 +78,11 @@ impl Actor for CommWorker {
 
 impl CommWorker {
     fn create(addr: &str) -> Result<Addr<Self>, failure::Error> {
+        let uuid = Uuid::new_v4();
         let router = Router::builder(ZMQ_CTXT.clone())
+            .identity(uuid.as_bytes())
             .bind(&addr)
             .build()?;
-
 
         let (sink, stream) = router.sink_stream().split();
 
@@ -84,12 +92,12 @@ impl CommWorker {
 
         let forwarder = sink.send_all(rx.map_err(|_| tzmq::Error::Sink)).map(|_| {});
 
-        Ok(Arbiter::start(|ctx: &mut Context<CommWorker>| {
+        Ok(Arbiter::start(move |ctx: &mut Context<CommWorker>| {
             ctx.spawn(wrap_future(forwarder).drop_err());
             Self::add_stream(stream, ctx);
 
             CommWorker {
-                uuid: Uuid::new_v4(),
+                uuid,
                 registry: HashMap::new(),
                 actor_registry: HashMap::new(),
                 router_sink: tx,
@@ -130,9 +138,15 @@ impl StreamHandler<(NodeIdentity, MessageWrapper), failure::Error> for CommWorke
     fn handle(&mut self, (node_identity, data): (NodeIdentity, MessageWrapper), ctx: &mut Self::Context) {
         match data {
             MessageWrapper::Hello => {
+                let mut resp = MessageWrapper::Identify(self.uuid).to_multipart().unwrap();
+                resp.push_front(zmq::Message::from_slice(&node_identity));
+                self.router_sink.unbounded_send(resp).unwrap();
+
+
                 self.remote_nodes.insert(node_identity.clone(), Instant::now());
                 self.update_caps(&node_identity, ctx);
             }
+
             // Reaction to heartbeat is simple, send it back.
             MessageWrapper::Heartbeat => {
                 self.remote_nodes.insert(node_identity.clone(), Instant::now());
@@ -141,12 +155,7 @@ impl StreamHandler<(NodeIdentity, MessageWrapper), failure::Error> for CommWorke
                 let mut multipart = resp.to_multipart().unwrap();
                 multipart.push_front(zmq::Message::from_slice(&node_identity));
 
-
-                let f = self.router_sink.clone()
-                    .send(multipart)
-                    .then(|_| fut::ok::<_, ()>(()));
-
-                ctx.spawn(wrap_future(f));
+                self.router_sink.unbounded_send(multipart).unwrap();
             }
 
             MessageWrapper::Request(type_id, msgid, data) => {
@@ -215,11 +224,9 @@ impl Handler<ConnectToNode> for CommWorker {
         let uuid = self.uuid.clone();
         let entry = self.node_workers.entry(msg.node_addr.clone());
 
-
+        let addr = ctx.address();
         return Ok(entry.or_insert_with(|| {
-            let addr = NodeWorker::new(ctx.address(), uuid, &msg.node_addr, &msg.node_addr).unwrap();
-
-            addr
+            NodeWorker::new(addr, &msg.node_addr, uuid).unwrap()
         }).clone());
     }
 }

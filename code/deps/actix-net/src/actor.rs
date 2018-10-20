@@ -14,8 +14,6 @@ pub trait RemoteActor: Actor {
     fn register_remote_messages<M: MessageRegistry<Self>>(m: &mut M);
 }
 
-
-
 pub trait ActorMessageHandler {
     fn handle(&self, msg_type_id: ::comm::MessageIdentity, msg: Bytes, sender: Sender<Result<Bytes, RemoteError>>);
 }

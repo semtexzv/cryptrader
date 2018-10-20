@@ -104,7 +104,7 @@ pub(crate) enum MessageWrapper {
     /// Simple Heartbeat message
     Heartbeat,
     Hello,
-    HelloReply(Uuid),
+    Identify(Uuid),
     Capabilities(HashSet<::comm::MessageIdentity>),
     /// Remote request message, consists of message type id, message instance id, and message body
     /// we need to use encoded data here, so we won't pollute whole API with generuc type

@@ -7,6 +7,7 @@ pub extern crate lazy_static;
 pub extern crate log;
 pub extern crate failure;
 pub extern crate bytes;
+
 pub extern crate futures;
 pub extern crate failure_derive;
 
@@ -50,10 +51,15 @@ pub use url::Url;
 pub use log::{log, trace, debug, info, warn, error};
 pub use bytes::{Bytes, BytesMut};
 
+pub use failure::{
+    bail, format_err
+};
 pub use failure_derive::Fail;
 
 
 pub use futures::{
     future as fut,
     Future,
+    prelude::*,
 };
+

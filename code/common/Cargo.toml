@@ -12,7 +12,7 @@ log = "*"
 failure = "*"
 failure_derive="*"
 bytes = { version = "0.4", features = ["serde"] }
-futures = "0.1"
+futures = "*"
 url = "*"
 
 actix = "0.7"

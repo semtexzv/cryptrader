@@ -1,8 +1,7 @@
 #![feature(box_syntax, core_intrinsics)]
 #![feature(specialization)]
-#![feature(async_await, await_macro, futures_api)]
 
-#![allow(unused_imports,dead_code)]
+#![allow(unused_imports,dead_code,unused_variables)]
 extern crate common;
 
 

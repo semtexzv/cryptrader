@@ -9,7 +9,9 @@ use tzmq::{
 
 
 use futures::sync::oneshot;
-use futures::sync::mpsc::UnboundedSender;
+use futures::sync::mpsc::{
+    UnboundedSender, UnboundedReceiver,
+};
 use futures::sync::mpsc::unbounded;
 
 
@@ -23,7 +25,7 @@ use comm::MessageIdentity;
 /// Struct that holds outgoing connection to one separate node
 /// It sends reqeuests, and receives responses over this connection,
 pub(crate) struct NodeWorker {
-    comm_uuid: Uuid,
+    self_ident: Uuid,
     msg_id: u64,
     comm: Addr<CommWorker>,
     dealer_sink: UnboundedSender<Multipart>,
@@ -31,44 +33,66 @@ pub(crate) struct NodeWorker {
     capabilities: HashSet<MessageIdentity>,
     hb: Instant,
 }
+/*
+fn connect(addr: &str, ident: Uuid) ->
+impl Future<
+    Item=(Uuid,
+          impl Stream<Item=Multipart, Error=tzmq::Error>,
+          impl Sink<SinkItem=Multipart, SinkError=tzmq::Error>),
+    Error=failure::Error
+>
+
+{
+    use futures::{Sink, Stream};
+
+    let dealer = Dealer::builder(::comm::ZMQ_CTXT.clone())
+        .identity(ident.as_bytes())
+        .connect(addr)
+        .build().unwrap();
 
 
-pub enum NodeConnecting {
-    Connected(),
-    UuidResolved(),
+    let (sink, stream) = dealer.sink_stream().split();
+    let hello = MessageWrapper::Hello.to_multipart().unwrap();
+    // Send hello message manually
+    sink.send(hello)
+        .map_err(Into::<failure::Error>::into)
+        .and_then(|sink| {
+            stream.into_future()
+                .map(|(item, stream)| {
+                    let item = item.map(MessageWrapper::from_multipart).map(Result::unwrap);
+                    // Only accept hello reply,  after this , we know identities of both parties
+                    if let Some(MessageWrapper::HelloReply(uuid)) = item {
+                        (uuid, stream, sink)
+                    } else {
+                        panic!("Not a HelloReply")
+                    }
+                })
+                .map_err(|(e, stream)| format_err!("Recv error {}", e))
+        })
 }
-
-use tokio::prelude::future::ok;
-
-fn test() {
-    let x = async {
-        await!(ok(()))
-    };
-}
+*/
 
 impl NodeWorker {
-    async fn connect(addr: &str) -> Result<(), ()> {
-        Ok(())
+    /*
+    pub(crate) fn connect(comm: Addr<CommWorker>, addr: &str, ident: Uuid) -> impl Future<Item=Addr<Self>, Error=failure::Error> {
+        return connect(addr, ident.clone())
+            .map(move |(remote, stream, sink)| Self::from_connected(comm, ident, remote, stream, sink));
     }
-    pub(crate) fn new(comm: Addr<CommWorker>, comm_uuid: Uuid, node_addr: &str, _token: &str) -> Result<Addr<Self>, failure::Error> {
-        let dealer = Dealer::builder(::comm::ZMQ_CTXT.clone())
-            .identity(comm_uuid.as_bytes())
-            .connect(node_addr)
-            .build()?;
 
-        let (sink, stream) = dealer.sink_stream().split();
+    pub(crate) fn from_connected<ST, SI>(comm: Addr<CommWorker>, self_id: Uuid, remote_id: Uuid, stream: ST, sink: SI) -> Addr<Self>
+        where ST: Stream<Item=Multipart, Error=tzmq::Error> + 'static,
+              SI: Sink<SinkItem=Multipart, SinkError=tzmq::Error> + 'static,
 
+
+    {
         let stream = stream.map_err(Into::<failure::Error>::into);
         let (tx, rx) = unbounded();
 
         let forwarder = sink.send_all(rx.map_err(|_| { tzmq::Error::Sink })).map(|_| ());
 
-        Ok(Actor::create(move |ctx| {
+        Actor::create(move |ctx| {
             ctx.spawn(wrap_future(forwarder).drop_err());
             Self::add_stream(stream, ctx);
-
-            let hello = MessageWrapper::Hello.to_multipart().unwrap();
-            tx.unbounded_send(hello).unwrap();
 
             ctx.run_interval(HEARTBEAT_INTERVAL, |this, _ctx| {
                 let msg = MessageWrapper::Heartbeat;
@@ -77,7 +101,7 @@ impl NodeWorker {
             });
 
             NodeWorker {
-                comm_uuid,
+                self_ident: self_id,
                 msg_id: 0,
                 comm,
                 dealer_sink: tx,
@@ -85,8 +109,47 @@ impl NodeWorker {
                 hb: Instant::now(),
                 capabilities: HashSet::new(),
             }
-        }))
+        })
     }
+    */
+
+        pub(crate) fn new(comm: Addr<CommWorker>, addr: &str, ident: Uuid) -> Result<Addr<Self>, failure::Error> {
+            let dealer = Dealer::builder(::comm::ZMQ_CTXT.clone())
+                .identity(ident.as_bytes())
+                .connect(addr)
+                .build()?;
+
+            let (sink, stream) = dealer.sink_stream().split();
+
+            let stream = stream.map_err(Into::<failure::Error>::into);
+            let (tx, rx) = unbounded();
+
+            let forwarder = sink.send_all(rx.map_err(|_| { tzmq::Error::Sink })).map(|_| ());
+
+            Ok(Actor::create(move |ctx| {
+                ctx.spawn(wrap_future(forwarder).drop_err());
+                Self::add_stream(stream, ctx);
+
+                let hello = MessageWrapper::Hello.to_multipart().unwrap();
+                tx.unbounded_send(hello).unwrap();
+
+                ctx.run_interval(HEARTBEAT_INTERVAL, |this, _ctx| {
+                    let msg = MessageWrapper::Heartbeat;
+                    let msg = msg.to_multipart().unwrap();
+                    this.dealer_sink.unbounded_send(msg).unwrap();
+                });
+
+                NodeWorker {
+                    self_ident: ident,
+                    msg_id: 0,
+                    comm,
+                    dealer_sink: tx,
+                    requests: HashMap::new(),
+                    hb: Instant::now(),
+                    capabilities: HashSet::new(),
+                }
+            }))
+        }
 
     pub(crate) fn resolve_request(&mut self, rid: u64, res: Result<Bytes, RemoteError>) {
         if let Some(sender) = self.requests.remove(&rid) {
@@ -110,7 +173,7 @@ impl StreamHandler<Multipart, failure::Error> for NodeWorker {
         let msg = MessageWrapper::from_multipart(item).unwrap();
         println!("Message: {:?}", msg);
         match msg {
-            MessageWrapper::HelloReply(uuid) => {}
+            MessageWrapper::Identify(uuid) => {}
             MessageWrapper::Heartbeat => {
                 self.hb = Instant::now();
             }
