@@ -1,6 +1,5 @@
 use ::prelude::*;
 
-use msg::*;
 use futures::sync::oneshot::{self, Sender};
 use tokio::timer::{
     Delay, Timeout,
@@ -8,8 +7,10 @@ use tokio::timer::{
 use std::time::{
     Duration, Instant,
 };
-use node::NodeWorker;
-use node::Node;
+use super::{
+    node::{BaseNode},
+    msg::*,
+};
 
 pub(crate) trait RemoteMessageHandler: Send {
     fn handle(&self, msg: Bytes, sender: Sender<Result<Bytes, RemoteError>>);
@@ -56,14 +57,14 @@ pub struct RemoteRequest<M>
     where M: RemoteMessage + Send + Serialize + DeserializeOwned + 'static,
           M::Result: Send + Serialize + DeserializeOwned
 {
-    inner: Request<NodeWorker, SendRemoteRequest<M>>,
+    inner: Request<BaseNode, SendRemoteRequest<M>>,
 }
 
 impl<M> RemoteRequest<M>
     where M: RemoteMessage + Send + Serialize + DeserializeOwned,
           M::Result: Send + Serialize + DeserializeOwned
 {
-    pub(crate) fn new(inner: Request<NodeWorker, SendRemoteRequest<M>>) -> Self {
+    pub(crate) fn new(inner: Request<BaseNode, SendRemoteRequest<M>>) -> Self {
         RemoteRequest {
             inner
         }
@@ -88,12 +89,11 @@ impl<M> ::futures::Future for RemoteRequest<M>
     }
 }
 
-
 pub struct RemoteRecipient<M>
     where M: RemoteMessage + Send + Serialize + DeserializeOwned,
           M::Result: Send + Serialize + DeserializeOwned
 {
-    node: Node,
+    node: Addr<BaseNode>,
     _p: PhantomData<M>,
 }
 
@@ -101,13 +101,19 @@ impl<M> RemoteRecipient<M>
     where M: RemoteMessage + Send + Serialize + DeserializeOwned + 'static,
           M::Result: Send + Serialize + DeserializeOwned
 {
-    fn send(&self, msg : M) -> RemoteRequest<M> {
-        self.node.send(msg)
+    pub(crate) fn new(node: Addr<BaseNode>) -> Self {
+        return RemoteRecipient {
+            node,
+            _p: PhantomData,
+        };
     }
-    fn do_send(&self, msg : M) {
-        self.node.do_send(msg)
+    pub fn send(&self, msg: M) -> RemoteRequest<M> {
+        RemoteRequest::new(self.node.send(SendRemoteRequest(msg)))
     }
-    fn try_send(&self, msg : M)  -> Result<(),SendError<M>> {
-        self.node.try_send(msg)
+    pub fn do_send(&self, msg: M) {
+        self.node.do_send(SendRemoteRequest(msg))
+    }
+    pub fn try_send(&self, msg: M) -> Result<(), SendError<M>> {
+        self.node.try_send(SendRemoteRequest(msg)).map_err(|e| unimplemented!())
     }
 }

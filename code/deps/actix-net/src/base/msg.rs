@@ -1,15 +1,19 @@
 use ::prelude::*;
 
-use node::NodeWorker;
+use super::node::BaseNode;
 use common::bytes::Bytes;
 use std::borrow::Cow;
-use actor::RemoteActor;
+
+use super::comm::{
+     MessageIdentity,
+};
+
 
 /// Message that can be sent across Process barrier
 pub trait RemoteMessage: Message + Send + Serialize + DeserializeOwned + Send
     where Self::Result: Send + Serialize + DeserializeOwned + Send,
 {
-    fn type_id() -> Cow<'static, str> {
+    fn type_id() -> MessageIdentity {
         unsafe { ::std::intrinsics::type_name::<Self>().into() }
     }
 
@@ -30,20 +34,26 @@ pub trait RemoteMessage: Message + Send + Serialize + DeserializeOwned + Send
     }
 }
 
-pub trait Announcement : RemoteMessage<Result=()> {
+pub trait Announcement: RemoteMessage<Result=()> {}
 
-}
-
+/// Request for connection to remote node, sent by application code
 #[derive(Debug, Clone)]
 pub(crate) struct ConnectToNode {
     pub(crate) node_addr: String
 }
 
 impl Message for ConnectToNode {
-    type Result = Result<Addr<NodeWorker>, failure::Error>;
+    type Result = Result<Addr<BaseNode>, failure::Error>;
 }
 
+/// Message denoting information about connected and identified node
+#[derive(Debug, Clone)]
+pub(crate) struct NodeConnected {
+    pub(crate) remote_id: Uuid,
+    pub(crate) addr: Addr<BaseNode>,
+}
 
+/// Message used to register recipients for remote messages
 pub(crate) struct RegisterRecipientHandler<M: RemoteMessage>
     where M: RemoteMessage + Send + Serialize + DeserializeOwned + 'static,
           M::Result: Send + Serialize + DeserializeOwned + 'static
@@ -51,18 +61,11 @@ pub(crate) struct RegisterRecipientHandler<M: RemoteMessage>
     pub recipient: Recipient<M>,
 }
 
+
 impl<M> Message for RegisterRecipientHandler<M>
     where M: RemoteMessage + Send + Serialize + DeserializeOwned + 'static,
           M::Result: Send + Serialize + DeserializeOwned + 'static
 {
-    type Result = ();
-}
-
-pub(crate) struct RegisterActorHandler<A : RemoteActor> {
-    pub addr : Addr<A>,
-}
-
-impl<A : RemoteActor> Message for RegisterActorHandler<A> {
     type Result = ();
 }
 
@@ -105,10 +108,9 @@ pub(crate) enum MessageWrapper {
     Heartbeat,
     Hello,
     Identify(Uuid),
-    Capabilities(HashSet<::comm::MessageIdentity>),
     /// Remote request message, consists of message type id, message instance id, and message body
     /// we need to use encoded data here, so we won't pollute whole API with generuc type
-    Request(Cow<'static, str>, u64, Bytes),
+    Request(MessageIdentity, u64, Bytes),
     /// Response to request identified by message id, and its body
     Response(u64, Result<Bytes, RemoteError>),
 }

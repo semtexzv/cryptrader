@@ -15,4 +15,5 @@ futures = "0.1.*"
 tokio = "0.1"
 failure = "*"
 uuid = { version = "*", features = ["v4","serde"] }
+anymap = "*"
 nix = "*"

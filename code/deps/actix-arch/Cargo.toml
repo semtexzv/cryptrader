@@ -7,4 +7,5 @@ authors = ["Michal Hornický <semtexzv@gmail.com>"]
 path = "../../common"
 
 [dependencies]
+serde = "*"
 actix-net= { path = "../actix-net"}
