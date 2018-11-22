@@ -18,8 +18,7 @@ use super::{
     comm::{
         HEARTBEAT_INTERVAL,
         BaseCommunicator,
-
-        MessageIdentity,
+        MsgType,
     },
     recipient::{
         RemoteRecipient,RemoteRequest

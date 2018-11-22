@@ -15,15 +15,15 @@
     3. Ops - NixOS package that automatically builds cargo project
 
 [ ] - Start with text writing
-    1. Create chapter structure
-    2. Split up chapters into main sections, with logical flow
-    3. Write simple introduction to get started
+ x  1. Create chapter structure
+ x  2. Split up chapters into main sections, with logical flow
+ x  3. Write simple introduction to get started
 
 [ ] - Start with code
  x  1. Import old Cryptrader project - Just for reference
  x  2. Create good dependecy chain ( Feature managment )
  x  3. Create actix extension libraries :
-    3.1 Actix-net - Library for distributed actors on different machines using ZMQ
+ x  3.1 Actix-net - Library for distributed actors on different machines using ZMQ
  x  3.1.1 ZMQ - Find or implement zmq library supporting tokio with futures
  x  3.1.2 NetMessage type - Automatic serialization
     3.1.3 PubSub addresses and actors
@@ -52,5 +52,7 @@
     1. Distributed & concurrent systems,  problems, solutions, architectures
     2. Actor model
     3. Rust - document why is it used, How actix solves a lot of bugs by using strongly typed messages, etc ...
+ x  3.1 Rust itself
+    3.2 Actix
 
 [ ] - Document implement library and tests in thesis

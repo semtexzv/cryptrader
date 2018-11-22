@@ -1,5 +1,6 @@
-\chapter{Abstract}
+\chapter*{Abstract}
 \label{abstract}
+
 
 
 
@@ -15,6 +16,47 @@
 
 \chapter{Introduction}
 \label{introduction}
+Financial markets are complex systems, in which, market players interact with each other to determine
+prices of individual assets. Advances in financial technologies, like the advent of blockchain technology,
+and corresponding proliferation of cryptoccurencies , like Bitcoin\todo{cite} have changed nature of trading.
+
+As a result of these advances, financial markets are now more approachable than ever, and thus present a significant
+opportunity. One example of services that successfully exploit this opportunity are cryptocurrency exchanges. They
+are a whole new kind of marketplace, that has several advantages, like: Ease of use, REST based APIs, etc\ldots .
+
+In order to capitalize on these advances, we mst use advanced trading techniques. One of these is algorithmic
+trading. Basis of algorithmic trading, is utilization of some kind of algorithm, along with market data, in
+orer to determine most profitable actions, that should be performed on the market.
+
+This approach, has several requirements. One of them is large amount of computing power, since used algorithms
+might be extremely complex. Latency is also a big concern, since htis space is extremely competitve, and a party,
+which is able to perform optimal actions sooner than all other parties, will net a larger profit.
+Thanks tho these requirements, usage of this technique is not easy, or cheap.
+
+However, advances in development and usage of distributed systems, might be an easy solution to these problems.
+Cloud computing\todo{cite} is now more widespread, and easy to use than ever. Thanks to new technologies like
+docker\todo{cite} and kubernetes\todo{cite}, the creation of distributed systems is easy, fast, and created
+systems are secured, with good architectural base\todo{reword}.
+
+
+\section{Objectives}
+This thesis is concerned with creation of a system for algorithmic trading. This system is concieved
+as a distributed application. Usage of distributed approach should help with performance requirements,
+and the difficulty of implementing such complex system. The system should be designed with latest technological advances in mind, and
+should utilize cloud computing environment.
+
+%There are 2 primnary performance requirements, raw bandwidth and latency. The system bandwidth is understood as ability to
+%process multiple streams of data from different markets, evaluate users' strategies on this data, and execute resulting actions.
+%The second, and probably more important, requiremnt is  latency. The system should be able to evaluate desired strategies,
+%and execute resulting actions in shortest time frame possible.
+
+The system itself should be extensible and scalable. The extensibility requirement deals with ability to integrate new markets,
+with types of assets, or add new functionality to existing ones. The scalaability of the system deals primarily with the system's
+ability to automatically scale based on amount of users and resulting load on the system.
+
+
+From users' perspective, the system should be a easy to use web application. The user should be able to define custom
+algorithms and strategies, and apply them to different markets.
 
 
 \todo{}
@@ -22,17 +64,335 @@
 
 \chapter{Theory}
 \label{theory}
-\todo{We need to introduce actor model, then introduce host language, rust}
-\todo{Clarify rust's type system}
-\todo{And explain the benefits of using so statically typed system for purposes of actor model library}
+This chapter describes theoretical approach to different parts of target system.
+\section{Trading \& Exchanges}
+In order to define algorithmic trading, we must first define what trading is, and how it is performed.
+Trading is performed on exchanges. Key aspect of exchange trading is the price discovery mechanism. For almost all assets,
+traded on an exchange, the price is not dictated by any single party. Instead, the price is "discovered" by interaction of
+buyers and sellers. Buyers advertise highest price they are willing to pay for an asset, and sellers advertise lowest price
+they are willing to accept. These 2 prices correspond to basic economic principle of supply and demand. When there are more sellers active
+on the exchange, the price will fall, since there are less buyers to buy an asset. This principle also applies in reverse, if there are more
+buyers active on the market, the price will rise(\todo{Replace more sellers with "more selling pressure" or smth similar}).
+The maximum price listed by a buyers known as \textbf{bid} price, and the minimal price listed by a seller is known as \textbf{ask} price
 
-\todo{Theoretical basis for problem}
-\todo{What we know about current state of affairs}
-\todo{At least 10 pages}
+Since these exchanges are dynamic enviroments, with always fluctuating pressures on either side, the price of an asset, varies over a time.
+The amount of this variance is called \textbf{volatility}.
+\todo{Introduce basic principles and terms here, so they can be used later}
+
+Historically, these exchanges were physical, and used for trading stocks, and
+were called stock echanges. They were physical locations , where individual traders  met, and traded one asset for another.
+Primarily, these trades consisted of stocks or goods against money. Another type of trade is when 2 parties trade one currency for another.
+Exchanges specializing in these types of trades are called \textbf{FOREX} (Foreign exchange) markets.
+
+Most recent of exchange types, is the cryptoccurency exchange. These exchanges are almost always purely virtual. All trading is performed
+via web interface. The main advantage for our purposes is the ease of use of these exchanges, and their modern features.
+Virtually all provide multiple APIs for different purposes. A real-time API for low-latency streaming of updates to clients,
+and a REST API provided for executing trades on the exchange.
+\todo{Modern technolgies}
+\subsection{Algorithmic trading}
+First financial markets with electronic execution and connection to communication networks appeared
+in late 1980s and 1990s. This allowed some degree of automation, but weren't yet used for fully
+automated trading. In 2001 a paper published by IBM (\todo{cite, http://spider.sci.brooklyn.cuny.edu/~parsons/courses/840-spring-2005/notes/das.pdf})
+encouraged adoption of algorithmic trading. In this paper, fully automated trading strategies
+consistently outperformed human counterparts. Since then, the amount of trading performed by
+automated system steadily risen. it currently amounts to more than 90\% of worldwide
+trading volume \todo{Find source, cite}.
+
+As algorithmic trading became more common, new trading strategies started popping up, and
+an arms race was started. In this arms race, the parties were consistently introducing new
+strategies to perform trading decisions, and execute resulting trades. The \textbf{HFT}(High frequency trading)
+is a culmination of the automated trading arms race.
+
+This form of trading is characterized by high turnover and order-to-trade ratios(number of orders compared to trades).
+It utilizes highly specialized order types, co-location of trading equipment as close as possible to exchange.
+Only 2\% of US based trading firms specialize in HFT, but these 2\% account for more than 73\% of all
+trading volume \todo{Cite - found on wiki, source}.
+
+There are four key types of HFT strategies:
+\begin{itemize}
+    \item {Order-flow based - text }
+    \item {Tick data based - text }
+    \item {Event arbitrage - text}
+    \item {Statistical arbitrage - text }
+\end{itemize}
+
+\todo{Find proper source, for these categories}
+
+
+Our system will mainly support strategies, that would fall into \textbf{tick-data} category. This is due
+to simplicity of these strategies, and type of information provided by cryptocurrency exchanges. These strategies will be
+applied to multiple assets, which will require a large amount of computational power, while preserving low latency.
+
+To satisfy these constraints, the system will have to be of distributed nature.
+
+
+\todo{Existing solutions, either too big corporate level affairs, (One example), or too small,
+focused only on cryptocurrencies
+}
+\section{Distributed systems}
+Distributed systems are systems, that are comprised of many loosely coupled components. These components might be threads
+in single process, processes on single computer, or multiple computers connected through shared memory or a network.\todo{Cite}.
+These components communicate by utilizing shared memory, or by passing messages to one another. Components interact with
+one another in order to achieve shared goal. Distributed systems have several key properties:
+\todo{cite: Coulouris - 2001 ( http://www.gecg.in/papers/ds5thedn.pdf)}
+
+\begin{itemize}
+    \item Concurrency
+    \item No global clock
+    \item Independent failures
+\end{itemize}
+make
+
+\todo{Models of diustributed systems}
+\todo{Client server}
+\todo{Pure peer to peer}
+\todo{Actor model}
+\section{Actor model}
+\todo{Actor model outline}
+\todo{Implementations of actor model, different languages, libraries}
+\todo{Introduce actix}
+\todo{Why rust - chose between low levewl \& high level, rust was best choice, herews whu}
+\section{Rust}
+Rust is a new programming language developed by Mozilla. It was created as a response to many shortcomings of existing low level
+languages such as C and C++. While these languages have crucial place in programming landscape, providing highest performance and
+degree of control over hardware, they are outdated, unergonomic and unsafe ( particularly with respect to concurrency). On oppsoite
+side of this equation , are managed languages, that are highly ergonomic, and seem to containt most innovation in this space.
+
+Rust language aims to position itself among the low level languages, bringing new and exciting features to this space.
+It was originally developed by graydon hoare  \todo{Cite initial paper} while working at Mozilla, and was based on
+ML. Probably the most important step, was adoption of the language by mozilla for the purpose of creating new browser engine
+called Servo\todo{Cite servo}. Goal of servo was to experiment and innovate in the Web browser space, without
+the dependency of over 30 years of legacy code, that was firefox. Main technical goal, was introduction of concurrency,
+to problems, that were historically had only sequential solutions. Primarily the concurrent layout of elements on a web page.
+
+\todo{Basic constructs , functions, structs ,enum, traits}
+\todo{immutability}
+
+These requirements influenced the design of the language in a significant way. It started out as general purpose programming
+language with functional features, very much similar to ML, and then acquired some features that make it excellent
+systems programming language. These features are:
+\begin{itemize}
+    \item Generic programming based on traits
+    \item Memory model that allows safety without garbage collector
+    \item Primitives to eliminate data races
+    \item Built in build system and package manager
+\end{itemize}
+
+\subsection{Generic programming, traits}
+Generic programming is a paradigm, in which algorithms are written in terms of unspecified types.
+The types are then specifdied upon instantiation. These types are called type parameters, or generic types.
+By using this tool, programmer can write common functions or types only once, and use them with multiple
+types, thus reducing duplication. This paradigm was pioneered by ML, and is supported in virtually every
+modern language in one shape or form.
+
+Modern generics follow 2 primary approaches for typing generic functions: Structural, or protocol based.
+
+Structural generic typing (also called Duck typing) is primarily used in C++. With this approach, the type
+checking is performed after instantiation of generic construct. This allows for greater flexibility of generics.
+But virtually all implementatiosn of this approach suffer poor diagnostinc messages (\todo{Cite, C++ error messages
+with generic are terrible})
+
+Protocol(Interface) generic typing is an approach , in which the generic construct itself undergoes type checking, and
+every checkinng upon every instantiation is minimal. This requires programmer to express the required interface
+of each type parameter explicitly. These requirements take form of Interfaces (Java, C\#), Concepts (Future C++),
+Type classes (Haskell) or Traits(Rust). Then, upon instantiation it is only neccessary to check whether
+each type parameter satisfies specified constraints.
+
+
+\subsection{Traits}
+Traits are key construct for many useful features of rust. They are similar to Interfaces in java, but
+their closest analogy are type classes from haskell.
+
+
+\begin{listing}[H]
+\begin{minted}[breaklines=true]{rust}
+pub trait Ord: Eq + PartialOrd<Self> {
+    fn cmp(&self, other: &Self) -> Ordering;
+    fn max(self, other: Self) -> Self where Self: Sized {
+        if other >= self { other } else { self }
+    }
+}
+\end{minted}
+\label{ord_trait}
+\caption{Trait definition}
+\end{listing}
+
+Sample \ref{ord_trait} Shows definition of an Ord trait. This trait specifies Additional constraints for implementing types
+(Also called supertrait constraints). Every type that implemenrs Ord, must also implement Eq, and PartialOrd trait with generic
+argument of impelemting type.
+
+The implementor, must provide implementation for cmp method, that takes an one argument of implementors type,
+and returns an ordering.
+
+The trait definition also specifies max method, for types, that that satisfy implement Sized trait, and provides default
+implementation.
+
+\todo{Dynamic dispatch using traits}
+The Self keyword is used to refer to implementing type, in the trait definition.
+
+Traits can also be generic, accepting type parameters, such as the PartialOrd trait used earlier.
+
+\begin{listing}[H]
+\begin{minted}[breaklines=true]{rust}
+    impl Ord for bool {
+        fn cmp(&self, other : &bool) -> Ordering {
+            if self & !other {
+                return Ordering::Greater;
+            }
+            if self == other {
+                return Ordering::Equal;
+            }
+            return Ordering::Less;
+        }
+    }
+\end{minted}
+\label{ord_impl}
+\caption{Trait implementation}
+\end{listing}
+
+Sample \ref{ord_impl} shows simple implementation of Ord trait specified earlier for boolean data type. This sample
+uses an "impl" block, to implement a trait for specific type. Impl block can be generic, and have to provide
+implementations for all functions that do not have default implementations specified in trait definitions.
+
+\subsection{Marker traits}
+The traits "Eq" and "PartialOrd" used earlier are self explanatory, they denote the availability of equality comparison, and partial order
+in implementing types. However, the "Sized" trait might not be so easy top comprehend.
+
+This trait belongs to special category of traits, called marker traits. These include "Send" , "Sync", "Sized" and several others
+The marker traits do not provide any functions and serve, as their name implies, as markers. They are used to mark specific
+types. The "Sized" trait marks types, which have their sizes defined at compile time, and is automatically implemented
+for these types by compiler. The example of unsized type might be \verb|[u8]| , which is an arrray with unknown length.
+
+The "Send" and "Sync" traits are crucial for features supporting safe concurrent programming , and will be explored later in
+this thesis.
+\subsection{Memory managment}
+Modern programming languages primarily use one of 2 approaches to manage memory.
+
+The grabage collection is an approach, most commonly used in High-level languages. It can be performed
+by reference counting (Swift \& Objective-C, Lua), where each object contains a reference count, that is modified
+by crating and destroying references to that object. Object is deallocated when reference  count reaches zero.
+This approach has problem with cyclic object graphs, which require so called "weak" references, that are
+not included in reference count \todo{Rephrase}. Second approach for garbage collection is tracing garbage collection.
+In this approach, the object graph is traversed, and reachable objects are marked. Unreachable objects stay unmarked during
+this traversal, and are deallocatead. This however requires pausing of a program to perform the traversal.
+
+Second common approach used is called RAII, which stands for "Resource acquisition is initialization". It is most
+prominently associated with C++, but is used in D, Ada, and Rust. This approach was originally developed for exception safe
+resource managment in C++ \todo{Cite- originally from wikipedia}.
+
+RAII is more oriented for managment of resources, but if we consider dynamically allocated objects a resource, it serves
+the same purpose as garbage collection.
+
+The lifetime of a resource is tied to object lifetime. The resource is acquired during creation of the object,
+and released during destruction. The object can have unconstrained lifetime (Allocated on a heap), or scope constrained
+lifetime (Allocated on the stack).
+
+In C++ the creation and destruction of object is performed by specific functions(Constructor and destructor). Rust does
+not support object oriented programming in a classical sense. The creation of struct is performed by listing all
+their components, the creation of enums is performed by specifying which variant of an enum should be created, aht
+then listing all it's components.
+
+The destruction of "Objects" is performed with the help of a trait system. If a type, implements the "Drop" trait, it must
+specify "drop" method. This signifies that thetype requires explicit destruction, and this method will
+be invoked, when variable of this type goes out of scope.
+
+\subsubsection{Move semantics}
+Another important concept taken from C++ is move semantics. Until C++11, the only approach was copy semantics, in which
+assignment to a variable from another variable would create copy of referenced object.
+The drawback of this approach, is unability to express a type, that should not be copyable, but should be movable.
+
+The move semantics on the other hand, can express this concept easily. With copy, the assignment to a variable, invalidates the
+old variable. In C++ move semantics, the object referenced by old variable is replaced by and "Empty" object ( an object
+that is safe to destruct, but this destruction will not invalidate copied object).
+
+In rust, the invalidation of moved-from variables is enforced at compile time, and usage of invalidated variable will result in a
+compiler error. Rust provides only move semantics, with copy semantics emulated by the "Clone" trait.
+
+\subsubsection{Ownership and borrowing}
+Conceptually, the move semantic are used to express the concept of ownership. If a variable, contains an object, it "owns"
+that object , and is responsible for it's destruction. However, transferring ownership of an object would be extremely
+tedious on programmer side, and copying of an object would degrade performance.
+
+Rust also provides a way to reference objects, without moving or copying them. Usage of  \verb|&| or
+\verb|&mut| sigils, will create immutable and mutable reference respectively. Why 2 reference types? This is
+done to ensure memory safety by disallowing mutation and aliasing at the same time.
+
+We can create any number of immutable references to an object, but these references can't mutate referenced object, or
+we can create one mutable reference, and use this reference to mutate the object. Creation of multiple mutable references
+is not allowed, and will result in compiler error.
+
+\todo{Iterator invalidation diagram}
+
+\subsection{Concurrency primitives}
+The concept of ownership and borrowing is also used to ensure memory safety in multithreaded programs, and prevent
+data races
+
+Data race occurs when 2 or more threads concurrently access same location of memory, one of these accesses is a write,
+and accesses are unsychronized. These types of bugs are extremely hard to discover, and have lead to death of several medical patients in
+extreme case \todo{Cite therac-25}.
+
+The ownership and borrowing system prevents these kinds of data races, but rust also provides tools for ensuring other
+constraints in multithreaded programs. Primary building blocks are 2 marker traits. The "Send" and "Sync" traits.
+
+The "Send" trait denotes that the implementor can be safely transferred to a different threads. This trait is automatically
+implemented by compiler, when appropriate. For example, objects that reference thread local storage do not implement send.
+\todo{Reword}
+
+The "Sync" trait is implemented for types that can be safely shared between threads.
+
+These 2 traits are then used by library abstractions like Mutex and RwLock to ensure memory safet and data race free code.
+For example, the \verb|Mutex| abstraction is used to protect an object with a mutex. The \verb|Mutex| struct is generic,
+with one type parameter. This type parameter denotes the type of contained object, and instance of this object must be provided
+upon instantiation of a mutex. The implementation of \verb|Mutex| requires that the contained type implement \verb|Send|.
+This ensures, that the contained type can be safely shared between threads. The mutex itself implements both "Send" and "Sync" traits,
+meaning mutex can be safely shared between threads.
+
+\todo{Arc example, we need it because reference lifetimes, it allows sharing}
+
+\subsection{C ABI}
+Since Rust is relatively new language, most of the code, was already written in annother languages. In order to
+effectively integrate into existing workflows, rust had to be able to integrate other languages. Rust has chosen
+the support of C ABI to achieve this goal. Programmer can use the \verb|#[repr(C)]| anntoation on structs and enums to
+the ensure, they are represented in a way that is compatible with C ABI.
+
+Programmer can also mark function definitions as \verb|external| to ensure, that these functions support C calling convention.
+External function definiton can be considered an exporting of this function.
+
+\subsubsection{Unsafe}
+Since external functions might not be implemented in rust, they might not preserve constraints imposed on normal rust code.
+Preservation of these constraints must then be performed manually by programmer. To ensure, these parts of code are clearly
+marked, the keyword unsafe is used. Either a function definition, or a block might be marked unsafe. All normal constraints
+are upheld inside unsafe parts of code. The only additinal features are support for dereferencing a raw pointer or calling
+an external function.
+
+\subsection{Build system and package manager}
+One area that
+
+\todo{Extreme improvement over C and C++}
+\todo{Keep STDLIB small, use user created packages}
+\todo{Cargo as testing, benchmarking framework}
+
+
+\section{Cloud environment}
+\todo{Helps with distributed side of things}
+\todo{Use google cloud engine, it has kubernetes integrated}
+\subsection{Kubernetes}
+\todo{System for managing cloud deployments, good configuration support}
+\todo{Integrated DNS and other helpful tools internal architecture}
+\todo{Uses docker images}
+\subsection{Nix}
+\todo{Deterministic package manager}
+\todo{Small packages}
 
 
 \chapter{Design}
 \label{design}
+
+\section{General system design}
+\section{Strategies}
+\section{Actors - How they influence design}
+\section{}
+
 \todo{Chapter that contains new ideas about solutions, later part outlines complete solution}
 \todo{Maybe split into multiple parts ?}
 
@@ -43,10 +403,8 @@
 
 
 \chapter{Evaluation}
-dds
-
-\cite{Pravidla}
 \label{evaluation}
+\cite{Pravidla}
 
 \chapter{Conclusion}
 \chapter{conclusion}

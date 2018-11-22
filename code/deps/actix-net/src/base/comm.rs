@@ -33,10 +33,10 @@ use super::{
 lazy_static! {
     pub(crate) static ref ZMQ_CTXT  : Arc<zmq::Context> = Arc::new(zmq::Context::new());
 }
-pub(crate)  const HEARTBEAT_INTERVAL: Duration = Duration::from_secs(10);
+pub(crate) const HEARTBEAT_INTERVAL: Duration = Duration::from_secs(10);
 
 pub type NodeIdentity = Vec<u8>;
-pub type MessageIdentity = Cow<'static, str>;
+pub type MsgType = Cow<'static, str>;
 type IdentifiedMessage = (NodeIdentity, MessageWrapper);
 
 
@@ -62,7 +62,7 @@ pub struct BaseCommunicator {
     /// received on corresponding Stream, and Heartbeat messages
     router_sink: UnboundedSender<Multipart>,
 
-    registry: HashMap<MessageIdentity, Box<RemoteMessageHandler>>,
+    registry: HashMap<MsgType, Box<RemoteMessageHandler>>,
 
     nodes: HashMap<Uuid, NodeInfo>,
 
@@ -81,7 +81,7 @@ impl Actor for BaseCommunicator {
 
 
 impl BaseCommunicator {
-    fn create(addr: &str) -> Result<Addr<Self>, failure::Error> {
+    pub fn new(addr: &str) -> Result<Addr<Self>, failure::Error> {
         let uuid = Uuid::new_v4();
         let router = Router::builder(ZMQ_CTXT.clone())
             .identity(uuid.as_bytes())
@@ -211,7 +211,7 @@ impl Handler<ConnectToNode> for BaseCommunicator {
 }
 
 impl<M> Handler<RegisterRecipientHandler<M>> for BaseCommunicator
-    where M: RemoteMessage + Send + Serialize + DeserializeOwned + 'static + Debug,
+    where M: RemoteMessage + Send + Serialize + DeserializeOwned + 'static,
           M::Result: Send + Serialize + DeserializeOwned + 'static
 
 {
@@ -219,5 +219,21 @@ impl<M> Handler<RegisterRecipientHandler<M>> for BaseCommunicator
 
     fn handle(&mut self, reg_msg: RegisterRecipientHandler<M>, ctx: &mut Self::Context) {
         self.registry.insert(M::type_id(), Box::new(LocalRecipientHandler::new(reg_msg.recipient)));
+    }
+}
+
+impl<M> Handler<DispatchRemoteRequest<M>> for BaseCommunicator
+    where M: RemoteMessage + Send + Serialize + DeserializeOwned + 'static,
+          M::Result: Send + Serialize + DeserializeOwned + 'static
+{
+    type Result = Response<M::Result, RemoteError>;
+
+    fn handle(&mut self, DispatchRemoteRequest { req, node_id }: DispatchRemoteRequest<M>, ctx: &mut Self::Context) -> Self::Result {
+        if let Some(n) = self.nodes.get(&node_id) {
+            let sent = n.addr.send(req).map_err(|_| RemoteError::HandlerNotFound).flatten();
+            return Response::r#async(sent);
+        } else {
+            return Response::reply(Err(RemoteError::NodeNotFound));
+        }
     }
 }

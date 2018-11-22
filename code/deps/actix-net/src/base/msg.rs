@@ -4,16 +4,14 @@ use super::node::BaseNode;
 use common::bytes::Bytes;
 use std::borrow::Cow;
 
-use super::comm::{
-     MessageIdentity,
-};
+use super::comm::MsgType;
 
 
 /// Message that can be sent across Process barrier
 pub trait RemoteMessage: Message + Send + Serialize + DeserializeOwned + Send
     where Self::Result: Send + Serialize + DeserializeOwned + Send,
 {
-    fn type_id() -> MessageIdentity {
+    fn type_id() -> MsgType {
         unsafe { ::std::intrinsics::type_name::<Self>().into() }
     }
 
@@ -58,10 +56,29 @@ pub(crate) struct RegisterRecipientHandler<M: RemoteMessage>
     where M: RemoteMessage + Send + Serialize + DeserializeOwned + 'static,
           M::Result: Send + Serialize + DeserializeOwned + 'static
 {
-    pub recipient: Recipient<M>,
+    path : String,
+    pub(crate) recipient: Recipient<M>,
 }
 
+impl<M>  RegisterRecipientHandler<M>
+    where M: RemoteMessage + Send + Serialize + DeserializeOwned + 'static,
+          M::Result: Send + Serialize + DeserializeOwned + 'static
+{
+    pub fn new(rec : Recipient<M>) -> Self {
+        RegisterRecipientHandler {
+            path : "/".into(),
+            recipient : rec,
+        }
+    }
 
+    pub fn with_path(path : String, rec : Recipient<M>) -> Self {
+        RegisterRecipientHandler {
+            path : path.to_string(),
+            recipient : rec,
+        }
+    }
+
+}
 impl<M> Message for RegisterRecipientHandler<M>
     where M: RemoteMessage + Send + Serialize + DeserializeOwned + 'static,
           M::Result: Send + Serialize + DeserializeOwned + 'static
@@ -80,6 +97,21 @@ impl<M> Message for SendRemoteRequest<M>
     type Result = Result<M::Result, RemoteError>;
 }
 
+pub(crate) struct DispatchRemoteRequest<M>
+    where M: RemoteMessage + Send + Serialize + DeserializeOwned + 'static,
+          M::Result: Send + Serialize + DeserializeOwned + 'static {
+    pub(crate)  req: SendRemoteRequest<M>,
+    pub(crate) node_id: Uuid,
+}
+
+impl<M> Message for DispatchRemoteRequest<M>
+    where M: RemoteMessage + Send + Serialize + DeserializeOwned + 'static,
+          M::Result: Send + Serialize + DeserializeOwned + 'static,
+{
+    type Result = Result<M::Result, RemoteError>;
+}
+
+
 /// Is similar to `MailboxError` but contains more variant suited for reporting protocol errors
 /// since remote commuincation is much more dynamic
 #[derive(Debug, Fail, Serialize, Deserialize)]
@@ -90,6 +122,10 @@ pub enum RemoteError {
     Timeout,
     #[fail(display = "Remote handler for specified message type not found")]
     HandlerNotFound,
+    #[fail(display = "Remote actor not found")]
+    ActorNotFound,
+    #[fail(display = "Remote node not found")]
+    NodeNotFound,
 }
 
 
@@ -110,7 +146,7 @@ pub(crate) enum MessageWrapper {
     Identify(Uuid),
     /// Remote request message, consists of message type id, message instance id, and message body
     /// we need to use encoded data here, so we won't pollute whole API with generuc type
-    Request(MessageIdentity, u64, Bytes),
+    Request(MsgType, u64, Bytes),
     /// Response to request identified by message id, and its body
     Response(u64, Result<Bytes, RemoteError>),
 }

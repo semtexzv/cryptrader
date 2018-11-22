@@ -15,13 +15,14 @@ $(CO).ps: $(CO).dvi
 	dvips $(CO)
 
 $(CO).pdf: clean
-	pdflatex -halt-on-error  $(CO)
-	bibtex $(CO)
-	pdflatex -halt-on-error $(CO)
-	pdflatex -halt-on-error $(CO)
+	mkdir -p out
+	pdflatex -halt-on-error --shell-escape --output-directory=out $(CO)
+	bibtex out/$(CO)
+	pdflatex -halt-on-error --shell-escape --output-directory=out  $(CO)
+	pdflatex -halt-on-error --shell-escape --output-directory=out  $(CO)
 
 $(CO).dvi: $(CO).tex $(CO).bib
-	latex $(CO)
+	latex  $(CO)
 	bibtex $(CO)
 	latex $(CO)
 	latex $(CO)

@@ -7,5 +7,6 @@ authors = ["Michal Hornický <semtexzv@gmail.com>"]
 path = "./common"
 
 [dependencies]
+clap = "*"
 actix-net = { path = "./deps/actix-net" }
 actix-arch = { path = "./deps/actix-arch" }

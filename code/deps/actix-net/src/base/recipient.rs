@@ -113,6 +113,7 @@ impl<M> RemoteRecipient<M>
     pub fn do_send(&self, msg: M) {
         self.node.do_send(SendRemoteRequest(msg))
     }
+
     pub fn try_send(&self, msg: M) -> Result<(), SendError<M>> {
         self.node.try_send(SendRemoteRequest(msg)).map_err(|e| unimplemented!())
     }

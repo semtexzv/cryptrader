@@ -59,11 +59,21 @@
 %---tt------------
 \renewcommand{\ttdefault}{lmtt}% zavede Latin Modern tt jako tt
 
+
+
+
+
 % vypne funkci šablony, která automaticky nahrazuje uvozovky,
 % aby nebyly prováděny nevhodné náhrady v popisech API apod.
 % disables function of the template which replaces quotation marks
 % to avoid unnecessary replacements in the API descriptions etc.
 \csdoublequotesoff
+
+
+
+\usepackage[outputdir=out]{minted}
+\usepackage{caption}
+
 
 % =======================================================================
 % balíček "hyperref" vytváří klikací odkazy v pdf, pokud tedy použijeme pdflatex
