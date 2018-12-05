@@ -8,5 +8,6 @@ path = "./common"
 
 [dependencies]
 clap = "*"
+serde = "*"
 actix-net = { path = "./deps/actix-net" }
 actix-arch = { path = "./deps/actix-arch" }

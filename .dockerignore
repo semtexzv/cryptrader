@@ -1,0 +1,4 @@
+images/*
+target/*/build
+target/*/deps
+target/*/incremental

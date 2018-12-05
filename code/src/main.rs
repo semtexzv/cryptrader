@@ -5,7 +5,6 @@ pub extern crate common;
 pub extern crate clap;
 
 pub mod prelude;
-pub mod types;
 pub mod ingest;
 
 
@@ -28,10 +27,6 @@ fn main() {
             "ingest" => {
                 let ingest = ingest::Ingest::new(base);
             },
-            "worker" => {
-                let ingest = ingest::Worker::new(base);
-
-            }
             _ => {
                 panic!("Not a valid subcommand")
             }

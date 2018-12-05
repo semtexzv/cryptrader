@@ -25,21 +25,13 @@ rec {
     ${dockerTools.shadowSetup}
     mkdir -p /tmp
     ";
-    contents = [ bash coreutils ];
+    contents = [ bashInteractive coreutils sudo openssl cacert file ];
 
     config = {
       Entrypoint = [ "${bashInteractive}/bin/bash" ];
       WorkingDir = "/";
     };
   };
-
-  with-ssl = dockerTools.buildImage {
-    name = "with-ssl";
-    tag = "latest";
-    contents = [ openssl cacert ];
-    fromImage = base;
-  };
-
   postgres = dockerTools.buildImage {
     name = "postgres";
     tag = "latest";
@@ -47,7 +39,7 @@ rec {
     created = "now";
 
     contents = [ postgresql zeromq ];
-    fromImage = with-ssl;
+    fromImage = base;
   };
 
   builder = dockerTools.buildImage {
@@ -55,7 +47,7 @@ rec {
     tag = "latest";
 
     created = "now";
-    fromImage = with-ssl;
+    fromImage = base;
 
     contents  = [
     rustc
@@ -67,10 +59,10 @@ rec {
     zeromq
     ];
 
-    runAsRoot = "
+    runAsRoot = ''
     #!${stdenv.shell}
     mkdir -p /app
-    ";
+    '';
 
     config = {
       WorkingDir = "/app";
@@ -80,9 +72,40 @@ rec {
       Volumes = {
         "/app" = {};
         "/out" = {};
+        "/usr/local/cargo" = {};
       };
     };
 
   };
 
+  runner = dockerTools.buildImage {
+    name = "runner";
+    tag = "latest";
+
+    created = "now";
+    fromImage = base;
+
+    contents = [ zeromq ];
+  };
+
+  dp = stdenv.mkDerivation {
+    name = "dp";
+    src = ../../target/debug/dp;
+    unpackCmd=''
+    set -x
+      mkdir -p dp
+      for i in $srcs; do
+        ls $i
+      done
+    '';
+
+  };
+
+  final = dockerTools.buildImage {
+    name = "final";
+    tag = "latest";
+    created = "now";
+    fromImage = runner;
+    contents = [ dp ];
+    };
 }

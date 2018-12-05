@@ -39,7 +39,13 @@ pub trait Announcement: RemoteMessage<Result=()> {}
 pub(crate) struct ConnectToNode {
     pub(crate) node_addr: String
 }
-
+impl ConnectToNode {
+    pub fn new(addr : String) -> Self {
+        return ConnectToNode {
+            node_addr: addr,
+        }
+    }
+}
 impl Message for ConnectToNode {
     type Result = Result<Addr<BaseNode>, failure::Error>;
 }

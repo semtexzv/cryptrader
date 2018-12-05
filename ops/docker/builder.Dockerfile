@@ -1,0 +1,1 @@
+FROM rustlang/nightly-slim

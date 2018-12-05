@@ -1,0 +1,65 @@
+apiVersion: v1
+kind: List
+items:
+- apiVersion: v1
+  kind: ConfigMap
+  metadata:
+    name: trader-pg-config
+  data:
+    POSTGRES_DB: postgresdb
+    POSTGRES_USER: postgresadmin
+    POSTGRES_PASSWORD: admin123
+    PGDATA: /var/lib/postgresql/data/pgdata
+
+
+- kind: PersistentVolumeClaim
+  apiVersion: v1
+  metadata:
+    name: trader-pg-pvc
+  spec:
+    accessModes:
+      - ReadWriteOnce
+    resources:
+      requests:
+        storage: 10Gi
+
+
+- kind: Service
+  apiVersion: v1
+  metadata:
+    name: trader-pg
+    labels: { app: trader }
+  spec:
+    ports: [ { port: 5432 } ]
+    selector: { app: trader, layer: storage }
+
+
+- kind: Deployment
+  apiVersion: apps/v1
+  metadata:
+    name: storage
+    labels: { app: trader }
+  spec:
+    replicas: 1
+    selector: { matchLabels: { app: trader, layer: storage }}
+    template:
+      metadata:
+        labels: { app: trader, layer: storage }
+      spec:
+        containers:
+          - name: postgres
+            image: postgres:10.4
+            imagePullPolicy: "IfNotPresent"
+            ports:
+              - containerPort: 5432
+            envFrom:
+              - configMapRef: { name: trader-pg-config }
+            volumeMounts:
+              - mountPath: /var/lib/postgresql/data
+                name: postgredb
+        volumes:
+          - name: postgredb
+            persistentVolumeClaim:
+              claimName: trader-pg-pvc
+
+
