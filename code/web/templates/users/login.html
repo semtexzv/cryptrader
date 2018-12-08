@@ -1,0 +1,22 @@
+{% extends "layout.html" %}
+
+{% block title %}Login{% endblock %}
+
+{% block head %}{% endblock %}
+
+{% block content %}
+    {% match errors %}
+        {% when Some with (errs) %}
+        <ul>
+            {% for e in errs %}
+            <li>{{ e }}</li>
+            {% endfor %}
+        </ul>
+        {% when None %}
+    {% endmatch %}
+    <form method="POST" action="/users/login/">
+        <input type="text" name="email">
+        <input type="password" name="password">
+        <input type="submit" value="Log in">
+    </form>
+{% endblock %}

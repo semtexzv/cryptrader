@@ -24,7 +24,9 @@ use futures::{
 
 use super::{
     msg::*,
-    node::BaseNode,
+    node::{
+        BaseNode, NodeAddr,
+    },
     recipient::{
         RemoteMessageHandler, LocalRecipientHandler,
     },
@@ -56,7 +58,7 @@ impl NodeInfo {
     }
 }
 
-pub struct BaseCommunicator {
+pub(crate) struct BaseCommunicator {
     uuid: Uuid,
     /// Sink that will accept all data from this CommWorker, mainly replies to requests
     /// received on corresponding Stream, and Heartbeat messages
@@ -154,14 +156,14 @@ impl StreamHandler<(NodeIdentity, MessageWrapper), failure::Error> for BaseCommu
 
                             let f = this.router_sink.clone()
                                 .send(multipart)
-                                .then(|_| fut::ok::<_, ()>(()));
+                                .then(|_| future::ok::<_, ()>(()));
 
                             return wrap_future(f);
                         });
                         ctx.spawn(wrapped.drop_err());
                     }
                     None => {
-                        println!("No handler found");
+                        println!("No handler found for msg type : {:?}", type_id);
 
                         let resp = MessageWrapper::Response(msgid, Err(RemoteError::HandlerNotFound));
 
@@ -170,7 +172,7 @@ impl StreamHandler<(NodeIdentity, MessageWrapper), failure::Error> for BaseCommu
 
                         let f = self.router_sink.clone()
                             .send(multipart)
-                            .then(|_| fut::ok::<_, ()>(()));
+                            .then(|_| future::ok::<_, ()>(()));
 
                         ctx.spawn(wrap_future(f));
                     }
@@ -235,5 +237,36 @@ impl<M> Handler<DispatchRemoteRequest<M>> for BaseCommunicator
         } else {
             return Response::reply(Err(RemoteError::NodeNotFound));
         }
+    }
+}
+
+
+pub struct CommAddr {
+    addr: Addr<BaseCommunicator>
+}
+
+impl CommAddr {
+    pub fn new(addr: &str) -> Result<Self, failure::Error> {
+        return BaseCommunicator::new(&addr).map(|v| CommAddr { addr: v });
+    }
+
+    #[must_use]
+    pub fn connect_to(&self, addr: String) -> impl Future<Item=NodeAddr, Error=Error> {
+        self.addr.send(ConnectToNode::new(addr)).flatten().map(|v| NodeAddr::new(v))
+    }
+
+    #[must_use]
+    pub fn register_recipient<M>(&self, rec: Recipient<M>) -> impl Future<Item=(), Error=MailboxError>
+        where M: RemoteMessage + Send + Serialize + DeserializeOwned + 'static,
+              M::Result: Send + Serialize + DeserializeOwned + 'static
+    {
+        self.addr.send(RegisterRecipientHandler::new(rec))
+    }
+
+    pub fn do_register_recipient<M>(&self, rec: Recipient<M>)
+        where M: RemoteMessage + Send + Serialize + DeserializeOwned + 'static,
+              M::Result: Send + Serialize + DeserializeOwned + 'static
+    {
+        self.addr.do_send(RegisterRecipientHandler::new(rec))
     }
 }

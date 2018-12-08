@@ -8,12 +8,21 @@ serde = "1.0"
 serde_json = "1.0"
 serde_derive = "1.0"
 lazy_static= "*"
+env_logger="*"
 log = "*"
 failure = "*"
 failure_derive="*"
 bytes = { version = "0.4", features = ["serde"] }
 futures = "*"
 url = "*"
+chrono = { version = "*", features = ["serde"]}
+time = "*"
+base64 = "*"
 
+tokio = "*"
 actix = "0.7"
+actix-web= { version = "*", features = ["tls"] }
 
+
+validator = "0.8"
+validator_derive = "0.8"

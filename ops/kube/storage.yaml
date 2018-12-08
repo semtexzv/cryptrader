@@ -27,7 +27,7 @@ items:
 - kind: Service
   apiVersion: v1
   metadata:
-    name: trader-pg
+    name: postgres
     labels: { app: trader }
   spec:
     ports: [ { port: 5432 } ]
@@ -41,6 +41,7 @@ items:
     labels: { app: trader }
   spec:
     replicas: 1
+    strategy: { type: Recreate }
     selector: { matchLabels: { app: trader, layer: storage }}
     template:
       metadata:
@@ -48,8 +49,8 @@ items:
       spec:
         containers:
           - name: postgres
-            image: postgres:10.4
-            imagePullPolicy: "IfNotPresent"
+            image: timescale/timescaledb:1.0.1-pg10
+            imagePullPolicy: IfNotPresent
             ports:
               - containerPort: 5432
             envFrom:

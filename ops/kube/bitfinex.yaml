@@ -1,0 +1,37 @@
+apiVersion: v1
+kind: List
+items:
+  - apiVersion: v1
+    kind: Service
+    metadata:
+      name: bitfinex
+      labels: { app: trader }
+    spec:
+      selector: { layer: sources }
+      ports:
+        - nodePort: 0
+          port: 42042
+          protocol: TCP
+          targetPort: 42042
+
+
+  - kind: Deployment
+    apiVersion: apps/v1
+    metadata:
+      name: bitfinex
+      labels: { app: trader }
+    spec:
+      replicas: 1
+      selector: { matchLabels: { app: trader, layer: sources, exch: bitfinex }}
+      template:
+        metadata:
+          labels: { app: trader, layer: sources, exch: bitfinex }
+        spec:
+          containers:
+            - name: app
+              image: ${APP_IMAGE}
+              imagePullPolicy: Always
+              command: ["/app", "bitfinex"]
+              resources:
+                requests:
+                  cpu: 10m

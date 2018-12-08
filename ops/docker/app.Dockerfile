@@ -1,4 +1,9 @@
 FROM base/archlinux:latest
-RUN pacman -Syu --noconfirm zeromq; pacman -Scc --noconfirm
-ADD target/debug/dp /dp
-ENTRYPOINT ["/dp"]
+
+
+RUN pacman -Syu --noconfirm zeromq postgresql-libs; pacman -Scc --noconfirm
+
+ARG app_name
+ADD target/debug/$app_name /app
+
+ENTRYPOINT ["/app"]

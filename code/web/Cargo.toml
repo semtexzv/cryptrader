@@ -1,0 +1,36 @@
+[package]
+name = "web"
+version = "0.1.0"
+authors = ["Michal Hornický <semtexzv@gmail.com>"]
+edition = "2018"
+build = "build.rs"
+
+
+[dependencies.common]
+path = "../common"
+
+
+[build-dependencies]
+askama = "*"
+
+
+[dependencies]
+clap = "*"
+serde = "*"
+
+actix-web = "*"
+actix-web-async-await = "0.2.0"
+
+actix-net = { path = "../deps/actix-net" }
+actix-arch = { path = "../deps/actix-arch" }
+
+apis = { path = "../deps/apis" }
+db = { path = "../deps/db" }
+
+
+askama = { version  = "*", features = ["actix-web", "serde-json"]   }
+
+sentry =  { version = "0.12.0", features = ["with_failure","with_log"] }
+sentry-actix = "0.12.0"
+
+djangohashers = "^0.3"

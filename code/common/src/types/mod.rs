@@ -2,10 +2,10 @@ pub use ::prelude::*;
 
 pub mod auth;
 
-pub mod ohlc;
+mod ohlc;
+mod spec;
 pub mod ticker;
 pub mod wallet;
-pub mod spec;
 
 
 
@@ -15,3 +15,7 @@ pub enum TradingDecision {
     Indeterminate,
     Short,
 }
+
+
+pub use self::ohlc::*;
+pub use self::spec::*;

@@ -1,7 +1,7 @@
 #![feature(box_syntax, core_intrinsics)]
 #![feature(specialization)]
 
-#![allow(unused_imports,dead_code,unused_variables)]
+#![allow(unused_imports, dead_code, unused_variables)]
 //! Architecture:
 //!
 //! Communicator will be actor on this that will constitute a network interface
@@ -66,3 +66,13 @@ pub mod prelude;
 
 pub mod base;
 pub mod addr;
+
+pub use base::{
+    comm::{CommAddr},
+    node::{NodeAddr},
+    msg::{
+        RemoteMessage,
+        RemoteError,
+        RegisterRecipientHandler,
+    },
+};

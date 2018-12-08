@@ -1,0 +1,16 @@
+[package]
+name = "db"
+version = "0.1.0"
+authors = ["Michal Hornický <semtexzv@gmail.com>"]
+
+[dependencies]
+serde = "*"
+common = {path = "../../common"}
+
+diesel = { version = "*", features = ["postgres", "r2d2", "chrono"]}
+diesel_migrations = "*"
+
+r2d2="*"
+r2d2-diesel="*"
+
+time = "*"

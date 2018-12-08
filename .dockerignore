@@ -1,4 +1,7 @@
-images/*
-target/*/build
-target/*/deps
-target/*/incremental
+images/**
+target/**/build
+target/**/deps
+target/**/incremental
+target/rls
+thesis/*
+code/*

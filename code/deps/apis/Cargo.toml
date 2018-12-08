@@ -1,0 +1,16 @@
+[package]
+name = "apis"
+version = "0.1.0"
+authors = ["Michal Hornický <semtexzv@gmail.com>"]
+
+[dependencies]
+common = {path = "../../common"}
+
+serde = "*"
+serde_derive = "*"
+serde_json = "*"
+
+hmac = "*"
+sha2 = "*"
+
+futures = "*"

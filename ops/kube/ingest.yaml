@@ -4,16 +4,13 @@ items:
 - apiVersion: v1
   kind: Service
   metadata:
-    name: input-svc
+    name: ingest
     labels: { app: trader}
   spec:
     selector: { layer: input }
     ports:
       - nodePort: 0
         port: 42042
-        protocol: TCP
-        targetPort: 42042
-
 
 - kind: Deployment
   apiVersion: apps/v1
@@ -29,6 +26,9 @@ items:
       spec:
         containers:
         - name: app
-          image: semtexzv/app:latest
+          image: ${APP_IMAGE}
           imagePullPolicy: Always
-          command: ["/dp", "ingest"]
+          command: ["/app", "ingest"]
+          resources:
+            requests:
+              cpu: 10m

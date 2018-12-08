@@ -32,6 +32,10 @@ pub trait RemoteMessage: Message + Send + Serialize + DeserializeOwned + Send
     }
 }
 
+impl<T: Message + Send + Serialize + DeserializeOwned + Send> RemoteMessage for T
+    where Self::Result: Send + Serialize + DeserializeOwned + Send,
+{}
+
 pub trait Announcement: RemoteMessage<Result=()> {}
 
 /// Request for connection to remote node, sent by application code
@@ -39,13 +43,15 @@ pub trait Announcement: RemoteMessage<Result=()> {}
 pub(crate) struct ConnectToNode {
     pub(crate) node_addr: String
 }
+
 impl ConnectToNode {
-    pub fn new(addr : String) -> Self {
+    pub fn new(addr: String) -> Self {
         return ConnectToNode {
             node_addr: addr,
-        }
+        };
     }
 }
+
 impl Message for ConnectToNode {
     type Result = Result<Addr<BaseNode>, failure::Error>;
 }
@@ -57,34 +63,35 @@ pub(crate) struct NodeConnected {
     pub(crate) addr: Addr<BaseNode>,
 }
 
+
 /// Message used to register recipients for remote messages
-pub(crate) struct RegisterRecipientHandler<M: RemoteMessage>
+pub struct RegisterRecipientHandler<M: RemoteMessage>
     where M: RemoteMessage + Send + Serialize + DeserializeOwned + 'static,
           M::Result: Send + Serialize + DeserializeOwned + 'static
 {
-    path : String,
+    path: String,
     pub(crate) recipient: Recipient<M>,
 }
 
-impl<M>  RegisterRecipientHandler<M>
+impl<M> RegisterRecipientHandler<M>
     where M: RemoteMessage + Send + Serialize + DeserializeOwned + 'static,
           M::Result: Send + Serialize + DeserializeOwned + 'static
 {
-    pub fn new(rec : Recipient<M>) -> Self {
+    pub fn new(rec: Recipient<M>) -> Self {
         RegisterRecipientHandler {
-            path : "/".into(),
-            recipient : rec,
+            path: "/".into(),
+            recipient: rec,
         }
     }
 
-    pub fn with_path(path : String, rec : Recipient<M>) -> Self {
+    pub fn with_path(path: String, rec: Recipient<M>) -> Self {
         RegisterRecipientHandler {
-            path : path.to_string(),
-            recipient : rec,
+            path: path.to_string(),
+            recipient: rec,
         }
     }
-
 }
+
 impl<M> Message for RegisterRecipientHandler<M>
     where M: RemoteMessage + Send + Serialize + DeserializeOwned + 'static,
           M::Result: Send + Serialize + DeserializeOwned + 'static
