@@ -32,6 +32,8 @@ pub struct RemoteRef<A: RemoteActor> {
     _p: PhantomData<A>,
 }
 
+unsafe impl<A: RemoteActor> Send for RemoteRef<A> {}
+
 impl<A: RemoteActor> Clone for RemoteRef<A> {
     fn clone(&self) -> Self {
         RemoteRef {
@@ -44,8 +46,20 @@ impl<A: RemoteActor> Clone for RemoteRef<A> {
 
 #[derive(Clone)]
 pub struct RemoteAddr<A: RemoteActor> {
-    r: RemoteRef<A>,
-    comm: Addr<comm::Communicator>,
+    pub(crate) r: RemoteRef<A>,
+    pub(crate) comm: Addr<comm::Communicator>,
+}
+impl<A, M, B> actix::dev::MessageResponse<A, M> for RemoteAddr<B>
+    where A: Actor,
+          B: RemoteActor,
+          M: Message<Result=RemoteAddr<B>>,
+          B: Actor
+{
+    fn handle<R: actix::dev::ResponseChannel<M>>(self, ctx: &mut <A as Actor>::Context, tx: Option<R>) {
+        if let Some(tx) = tx {
+            tx.send(self);
+        }
+    }
 }
 
 impl<A: RemoteActor> Deref for RemoteAddr<A> {
@@ -63,15 +77,19 @@ impl<A: RemoteActor> RemoteAddr<A> {
 }
 
 
+
+
+
+
 impl<A: RemoteActor> RemoteAddr<A> {
-    fn from_ref(ctx: Addr<comm::Communicator>, r: &RemoteRef<A>) -> Self {
+    pub fn from_ref(ctx: Addr<comm::Communicator>, r: &RemoteRef<A>) -> Self {
         return RemoteAddr {
             comm: ctx.clone(),
             r: r.clone(),
         };
     }
 
-    fn send<M>(&self, msg: M) -> msg::AddressedRequest<M>
+    pub fn send<M>(&self, msg: M) -> msg::AddressedRequest<M>
         where A: Handler<M>,
               M: RemoteMessage + Send + Serialize + DeserializeOwned + 'static,
               M::Result: Send + Serialize + DeserializeOwned
@@ -86,7 +104,7 @@ impl<A: RemoteActor> RemoteAddr<A> {
             })
         }
     }
-    fn do_send<M>(&self, msg: M)
+    pub fn do_send<M>(&self, msg: M)
         where A: Handler<M>,
               M: RemoteMessage + Send + Serialize + DeserializeOwned + 'static,
               M::Result: Send + Serialize + DeserializeOwned

@@ -40,6 +40,18 @@ pub struct Communicator {
 }
 
 impl Communicator {
+    pub fn new(addr: &str) -> Result<Addr<Self>, failure::Error> {
+        return BaseCommunicator::new(addr).map(|base| {
+            Communicator::create(|ctx| {
+                Communicator {
+                    base,
+                    uuid : Uuid::new_v4(),
+                    recipients : anymap::AnyMap::new(),
+                    names : HashMap::new(),
+                }
+            })
+        })
+    }
     pub(crate) fn recipient_map<M>(&mut self) -> &mut HashMap<Uuid, Recipient<M>>
         where M: RemoteMessage + Send + Serialize + DeserializeOwned + 'static,
               M::Result: Send + Serialize + DeserializeOwned + 'static
@@ -53,7 +65,7 @@ impl Actor for Communicator {
 }
 
 impl<A: RemoteActor> Handler<RegisterRemoteActor<A>> for Communicator {
-    type Result = Result<RemoteAddr<A>, ()>;
+    type Result = RemoteAddr<A>;
 
     fn handle(&mut self, msg: RegisterRemoteActor<A>, ctx: &mut Self::Context) -> Self::Result {
         let id = Uuid::new_v4();
@@ -96,7 +108,7 @@ impl<A: RemoteActor> Handler<RegisterRemoteActor<A>> for Communicator {
             },
             comm: ctx.address(),
         };
-        Ok(add)
+        add
     }
 }
 
@@ -138,4 +150,32 @@ impl<M> Handler<AddressedMessage<M>> for Communicator
     }
 }
 
+
+use base::{
+    node::{BaseNode},
+    msg::{
+        ConnectToNode,
+    }
+};
+
+impl Handler<ConnectToNode> for Communicator {
+    type Result = Response<Addr<BaseNode>, failure::Error>;
+
+    fn handle(&mut self, msg: ConnectToNode, ctx: &mut Self::Context) -> Self::Result {
+        return Response::async(self.base.send(msg).flatten())
+    }
+}
+
+
+impl<M> Handler<RegisterRecipientHandler<M>> for Communicator
+    where M: RemoteMessage + Send + Serialize + DeserializeOwned + 'static,
+          M::Result: Send + Serialize + DeserializeOwned + 'static
+
+{
+    type Result = ();
+
+    fn handle(&mut self, reg_msg: RegisterRecipientHandler<M>, ctx: &mut Self::Context) {
+        self.base.do_send(reg_msg);
+    }
+}
 

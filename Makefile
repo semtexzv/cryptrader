@@ -1,6 +1,6 @@
 include ops/make/Macros.mk
 
-MAKEFLAGS += -j s2
+MAKEFLAGS += -j 4
 
 APPS=app web
 

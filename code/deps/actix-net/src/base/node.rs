@@ -171,25 +171,3 @@ impl<M> Handler<SendRemoteRequest<M>> for BaseNode
         return Response::r#async(flat);
     }
 }
-
-pub struct NodeAddr {
-    addr: Addr<BaseNode>
-}
-
-impl NodeAddr {
-    pub(crate) fn new(addr: Addr<BaseNode>) -> Self {
-        NodeAddr { addr }
-    }
-    pub fn send<M>(&self, msg: M) -> impl Future<Item=M::Result, Error=RemoteError>
-        where M: RemoteMessage + Send + Serialize + DeserializeOwned + 'static,
-              M::Result: Send + Serialize + DeserializeOwned + 'static {
-        self.addr.send(SendRemoteRequest(msg)).flatten()
-    }
-
-    pub fn do_send<M>(&self, msg: M)
-        where M: RemoteMessage + Send + Serialize + DeserializeOwned + 'static,
-              M::Result: Send + Serialize + DeserializeOwned + 'static {
-        self.addr.do_send(SendRemoteRequest(msg))
-    }
-}
-

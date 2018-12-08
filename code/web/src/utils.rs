@@ -21,8 +21,8 @@ pub fn collect_validation_errors(e: ValidationErrors) -> Vec<String> {
 
 #[derive(Debug, Serialize)]
 pub struct AuthTemplateInfo {
-    pub user: Option<db::User>,
     pub signed_in: bool,
+    pub email: String,
 }
 
 #[derive(Debug, Serialize)]
@@ -32,14 +32,12 @@ pub struct BaseTemplateInfo {
 
 impl BaseTemplateInfo {
     pub fn from_request(req: &HttpRequest<super::State>) -> impl Future<Item=Self, Error=Error> {
-        req.user().then(|user| {
-            Ok(BaseTemplateInfo {
-                auth: AuthTemplateInfo {
-                    signed_in: user.is_ok(),
-                    user: user.ok(),
-                }
-            })
-        })
+        future::result(Ok(BaseTemplateInfo {
+            auth: AuthTemplateInfo {
+                signed_in: req.is_authenticated(),
+                email: req.session().get("email").unwrap().unwrap_or("".into()),
+            }
+        }))
     }
 }
 
@@ -68,7 +66,7 @@ pub fn redirect(location: &str) -> HttpResponse {
 }
 
 #[inline(always)]
-pub fn redirect_to<S>(req: HttpRequest<S>, name : &str) -> HttpResponse{ 
+pub fn redirect_to<S>(req: HttpRequest<S>, name: &str) -> HttpResponse {
     let url = req.url_for(name, &[""; 0]).unwrap();
     return redirect(url.as_str());
 }

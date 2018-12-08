@@ -61,18 +61,116 @@ pub extern crate uuid;
 extern crate anymap;
 extern crate failure;
 
-
 pub mod prelude;
-
 pub mod base;
 pub mod addr;
+pub mod pubsub;
 
+use common::prelude::*;
+use futures::prelude::*;
 pub use base::{
-    comm::{CommAddr},
-    node::{NodeAddr},
     msg::{
         RemoteMessage,
         RemoteError,
         RegisterRecipientHandler,
     },
 };
+
+
+use base::{
+    node::BaseNode,
+    msg::{
+        ConnectToNode,
+        NodeConnected,
+        SendRemoteRequest,
+    },
+};
+
+use addr::{
+    RemoteActor,
+    RemoteAddr,
+    RemoteRef,
+    comm::Communicator,
+    msg::RegisterRemoteActor,
+};
+
+pub struct CommAddr {
+    addr: Addr<Communicator>
+}
+
+impl CommAddr {
+    pub fn new(addr: &str) -> Result<Self, failure::Error> {
+        return Communicator::new(&addr).map(|v| CommAddr { addr: v });
+    }
+
+    #[must_use]
+    pub fn connect_to(&self, addr: String) -> impl Future<Item=NodeAddr, Error=Error> {
+        self.addr.send(ConnectToNode::new(addr)).flatten().map(|v| NodeAddr::new(v))
+    }
+
+    #[must_use]
+    pub fn register_recipient<M>(&self, rec: Recipient<M>) -> impl Future<Item=(), Error=MailboxError>
+        where M: RemoteMessage + Send + Serialize + DeserializeOwned + 'static,
+              M::Result: Send + Serialize + DeserializeOwned + 'static
+    {
+        self.addr.send(RegisterRecipientHandler::new(rec))
+    }
+
+    pub fn do_register_recipient<M>(&self, rec: Recipient<M>)
+        where M: RemoteMessage + Send + Serialize + DeserializeOwned + 'static,
+              M::Result: Send + Serialize + DeserializeOwned + 'static
+    {
+        self.addr.do_send(RegisterRecipientHandler::new(rec))
+    }
+
+    pub fn register_actor<A: RemoteActor>(&self, addr: Addr<A>) -> impl Future<Item=RemoteAddr<A>, Error=MailboxError> {
+        return self.addr.send(RegisterRemoteActor { addr });
+    }
+
+    pub fn resolve_addr<A: RemoteActor>(&self, r: RemoteRef<A>) -> RemoteAddr<A> {
+        return RemoteAddr { r, comm: self.addr.clone() };
+    }
+    /// Publish to specific address, where listener called `CommAddr::subscribe_on`
+    pub fn publish_to(&self, addr: &str) -> Publisher {
+        Publisher {}
+    }
+    /// Publish on local address, listeners can connect by `ComAddr::subscribe_to`
+    pub fn publish_on(&self, local_addr: &str) -> Publisher {
+        unimplemented!()
+    }
+    /// Subscribe to remote address, on which a publisher created by `ComAddr::subsribe_on`
+    pub fn subscribe_to(&self, addr: &str) -> Subscriber {
+        unimplemented!()
+    }
+    /// Subscribe to publishers on local address, publishers connect by `ComAddr::subscibe_to`
+    pub fn subscribe_on(&self, local_addr: &str) -> Subscriber {
+        unimplemented!()
+    }
+}
+
+pub enum Subscriber {}
+
+pub struct Publisher {}
+
+pub struct NodeAddr {
+    addr: Addr<BaseNode>
+}
+
+impl NodeAddr {
+    pub(crate) fn new(addr: Addr<BaseNode>) -> Self {
+        NodeAddr { addr }
+    }
+    pub fn send<M>(&self, msg: M) -> impl Future<Item=M::Result, Error=RemoteError>
+        where M: RemoteMessage + Send + Serialize + DeserializeOwned + 'static,
+              M::Result: Send + Serialize + DeserializeOwned + 'static {
+        self.addr.send(SendRemoteRequest(msg)).flatten()
+    }
+
+    pub fn do_send<M>(&self, msg: M)
+        where M: RemoteMessage + Send + Serialize + DeserializeOwned + 'static,
+              M::Result: Send + Serialize + DeserializeOwned + 'static {
+        self.addr.do_send(SendRemoteRequest(msg))
+    }
+}
+
+

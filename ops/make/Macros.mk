@@ -1,3 +1,4 @@
+include ops/make/Env.mk
 .SUFFIXES:
 
-app_sources = $(wildcard code/$(1)/*) $(wildcard code/$(1)/**/*)
+require = $(if $(value $(1)),,$(error $(1) not set))

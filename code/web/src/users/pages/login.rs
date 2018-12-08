@@ -43,6 +43,7 @@ impl Login {
         return match res {
             Ok(user) => {
                 if djangohashers::check_password(&password, &user.password).unwrap() {
+                    request.session().set("email",user.email).unwrap();
                     request.session().set("uid", user.id).unwrap();
                     homepage
                 } else {

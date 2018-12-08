@@ -37,16 +37,8 @@ impl Signup {
 
         match comp_await!(request.state().db.send(user))? {
             Ok(user) => {
-                if let Err(e) = request.session().set("uid", user.id) {
-                    error!("Could not set UID for user session! {:?}", e);
-                    return Ok(render(Self {
-                        base: unimplemented!(),
-                        errors: Some(vec![
-                            "Your account was created, but an internal error happened while \
-                            attempting to sign you in. Try again in a bit!".into()
-                        ]),
-                    }));
-                }
+                request.session().set("email",user.email).unwrap();
+                request.session().set("uid", user.id).unwrap();
 
                 let url = request.url_for("homepage", &[""; 0]).unwrap();
                 Ok(redirect(url.as_str()))

@@ -12,12 +12,7 @@
 <header>
     <nav class="">
         {%if base.auth.signed_in %}
-        {% match base.auth.user %}
-        {% when Some with (user) %}
-        <a href="/users/me">{{ user.email }}</a>
-        {% when _ %}
-        {% endmatch %}
-
+        <a href="/users/me">{{ base.auth.email }}</a>
         <form method="POST" action="/users/logout/">
             <input type="submit" value="Logout"/>
         </form>

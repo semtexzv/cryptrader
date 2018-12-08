@@ -15,8 +15,10 @@ pub struct RegisterRemoteActor<A: RemoteActor> {
     pub addr: Addr<A>,
 }
 
+unsafe impl<A: RemoteActor> Send for RegisterRemoteActor<A> {}
+
 impl<A: RemoteActor> Message for RegisterRemoteActor<A> {
-    type Result = Result<RemoteAddr<A>, ()>;
+    type Result = RemoteAddr<A>;
 }
 
 

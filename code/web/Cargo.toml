@@ -13,7 +13,6 @@ path = "../common"
 [build-dependencies]
 askama = "*"
 
-
 [dependencies]
 clap = "*"
 serde = "*"
@@ -26,7 +25,6 @@ actix-arch = { path = "../deps/actix-arch" }
 
 apis = { path = "../deps/apis" }
 db = { path = "../deps/db" }
-
 
 askama = { version  = "*", features = ["actix-web", "serde-json"]   }
 

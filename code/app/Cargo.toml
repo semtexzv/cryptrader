@@ -3,7 +3,6 @@ name = "app"
 version = "0.0.0"
 authors = ["Michal Hornický <semtexzv@gmail.com>"]
 
-
 [dependencies.common]
 path = "../common"
 
@@ -18,6 +17,6 @@ apis = { path = "../deps/apis" }
 db = { path = "../deps/db" }
 
 
-sentry =  { version = "0.12.0", features = ["with_failure","with_log"] }
+sentry = { version = "0.12.0", features = ["with_failure","with_log"] }
 sentry-actix = "0.12.0"
 

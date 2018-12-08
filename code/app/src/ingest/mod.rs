@@ -13,8 +13,6 @@ impl Message for IngestUpdate { type Result = (); }
 pub struct Ingest {
     comm: CommAddr,
     db : Addr<db::Database>,
-
-    //last: BTreeMap<PairId, Ohlc>,
 }
 
 impl Actor for Ingest {
