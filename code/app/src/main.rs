@@ -23,8 +23,6 @@ fn main() {
     env::set_var("RUST_BACKTRACE", "1");
     env::set_var("RUST_LOG", "actix_web=debug,diesel=debug,info,warn");
 
-    let _guard = sentry::init("https://46b76bb7ec294a1a93859dca8b01d103@sentry.io/1339228");
-    sentry::integrations::panic::register_panic_handler();
 
     env_logger::Builder::from_default_env()
         .init();

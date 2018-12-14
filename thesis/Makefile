@@ -7,12 +7,17 @@
 # asi budete chtit prejmenovat / you will probably rename:
 CO=projekt
 
-all: $(CO).pdf
+all: $(CO)-short.pdf
 
 pdf: $(CO).pdf
 
 $(CO).ps: $(CO).dvi
 	dvips $(CO)
+
+$(CO)-short.pdf:
+	mkdir -p out
+	pdflatex -halt-on-error --shell-escape --output-directory=out $(CO)
+
 
 $(CO).pdf: clean
 	mkdir -p out

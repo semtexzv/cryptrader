@@ -31,7 +31,7 @@ pub fn run() {
             db: db::start(),
         });
         app = app.middleware(actix_web::middleware::Logger::default());
-        app = app.middleware(sentry_actix::SentryMiddleware::new());
+        // app = app.middleware(sentry_actix::SentryMiddleware::new());
 
         app = files::configure(app);
         app = pages::configure(app);
@@ -51,8 +51,8 @@ fn main() {
     env::set_var("RUST_BACKTRACE", "1");
     env::set_var("RUST_LOG", "actix_web=debug,diesel=debug,info,warn");
 
-    let _guard = sentry::init("https://46b76bb7ec294a1a93859dca8b01d103@sentry.io/1339228");
-    sentry::integrations::panic::register_panic_handler();
+    // let _guard = sentry::init("https://46b76bb7ec294a1a93859dca8b01d103@sentry.io/1339228");
+    // sentry::integrations::panic::register_panic_handler();
 
     env_logger::Builder::from_default_env()
         .init();
