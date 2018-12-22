@@ -73,7 +73,7 @@ Trading is performed on exchanges. Key aspect of exchange trading is the price d
 traded on an exchange, the price is not dictated by any single party. Instead, the price is "discovered" by interaction of
 buyers and sellers. Buyers advertise highest price they are willing to pay for an asset, and sellers advertise lowest price
 they are willing to accept. These 2 prices correspond to basic economic principle of supply and demand. When there are more sellers active
-on the exchange, the price will fall, since there are less buyers to buy an asset. This principle also applies in reverse, if there are more
+on the exchange, the price will fall, since there are  isn't enough buyers to buy an asset. This principle also applies in reverse, if there are more
 buyers active on the market, the price will rise(\todo{Replace more sellers with "more selling pressure" or smth similar}).
 The maximum price listed by a buyers known as \textbf{bid} price, and the minimal price listed by a seller is known as \textbf{ask} price
 
@@ -81,14 +81,14 @@ Since these exchanges are dynamic enviroments, with always fluctuating pressures
 The amount of this variance is called \textbf{volatility}.
 \todo{Introduce basic principles and terms here, so they can be used later}
 
-Historically, these exchanges were physical, and used for trading stocks, and
+Historically, the exchanges were physical, mainly used for trading stocks, and
 were called stock echanges. They were physical locations , where individual traders  met, and traded one asset for another.
 Primarily, these trades consisted of stocks or goods against money. Another type of trade is when 2 parties trade one currency for another.
 Exchanges specializing in these types of trades are called \textbf{FOREX} (Foreign exchange) markets.
 
 Most recent of exchange types, is the cryptoccurency exchange. These exchanges are almost always purely virtual. All trading is performed
 via web interface. The main advantage for our purposes is the ease of use of these exchanges, and their modern features.
-Virtually all provide multiple APIs for different purposes. A real-time API for low-latency streaming of updates to clients,
+Virtually all of them provide multiple APIs for different purposes. A real-time API for low-latency streaming of updates to clients,
 and a REST API provided for executing trades on the exchange.
 \todo{Modern technolgies}
 \subsection{Algorithmic trading}
@@ -122,7 +122,12 @@ There are four key types of HFT strategies:
 
 
 Our system will mainly support strategies, that would fall into \textbf{tick-data} category. This is due
-to simplicity of these strategies, and type of information provided by cryptocurrency exchanges. These strategies will be
+to simplicity of these strategies, and hte fact that the information provided by the exchanges is best suited
+for these strategies. Strategies will be used to create trading decisions for multiple assets. The fact that
+there are multiple different strategies evaluated for multiple currencies means that the total number of evaluations is
+
+
+and type of information provided by cryptocurrency exchanges. These strategies will be
 applied to multiple assets, which will require a large amount of computational power, while preserving low latency.
 
 To satisfy these constraints, the system will have to be of distributed nature.

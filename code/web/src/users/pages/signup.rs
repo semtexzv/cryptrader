@@ -37,7 +37,7 @@ impl Signup {
 
         match comp_await!(request.state().db.send(user))? {
             Ok(user) => {
-                request.session().set("email",user.email).unwrap();
+                request.session().set("email", user.email).unwrap();
                 request.session().set("uid", user.id).unwrap();
 
                 let url = request.url_for("homepage", &[""; 0]).unwrap();
@@ -46,7 +46,7 @@ impl Signup {
             Err(e) => {
                 error!("Error creating new user: {:?}", e);
                 Ok(render(Self {
-                    base: unimplemented!(),
+                    base,
                     errors: Some(vec![
                         "An error occurred while trying to create your account. We've \
                         notified the engineering team and are looking into it - feel \

@@ -1,4 +1,5 @@
 use crate::prelude::*;
+use actix_web::{HttpRequest, HttpResponse};
 use crate::users::middleware::UserAuthentication;
 
 
@@ -13,19 +14,19 @@ pub struct Login {
 
 
 impl Login {
-    pub async fn get_async(request : HttpRequest<State>) -> Result<HttpResponse> {
-         if request.is_authenticated() {
+    pub async fn get_async(request: HttpRequest<State>) -> Result<HttpResponse> {
+        if request.is_authenticated() {
             return Ok(redirect_to(request, "homepage"));
         }
         let base: BaseTemplateInfo = comp_await!(BaseTemplateInfo::from_request(&request))?;
-        return Ok(render(Self { base, errors: None, }));
+        return Ok(render(Self { base, errors: None }));
     }
 
     pub async fn post_async((request, login): (HttpRequest<State>, Form<UserLogin>)) -> Result<HttpResponse> {
         let base: BaseTemplateInfo = comp_await!(BaseTemplateInfo::from_request(&request))?;
 
         let url = request.url_for("homepage", &[""; 0]).unwrap();
-        let homepage =  Ok(redirect(url.as_str()));
+        let homepage = Ok(redirect(url.as_str()));
 
         if request.is_authenticated() {
             return homepage;
@@ -43,7 +44,7 @@ impl Login {
         return match res {
             Ok(user) => {
                 if djangohashers::check_password(&password, &user.password).unwrap() {
-                    request.session().set("email",user.email).unwrap();
+                    request.session().set("email", user.email).unwrap();
                     request.session().set("uid", user.id).unwrap();
                     homepage
                 } else {
@@ -57,11 +58,10 @@ impl Login {
             Err(e) => {
                 warn!("Error locating user: {:?}", e);
                 Ok(render(Self {
-                    base: unimplemented!(),
+                    base,
                     errors: Some(vec!["Email or password is incorrect.".into()]),
                 }))
             }
         };
     }
-
 }

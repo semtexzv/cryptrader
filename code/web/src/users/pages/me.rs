@@ -8,7 +8,7 @@ pub struct Me {
     pub user : db::User,
 }
 
-impl Me{
+impl Me {
     pub async fn get(request: HttpRequest<State>) -> Result<HttpResponse> {
         let base = comp_await!(BaseTemplateInfo::from_request(&request))?;
         let user = comp_await!(request.state().db.send(db::UserLookup { id: 2 }))??;
