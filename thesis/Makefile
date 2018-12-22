@@ -5,56 +5,57 @@
 # Edited by: dytrych AT fit vutbr cz
 #===========================================
 # asi budete chtit prejmenovat / you will probably rename:
-CO=projekt
+NAME=projekt
+OUT_DIR  = out
 
-all: $(CO)-short.pdf
+all: $(NAME)-short.pdf
 
-pdf: $(CO).pdf
+pdf: $(NAME).pdf
 
-$(CO).ps: $(CO).dvi
-	dvips $(CO)
+$(NAME).ps: $(NAME).dvi
+	dvips $(NAME)
 
-$(CO)-short.pdf:
+$(NAME)-short.pdf:
 	mkdir -p out
-	pdflatex -halt-on-error --shell-escape --output-directory=out $(CO)
+	pdflatex -halt-on-error --shell-escape --output-directory=$(OUT_DIR) $(NAME)
 
 
-$(CO).pdf: clean
-	mkdir -p out
-	pdflatex -halt-on-error --shell-escape --output-directory=out $(CO)
-	bibtex out/$(CO)
-	pdflatex -halt-on-error --shell-escape --output-directory=out  $(CO)
-	pdflatex -halt-on-error --shell-escape --output-directory=out  $(CO)
+$(NAME).pdf: clean
+	mkdir -p $(OUT_DIR)
+	pdflatex -halt-on-error --shell-escape --output-directory=$(OUT_DIR) $(NAME)
+	bibtex $(OUT_DIR)/$(NAME)
+	pdflatex -halt-on-error --shell-escape --output-directory=$(OUT_DIR)  $(NAME)
+	pdflatex -halt-on-error --shell-escape --output-directory=$(OUT_DIR)  $(NAME)
 
-$(CO).dvi: $(CO).tex $(CO).bib
-	latex  $(CO)
-	bibtex $(CO)
-	latex $(CO)
-	latex $(CO)
+$(NAME).dvi: $(NAME).tex $(NAME).bib
+	latex  $(NAME)
+	bibtex $(NAME)
+	latex $(NAME)
+	latex $(NAME)
 
 clean:
-	rm -f *.dvi *.log $(CO).blg $(CO).bbl $(CO).toc *.aux $(CO).out $(CO).lof $(CO).ptc
-	rm -f $(CO).pdf
+	rm -f *.dvi *.log $(NAME).blg $(NAME).bbl $(NAME).toc *.aux $(NAME).out $(NAME).lof $(NAME).ptc
+	rm -f $(NAME).pdf
 	rm -f *~
 
 pack:
-	tar czvf $(CO).tar.gz *.tex *.bib *.bst ./template-fig/* ./bib-styles/* ./cls/* zadani.pdf $(CO).pdf Makefile Changelog
+	tar czvf $(NAME).tar.gz *.tex *.bib *.bst ./template-fig/* ./bib-styles/* ./cls/* zadani.pdf $(NAME).pdf Makefile Changelog
 
 rename:
-	mv $(CO).tex $(NAME).tex
-	mv $(CO)-01-kapitoly-chapters.tex $(NAME)-01-kapitoly-chapters.tex
-	mv $(CO)-20-literatura-bibliography.bib $(NAME)-20-literatura-bibliography.bib
-	mv $(CO)-30-prilohy-appendices.tex $(NAME)-30-prilohy-appendices.tex
-	sed -i "s/$(CO)-01-kapitoly-chapters/$(NAME)-01-kapitoly-chapters/g" $(NAME).tex
-	sed -i "s/$(CO)-20-literatura-bibliography/$(NAME)-20-literatura-bibliography/g" $(NAME).tex
-	sed -i "s/$(CO)-30-prilohy-appendices/$(NAME)-30-prilohy-appendices/g" $(NAME).tex
-	sed -i "s/$(CO)/$(NAME)/g" Makefile
+	mv $(NAME).tex $(NAME).tex
+	mv $(NAME)-01-kapitoly-chapters.tex $(NAME)-01-kapitoly-chapters.tex
+	mv $(NAME)-20-literatura-bibliography.bib $(NAME)-20-literatura-bibliography.bib
+	mv $(NAME)-30-prilohy-appendices.tex $(NAME)-30-prilohy-appendices.tex
+	sed -i "s/$(NAME)-01-kapitoly-chapters/$(NAME)-01-kapitoly-chapters/g" $(NAME).tex
+	sed -i "s/$(NAME)-20-literatura-bibliography/$(NAME)-20-literatura-bibliography/g" $(NAME).tex
+	sed -i "s/$(NAME)-30-prilohy-appendices/$(NAME)-30-prilohy-appendices/g" $(NAME).tex
+	sed -i "s/$(NAME)/$(NAME)/g" Makefile
 	
 # Pozor, vlna neresi vse (viz popis.txt) / Warning - vlna is not solving all problems (see description.txt)
 vlna:
-	vlna -l $(CO)-*.tex
+	vlna -l $(NAME)-*.tex
 
 # Spocita normostrany / Count of standard pages
 normostrany:
-	echo "scale=2; `detex -n $(CO)-[01]*.tex | wc -c`/1800;" | bc
+	echo "scale=2; `detex -n $(NAME)-[01]*.tex | wc -c`/1800;" | bc
 

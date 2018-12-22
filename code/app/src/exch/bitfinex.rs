@@ -19,17 +19,11 @@ impl Actor for BitfinexOhlcSource {
     type Context = Context<Self>;
 
     fn started(&mut self, ctx: &mut <Self as Actor>::Context) {
-        trace!("Starting bitfinex ohlc source");
-        for i in 0..100 {
-            self.ingest_node.send(crate::ingest::IngestUpdate {
-                ohlc: vec![],
-                spec: OhlcSpec::new_m("bitfinex", TradePair::new("A", "B")),
-            }).wait().unwrap();
-        }
+        info!("Starting bitfinex ohlc source");
     }
 
     fn stopped(&mut self, ctx: &mut <Self as Actor>::Context) {
-        trace!("Stopping bitfinex ohlc source");
+        info!("Stopping bitfinex ohlc source");
     }
 }
 
@@ -50,6 +44,7 @@ impl BitfinexOhlcSource {
                         "channel" : "candles",
                         "key" : format!("trade:{}:{}", interval.bfx_str() ,trade_sym),
                     });
+
                 let ticker_sub = json!({
                         "event" : "subscribe",
                         "channel" : "ticker",
@@ -58,6 +53,7 @@ impl BitfinexOhlcSource {
                 tx.text(json::to_string(&ohlc_sub).unwrap());
                 tx.text(json::to_string(&ticker_sub).unwrap());
             }
+            println!("Send {} pair requests", pairs.len());
 
             let addr = Actor::create(|ctx| {
                 BitfinexOhlcSource::add_stream(rx, ctx);
@@ -82,6 +78,7 @@ impl BitfinexOhlcSource {
 /// Handle server websocket messages
 impl StreamHandler<ws::Message, ws::ProtocolError> for BitfinexOhlcSource {
     fn handle(&mut self, msg: ws::Message, ctx: &mut Context<Self>) {
+        debug!("Received message");
         if let ws::Message::Text(str) = msg {
             if let Ok(r) = json::from_str::<api::Resp>(&str) {
                 match r.data {

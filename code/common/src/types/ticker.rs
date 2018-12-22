@@ -1,5 +1,6 @@
 use ::prelude::*;
 
+
 #[derive(Debug, Default, Clone, PartialEq, PartialOrd, Deserialize, Serialize)]
 pub struct Ticker {
     pub time: u64,

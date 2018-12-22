@@ -7,6 +7,7 @@ pub extern crate clap;
 
 pub extern crate db;
 pub extern crate apis;
+
 pub mod prelude;
 pub mod exch;
 pub mod ingest;
@@ -16,12 +17,12 @@ use ::prelude::*;
 use std::env;
 
 use clap::{App, ArgMatches, SubCommand};
+use common::prelude::future::result;
 
 
 fn main() {
-    
     env::set_var("RUST_BACKTRACE", "1");
-    env::set_var("RUST_LOG", "actix_web=debug,diesel=debug,info,warn");
+    env::set_var("RUST_LOG", "actix_web=debug,diesel=debug,trace");
 
 
     env_logger::Builder::from_default_env()
@@ -48,8 +49,7 @@ fn main() {
             }
             "bitfinex" => {
                 common::actix::Arbiter::spawn(exch::bitfinex::BitfinexOhlcSource::new(base)
-                    .map(|_| ())
-                    .map_err(|_| ())
+                    .then(|v| { v.unwrap(); result(Ok(())) })
                 );
             }
             _ => {

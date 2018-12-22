@@ -3,7 +3,7 @@ use crate::prelude::*;
 use std::borrow::Borrow;
 
 use common::validator::ValidationErrors;
-use common::futures::future::{Future, result};
+use std::future::Future;
 
 pub use actix_web_async_await::{await as comp_await, compat};
 
@@ -31,34 +31,22 @@ pub struct BaseTemplateInfo {
 }
 
 impl BaseTemplateInfo {
-    pub fn from_request(req: &HttpRequest<super::State>) -> impl Future<Item=Self, Error=Error> {
-        future::result(Ok(BaseTemplateInfo {
+    pub async fn from_request(req: &HttpRequest<super::State>) -> Result<Self> {
+        Ok(BaseTemplateInfo {
             auth: AuthTemplateInfo {
                 signed_in: req.is_authenticated(),
                 email: req.session().get("email").unwrap().unwrap_or("".into()),
             }
-        }))
+        })
     }
 }
 
-#[derive(Deserialize, Serialize)]
-pub struct OperationResponse<'a> {
-    pub success: bool,
-    pub message: Option<&'a str>,
-}
-
-
-pub type FutureResponse = Box<Future<Item=HttpResponse, Error=Error>>;
 
 #[inline(always)]
 pub fn render(template: impl Template) -> HttpResponse {
     HttpResponse::Ok().content_type("text/html").body(template.borrow().render().unwrap())
 }
 
-#[inline(always)]
-pub fn async_render(template: &Template) -> FutureResponse {
-    result(Ok(HttpResponse::Ok().content_type("text/html").body(template.render().unwrap()))).responder()
-}
 
 #[inline(always)]
 pub fn redirect(location: &str) -> HttpResponse {
@@ -71,7 +59,12 @@ pub fn redirect_to<S>(req: HttpRequest<S>, name: &str) -> HttpResponse {
     return redirect(url.as_str());
 }
 
+
 #[inline(always)]
-pub fn async_redirect(location: &str) -> FutureResponse {
-    result(Ok(HttpResponse::TemporaryRedirect().header("Location", location).finish())).responder()
+pub async fn async_render(template: impl Template) -> Result<HttpResponse> {
+    Ok(HttpResponse::Ok().content_type("text/html").body(template.render().unwrap()))
+}
+#[inline(always)]
+pub async fn async_redirect(location: &str) -> Result<HttpResponse> {
+    Ok(HttpResponse::TemporaryRedirect().header("Location", location).finish())
 }

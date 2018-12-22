@@ -74,7 +74,7 @@ pub fn unixtime() -> i64 {
 #[inline(always)]
 pub fn min_db_time() -> u64 {
     let n = unixtime() as u64;
-    let c = days_to_seconds(28 * 3);
+    let c = days_to_seconds(28 * 4);
     return n - c;
 }
 

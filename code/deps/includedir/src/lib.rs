@@ -37,7 +37,7 @@ pub fn start(base_path: impl AsRef<Path>) -> IncludeDir {
     IncludeDir {
         files: HashMap::new(),
         name: "".into(),
-        base: base_path.as_ref().clone().to_owned(),
+        base: base_path.as_ref().to_owned(),
         passthrough: false,
         compress: false,
     }
