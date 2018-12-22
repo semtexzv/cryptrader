@@ -32,7 +32,7 @@ impl BitfinexOhlcSource {
     pub fn new(comm: CommAddr) -> impl Future<Item=Addr<Self>, Error=Error> {
         let client = ws::Client::new("wss://api.bitfinex.com/ws/2").connect().map_err(|e| e.into());
         let pairs = ::apis::bitfinex::get_available_pairs();
-        return Future::join(client, pairs).map(|((rx, mut tx), pairs)| {
+        return Future::join(client, pairs).and_then(|((rx, mut tx), pairs)| {
             let interval = OhlcPeriod::Min1;
             let interval_secs = interval.seconds();
 
@@ -55,18 +55,22 @@ impl BitfinexOhlcSource {
             }
             println!("Send {} pair requests", pairs.len());
 
-            let addr = Actor::create(|ctx| {
-                BitfinexOhlcSource::add_stream(rx, ctx);
+            let node = comm.connect_to(format!("tcp://{}:42042", ::ingest::SERVICE_NAME));
 
-                BitfinexOhlcSource {
-                    ingest_node: comm.connect_to(format!("tcp://{}:42042", ::ingest::SERVICE_NAME)).wait().unwrap(),
-                    comm,
-                    ws: tx,
-                    ohlc_ids : BTreeMap::new(),
-                    ticker_ids : BTreeMap::new(),
-                }
-            });
-            addr
+            node.map(|node| {
+                Actor::create(|ctx| {
+                    BitfinexOhlcSource::add_stream(rx, ctx);
+
+                    BitfinexOhlcSource {
+                        ingest_node: node,
+                        comm,
+                        ws: tx,
+                        ohlc_ids : BTreeMap::new(),
+                        ticker_ids : BTreeMap::new(),
+                    }
+                })
+            })
+
         }).map_err(|e| {
             println!("Error: {}", e);
             e.into()
