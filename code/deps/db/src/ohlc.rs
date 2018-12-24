@@ -1,10 +1,16 @@
 use common::prelude::*;
 use diesel::prelude::*;
 
-use super::{
+use crate::{
     Database,
     ConnType,
-    schema::{self, ohlc, users},
+    schema::{
+        self,
+        ohlc::{
+            self, *,
+        },
+        users,
+    },
 };
 
 use common::{
@@ -92,8 +98,6 @@ impl Handler<SaveOhlc> for Database {
 
         for data in new_ohlc.chunks(4096) {
             use diesel::pg::upsert::*;
-            use schema::ohlc;
-            use schema::ohlc::*;
 
             let stmt = ::diesel::insert_into(schema::ohlc::table)
                 .values(data)

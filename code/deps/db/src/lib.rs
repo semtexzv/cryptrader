@@ -27,16 +27,12 @@ use diesel_migrations::*;
 embed_migrations!("./migrations");
 
 mod schema;
-
-pub use schema::*;
-
 mod ohlc;
-
-pub use ohlc::*;
-
 mod users;
 
-pub use users::*;
+pub use crate::schema::*;
+pub use crate::ohlc::*;
+pub use crate::users::*;
 
 
 pub fn init_store() {

@@ -22,7 +22,7 @@ use common::prelude::future::result;
 
 fn main() {
     env::set_var("RUST_BACKTRACE", "1");
-    env::set_var("RUST_LOG", "actix_web=debug,diesel=debug,trace");
+    env::set_var("RUST_LOG", "app=trace,debug");
 
 
     env_logger::Builder::from_default_env()
