@@ -32,7 +32,7 @@ pub(crate) struct BaseNode {
     self_ident: Uuid,
     msg_id: u64,
     dealer_sink: UnboundedSender<Multipart>,
-    requests: HashMap<u64, oneshot::Sender<Result<Bytes, RemoteError>>>,
+    requests: HashMap<u64, oneshot::Sender<Result<WrappedType, RemoteError>>>,
     hb: Instant,
 
     connected: Option<oneshot::Sender<NodeConnected>>,
@@ -78,10 +78,10 @@ impl BaseNode {
             }
         });
 
-        conn_rx.map_err(Into::into)
+        conn_rx.timeout(Duration::from_secs(30)).map_err(Into::into)
     }
 
-    pub(crate) fn resolve_request(&mut self, rid: u64, res: Result<Bytes, RemoteError>) {
+    pub(crate) fn resolve_request(&mut self, rid: u64, res: Result<WrappedType, RemoteError>) {
         if let Some(sender) = self.requests.remove(&rid) {
             sender.send(res).unwrap()
         }
@@ -138,12 +138,12 @@ impl<M> Handler<SendRemoteRequest<M>> for BaseNode
         self.msg_id += 1;
         let req_id = self.msg_id;
 
-        let encoded = M::to_bytes(&msg.0).unwrap();
+        let encoded = M::to_wrapped(&msg.0).unwrap();
 
-        let wrapped = MessageWrapper::Request(M::type_id().into(), self.msg_id, Bytes::from(encoded));
+        let wrapped = MessageWrapper::Request(M::type_id().into(), self.msg_id, encoded);
         let multipart = wrapped.to_multipart().unwrap();
 
-        let (tx, rx) = oneshot::channel::<Result<Bytes, RemoteError>>();
+        let (tx, rx) = oneshot::channel::<Result<WrappedType, RemoteError>>();
         self.requests.insert(req_id, tx);
 
         let sent = wrap_future(self.dealer_sink.clone().send(multipart));
@@ -166,7 +166,7 @@ impl<M> Handler<SendRemoteRequest<M>> for BaseNode
             .timeout(Duration::from_secs(30))
             .map_err(|e| e.into_inner().unwrap_or(RemoteError::Timeout))
             .flatten();
-        let flat = flat.map(|v| M::res_from_bytes(&v).unwrap());
+        let flat = flat.map(|v| M::res_from_wrapped(&v).unwrap());
 
         return Response::r#async(flat);
     }

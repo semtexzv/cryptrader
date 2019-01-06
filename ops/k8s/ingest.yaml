@@ -9,7 +9,8 @@ items:
   spec:
     selector: { layer: input }
     ports:
-      - nodePort: 0
+      - name: actor-endpoint
+        nodePort: 0
         port: 42042
 
 - kind: Deployment

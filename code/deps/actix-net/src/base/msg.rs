@@ -6,6 +6,8 @@ use std::borrow::Cow;
 
 use super::comm::MsgType;
 
+pub type WrappedType = json::Value;
+
 
 /// Message that can be sent across Process barrier
 pub trait RemoteMessage: Message + Send + Serialize + DeserializeOwned + Send
@@ -15,20 +17,20 @@ pub trait RemoteMessage: Message + Send + Serialize + DeserializeOwned + Send
         unsafe { ::std::intrinsics::type_name::<Self>().into() }
     }
 
-    fn from_bytes(data: &Bytes) -> Result<Self, failure::Error> {
-        Ok(json::from_slice(&data)?)
+    fn from_wrapped(data: &WrappedType) -> Result<Self, failure::Error> {
+        Ok(json::from_value(data.clone())?)
     }
 
-    fn to_bytes(&self) -> Result<Bytes, failure::Error> {
-        Ok(Bytes::from(json::to_vec(&self)?))
+    fn to_wrapped(&self) -> Result<WrappedType, failure::Error> {
+        Ok(json::to_value(self)?)
     }
 
-    fn res_from_bytes(data: &Bytes) -> Result<Self::Result, failure::Error> {
-        Ok(json::from_slice(&data)?)
+    fn res_from_wrapped(data: &WrappedType) -> Result<Self::Result, failure::Error> {
+        Ok(json::from_value(data.clone())?)
     }
 
-    fn res_to_bytes(res: &Self::Result) -> Result<Bytes, failure::Error> {
-        Ok(Bytes::from(json::to_vec(&res)?))
+    fn res_to_wrapped(res: &Self::Result) -> Result<WrappedType, failure::Error> {
+        Ok(json::to_value(&res)?)
     }
 }
 
@@ -159,9 +161,9 @@ pub(crate) enum MessageWrapper {
     Identify(Uuid),
     /// Remote request message, consists of message type id, message instance id, and message body
     /// we need to use encoded data here, so we won't pollute whole API with generuc type
-    Request(MsgType, u64, Bytes),
+    Request(MsgType, u64, WrappedType),
     /// Response to request identified by message id, and its body
-    Response(u64, Result<Bytes, RemoteError>),
+    Response(u64, Result<WrappedType, RemoteError>),
 }
 
 impl MessageWrapper {

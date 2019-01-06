@@ -1,2 +1,2 @@
-use ::prelude::*;
+use crate::prelude::*;
 pub mod bitfinex;

@@ -1,21 +1,12 @@
+#![feature(await_macro, futures_api, async_await, box_syntax)]
 #![allow(dead_code, unused_variables, unused_imports, unreachable_code)]
-pub extern crate actix_arch;
-pub extern crate actix_net;
-pub extern crate common;
-
-pub extern crate clap;
-
-pub extern crate db;
-pub extern crate apis;
-
 pub mod prelude;
 pub mod exch;
 pub mod ingest;
 
-use ::prelude::*;
+use crate::prelude::*;
 
 use std::env;
-
 use clap::{App, ArgMatches, SubCommand};
 use common::prelude::future::result;
 
@@ -48,7 +39,7 @@ fn main() {
                 ingest::Ingest::new(base);
             }
             "bitfinex" => {
-                common::actix::Arbiter::spawn(exch::bitfinex::BitfinexOhlcSource::new(base)
+                common::actix::Arbiter::spawn(exch::bitfinex::BitfinexOhlcSource::new_sync(base)
                     .then(|v| { v.unwrap(); result(Ok(())) })
                 );
             }

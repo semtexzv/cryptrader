@@ -10,3 +10,6 @@ pub use common::types::{
     Ohlc, OhlcSpec, OhlcPeriod, TradePair
 
 };
+
+
+pub use actix_web_async_await::{await as comp_await, compat};

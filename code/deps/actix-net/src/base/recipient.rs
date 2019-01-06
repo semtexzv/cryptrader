@@ -13,7 +13,7 @@ use super::{
 };
 
 pub(crate) trait RemoteMessageHandler: Send {
-    fn handle(&self, msg: Bytes, sender: Sender<Result<Bytes, RemoteError>>);
+    fn handle(&self, msg: WrappedType, sender: Sender<Result<WrappedType, RemoteError>>);
 }
 
 pub(crate) struct LocalRecipientHandler<M>
@@ -37,12 +37,12 @@ impl<M> LocalRecipientHandler<M>
 impl<M> RemoteMessageHandler for LocalRecipientHandler<M>
     where M: RemoteMessage + Serialize + DeserializeOwned + Send + 'static,
           M::Result: Serialize + DeserializeOwned + Send {
-    fn handle(&self, msg: Bytes, sender: Sender<Result<Bytes, RemoteError>>) {
-        let msg = M::from_bytes(&msg).unwrap();
+    fn handle(&self, msg: WrappedType, sender: Sender<Result<WrappedType, RemoteError>>) {
+        let msg = M::from_wrapped(&msg).unwrap();
         let fut = self.recipient.send(msg);
         let fut = fut.then(|res| {
             let reply = res
-                .map(|data| M::res_to_bytes(&data).unwrap())
+                .map(|data| M::res_to_wrapped(&data).unwrap())
                 .map_err(Into::into);
             sender.send(reply).unwrap();
             Ok::<_, ()>(())

@@ -18,7 +18,7 @@ clap = "*"
 serde = "*"
 
 actix-web = "*"
-actix-web-async-await = "0.2.0"
+actix-web-async-await = { path = "../deps/actix-web-async-await"}
 
 actix-net = { path = "../deps/actix-net" }
 actix-arch = { path = "../deps/actix-arch" }

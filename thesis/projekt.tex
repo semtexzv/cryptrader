@@ -74,7 +74,28 @@
 
 \usepackage[outputdir=out]{minted}
 \usepackage{caption}
+\usepackage{graphicx}
+\usepackage{grffile}
+\usepackage{listings, listings-rust}
 
+\usepackage{tikz}
+\usepackage{tikz-uml}
+
+\lstdefinestyle{freefempp}{
+language=Rust,
+basicstyle=\footnotesize\ttfamily,
+commentstyle=\itshape\color{violet},
+% float,
+frame=single,
+numbers=left
+}
+
+\lstset{style=freefempp}
+
+\lstnewenvironment{code}[1][]%
+{\noindent\minipage{\linewidth}\medskip
+\lstset{basicstyle=\ttfamily\footnotesize,frame=single,#1}}
+{\endminipage}
 
 % =======================================================================
 % balíček "hyperref" vytváří klikací odkazy v pdf, pokud tedy použijeme pdflatex
@@ -121,7 +142,7 @@
 %---------------------------------------------------------------------------
 \projectinfo{
   %Prace / Thesis
-  project={DP},            %typ práce BP/SP/DP/DR  / thesis type (SP = term project)
+  project={SP},            %typ práce BP/SP/DP/DR  / thesis type (SP = term project)
   year={2018},             % rok odevzdání / year of submission
   date=\today,             % datum odevzdání / submission date
   %Nazev prace / thesis title
@@ -131,7 +152,7 @@
   %Autor / Author
   author.name={Michal},   % jméno autora / author name
   author.surname={Hornický},   % příjmení autora / author surname
-  %author.title.p={Bc.}, % titul před jménem (nepovinné) / title before the name (optional)
+  author.title.p={Bc.}, % titul před jménem (nepovinné) / title before the name (optional)
   %author.title.a={Ph.D.}, % titul za jménem (nepovinné) / title after the name (optional)
   %Ustav / Department
   department={UIFS}, % doplňte příslušnou zkratku dle ústavu na zadání: UPSY/UIFS/UITS/UPGM / fill in appropriate abbreviation of the department according to assignment: UPSY/UIFS/UITS/UPGM
@@ -141,8 +162,8 @@
   supervisor.title.p={RNDr.},   %titul před jménem (nepovinné) / title before the name (optional)
   supervisor.title.a={Ph.D.},    %titul za jménem (nepovinné) / title after the name (optional)
   % Klíčová slova / keywords
-  keywords.cs={Sem budou zapsána jednotlivá klíčová slova v českém (slovenském) jazyce, oddělená čárkami.}, % klíčová slova v českém či slovenském jazyce / keywords in czech or slovak language
-  keywords.en={Sem budou zapsána jednotlivá klíčová slova v anglickém jazyce, oddělená čárkami.}, % klíčová slova v anglickém jazyce / keywords in english
+  keywords.cs={TODO}, % klíčová slova v českém či slovenském jazyce / keywords in czech or slovak language
+  keywords.en={Trading, Algorithmic trading, Cloud, Distributed system, Rust, Kubernetes, }, % klíčová slova v anglickém jazyce / keywords in english
   %keywords.en={Here, individual keywords separated by commas will be written in English.},
   % Abstrakt / Abstract
   abstract.cs={Do tohoto odstavce bude zapsán výtah (abstrakt) práce v českém (slovenském) jazyce.}, % abstrakt v českém či slovenském jazyce / abstract in czech or slovak language

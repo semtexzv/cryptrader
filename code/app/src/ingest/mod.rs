@@ -1,4 +1,4 @@
-use ::prelude::*;
+use crate::prelude::*;
 
 pub const SERVICE_NAME : &str = "ingest.default.svc";
 

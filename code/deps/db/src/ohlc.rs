@@ -119,3 +119,8 @@ impl Handler<SaveOhlc> for Database {
     }
 }
 
+pub struct OhlcCounts {
+}
+impl Message for OhlcCounts {
+    type Result = HashMap<PairId,usize>;
+}

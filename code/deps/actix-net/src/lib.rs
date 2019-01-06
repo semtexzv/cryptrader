@@ -55,6 +55,7 @@ extern crate common;
 
 pub extern crate zmq;
 pub extern crate tokio_zmq as tzmq;
+pub extern crate trust_dns_resolver;
 pub extern crate futures;
 pub extern crate tokio;
 pub extern crate uuid;
@@ -173,4 +174,30 @@ impl NodeAddr {
     }
 }
 
+use trust_dns_resolver::lookup::SrvLookup;
 
+//  _actor-endpoint._tcp.ingest.default.svc.cluster.local.
+/*
+pub fn resolve(service: &str, proto: &str, domain: &str) -> impl Future<Item=SrvLookup, Error=Error> {
+    use common::actix::actors::resolver::{self, *};
+
+    let resolver = resolver::Resolver::from_registry();
+
+    let name = format!("_{svc}._{proto}.{domain}.", svc = service, proto = proto, domain = domain);
+
+    let (res, fut) = trust_dns_resolver::AsyncResolver::new(Default::default(), Default::default());
+
+    tokio::spawn(fut);
+
+    return res.lookup_srv(name)
+        .then(|l| {
+
+            if let Ok(r)  = l {
+                for l in r.iter() {
+                    return Ok(r.clone());
+                }
+            }
+            bail!("Could not resolve");
+        });
+}
+*/

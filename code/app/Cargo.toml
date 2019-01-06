@@ -2,6 +2,7 @@
 name = "app"
 version = "0.0.0"
 authors = ["Michal Hornický <semtexzv@gmail.com>"]
+edition = "2018"
 
 [dependencies.common]
 path = "../common"
@@ -12,6 +13,7 @@ serde = "*"
 
 actix-net = { path = "../deps/actix-net" }
 actix-arch = { path = "../deps/actix-arch" }
+actix-web-async-await = { path = "../deps/actix-web-async-await"}
 
 apis = { path = "../deps/apis" }
 db = { path = "../deps/db" }
