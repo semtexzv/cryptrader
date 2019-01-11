@@ -1,4 +1,3 @@
-
 \providecommand*{\listingautorefname}{Code sample}
 
 \newcommand{\trait}[1]{{#1}}
@@ -6,7 +5,8 @@
 \newcommand{\type}[1]{{#1}}
 \newcommand{\fun}[1]{{#1}}
 \newcommand{\kubecomp}[1]{{#1}}
-
+\newcommand{\actor}[1]{{#1}}
+\newcommand{\msg}[1]{{#1}}
 
 \chapter*{Abstract}
 \label{abstract}
@@ -33,7 +33,7 @@ Thanks to these requirements, usage of this technique is not easy, or cheap.
 
 However, advances in development and usage of distributed systems, might be an easy solution to these problems.
 Cloud computing\cite{wiki:cloud} is now more widespread, and easy to use than ever. Thanks to new technologies like
-docker\cite{web:docker} and kubernetes\cite{web:k8s}, the creation and managment of distributed systems is easy,
+docker\footnote{https://www.docker.com/} and kubernetes\cite{web:k8s}, the creation and managment of distributed systems is easy,
 and systems created with these technologies can be easily secured, are scalable and provide other benefits
 for developers creating them compared to more monolithic architectures.
 
@@ -54,7 +54,7 @@ algorithms and strategies, and apply them to different markets.
 \chapter{Current state \& existing solutions}
 \label{chapter:current_state}
 Existing solutions for algorithmic trading that are aimed to regular users instead of specialized investmnet companies
-have been available for some time. Form of these solutions ranges from simple command-line applications  that connect to single exchange
+have been available for some time. Form of these solutions ranges from simple command-line applications that connect to single exchange
 to large distributed deployments with web interface that interface with the largest stock exchanges\cite{Agopyan_financialbusiness}.
 
 \section{Examples}
@@ -67,7 +67,7 @@ should be transferable to other markets \todo{Reword}.
 On the lower end of the spectrum, there is a simple application written in javascript called Gekko\footnote{https://gekko.wizb.it/}.
 This application is open source and runs on top of the Node.js runtime. The application can import historical data,
 and use this historical data to backtest created strategies. The strategies are written in Javascript, with the support
-of a simpel linbrary that contains implementations of financial indicators, that atre commonly used  with these types
+of a simpel linbrary that contains implementations of financial indicators, that atre commonly used with these types
 of trading strategies.
 
 It also provides simple web interface, but can only connect to one exchange at a taime, and only supports one user at a time.
@@ -114,11 +114,11 @@ in late 1980s and 1990s. This allowed some degree of automation, but weren't yet
 automated trading. In 2001 a paper published by IBM\cite{Tesauro:2001:HBA:501158.501183},
 encouraged adoption of algorithmic trading. In this paper, fully automated trading strategies
 consistently outperformed human counterparts. Since then, the amount of trading performed by
-automated system steadily risen.
+automated systems has steadily risen.
 
 As algorithmic trading became more common, new trading strategies started popping up, and
-an arms race was started. In this arms race, the parties were consistently introducing new
-strategies to perform trading decisions, and execute resulting trades. The \textbf{HFT}(High frequency trading)
+an arms race was started. In this arms race, the parties were consistently introducing new,
+more effective ways of performing trading decisions, and executing resulting trades. The \textbf{HFT}(High frequency trading)
 is a culmination of the automated trading arms race.
 
 \subsubsection{High frequency trading}
@@ -139,13 +139,10 @@ There are four key categories of HFT strategies\cite{wiki:hft}:
     \item {Statistical arbitrage - Utilizes multiple asset classes, to create complex transaction chains, which allow for relatively risk free profit }
 \end{itemize}
 
-\todo{Find proper source, for these categories}
-
-
 Our system will mainly support strategies, that would fall into \textbf{Tick data market making} category. This is due
-to simplicity of these strategies, and the fact that the information provided by the exchanges is best suited
+to simplicity of these strategies, and the fact that the information provided by the cryptocurrency exchanges is best suited
 for these strategies. Strategies will be used to create trading decisions for multiple assets. The fact that
-there are multiple different strategies evaluated for multiple currencies means that the total number of evaluations is
+there are multiple different strategies evaluated for multiple currencies means that the total number of strategy evaluations is
 extremely large. In addition to that , the system will also have to provide some degree of scalability, since the system will
 have to respond to changes in number of users.
 
@@ -153,60 +150,63 @@ To satisfy these constraints, the system will have to be of distributed nature.
 
 \section{Distributed systems}
 Distributed systems are systems, that are comprised of many loosely coupled components. These components might be threads
-in single process, processes on single computer, or multiple computers connected through shared memory or a network.\todo{Cite}.
+in single process, processes on single computer, or multiple computers connected through shared memory or a network.
 These components communicate by utilizing shared memory, or by passing messages to one another. Components interact with
 one another in order to achieve shared goal. Distributed systems have several key properties\cite{Coulouris:2011:DSC:2029110}:
 
 \begin{itemize}
-    \item Concurrency
-    \item No global clock
-    \item Independent failures
+    \item Concurrency - The computation in one component is concurrent with computations performed by other components
+    \item No global clock - There is no single global clock, each component has only local clock
+    \item Independent failures - Failure of one component does not imply failure of other components
 \end{itemize}
 
 We can use these properties to make a very loose defnition of what a distributed system is. In order to better understand these
 types of systems, we will have to analyze several aditional properties.
 
-For example, we can analyze whether a distributed system uses homogenous or heterogenous components, and in latter case we can look
-on the one component has higher "Priority" than another. The systems that only use homogenous component are commonly used in open
+\subsection{Additional properties}
+
+We can analyze whether a distributed system uses homogenous or heterogenous components.
+The systems that only use homogenous component are commonly used in open
 environments, like the Internet. Systems like BitTorrert or similar file distribution software are the perfect example.
 
 In order to find an example of heterogenous system , we don't have to look further than World Wide Web. In this system,
 we have servers and clients, which are 2 different types of system components.
-
 
 Another property of distributed system is the communication method. There are 2 primary approaches to communication between 2 components. Message passing or shared
 memory. Most commonly used is message passing, since it allows for 2 components to be on different networked computers, while implemntations that utilizre
 shared memory can only be used on a single machine. We can simulate former approach with the latter and vice versa at the cost of performance.
 Going further, this thesis will only deal with systems that use message pasing as the communcation paradigm.
 
-Another aspect of component communication is the communication protocol. This does not mean the underlying technology that is used to send ,essages, but rather
-the protocol that determines what messages will be send , and when.
+Another aspect of component communication is the communication protocol. This does not mean the underlying technology that is used to send
+messages, but rather the protocol that determines what messages will be send , and when.
 
-Components might cmmunicate useing simple request - reply based protocol , like HTTP. Or they might communicate using slightly different
+Components might communicate useing simple request - reply based protocol , like HTTP. Or they might communicate using slightly different
 publish - subscribe model over technologies like ZeroMQ, or message buses like Kafka. Or the combination of these approaches.
 
+Using these properties, we settled on a model of a distributed system, that utilizes large amount of heterogenous components.
+Each of these components communicates primarily using request-reply style of communication utilizing message passing paradigm.
 
-\todo{Using these properties, we decided on actor model }
-\todo{Actor model is heterogenous message passing based model of a distributed system}
 \section{Actor model}
-Actor model is a conceptual model of describing concurrent computation. It treats "Actors" as a primitives of concurrent
+Actor model is a conceptual model of describing concurrent computation. It treats Actors as a primitives of concurrent
 computation. Each actor can: Create new actors, send messages, modify its state and decide, how to respond to
 received messages. Primary constraint is the restriction of modifying application state.
 Each actor can modify its local state however it wants, but can only affect other actors by sending messages.
 
-Thanks to this property of isolation, there are no necessary locks to ensure memory safety. Another benefit is,
+Thanks to this property of isolation, there are no necessary locks to ensure memory safety.
 It originated in 1973, and has been used for understanding distributed computatuion, and also as
 a basis of several implementation of concurrent systems.
 
-According to hewitt\cite{journal:actor}, the actor model is based on physics. This is contrasted by
+According to Hewitt\cite{journal:actor}, the actor model is based on physics. This contrasts
 other computational models, which are most commonly based on mathematical logic, set theory or similar concepts.
 The primary takeaway from physics , that can be observed in actor model, is taken from quantum physics, and it
 is the idea of uncertianty. We cannot observe precise state of a whole system, because attempting to do so
 will affect the it, and therefore invalidate measured results.
 
 \subsection{Alternative models}
-Actor model builds on previous computational models. For example, If we consider Smalltalk, and its message
-passing model of object oriented programming, we observe several common properties.
+Actor model is very high level, and shares both goals and propertes with other programming paradigms. These
+include:
+\subsubsection{OOP}
+If we consider Smalltalk, and its message passing model of object oriented programming, we observe several common properties.
 \begin{itemize}
     \item Encapsulation - Both actors and objects can only directly manipulate their local state
     \item Message passing - Both actors and objects can send messages to other actors and objects respectively
@@ -224,16 +224,17 @@ simultaneous action. While we can easiliy simulate simultaneous action of removi
 a transition and placing a marker in output place, in reality, these 3 actions will not be simultaneous.
 
 \subsection{Communicating sequential processes}
-This model differs from actor model in several ways. Most important difference is that Actor model is inherently
+While CSP model has similar goals to actor model, there are several ways, in which these 2 models differ.
+Most important difference is that Actor model is inherently
 dynamic, while CSP model if based on a fixed number of sequential processes communicating in a fixed topology\cite{Hoare:1985:CSP:3921}.
 
 \subsection{Implementations}
 While the actor model is almost 4 decades old, implemetations of concurrent and distributed systems that
 are based on this model are more common than ever. This model is used in both general purpose languages, and
-languages specially designed for programming with this model in mind. It is also used in telecommunications,
-providing basis for concurrent Erlang, in web services, and general purpose distributed applications.
+languages specially designed for programming with this model in mind. Historically, this model
+was used in very niche systems, like telecommunications.
 
-The success in niche applications slowly fuelled growth of this paradigm into more general purpose applications. With this
+The success in these kinds of systems slowly fuelled growth of this paradigm into more general purpose programming. With this
 growth, several libraries started popping up. There are multiple similar libraries in
 wide variety of languages, ranging from Lisp to C++. Today, one of the most commonly used libraries is Akka\cite{web:akka}, which was originally
 developed for Java and Scala, but was reimplemented using C\# for the .NET platform. While Akka is extremely easy to use,
@@ -253,17 +254,14 @@ Rust language aims to position itself among the low level languages, bringing ne
 It was originally developed by graydon hoare\cite{web:rust_progress} while working at Mozilla, and was based on
 ML. Probably the most important step, was adoption of the language by mozilla for the purpose of creating new browser engine
 called Servo\cite{proc:servo}. Goal of Servo was to experiment and innovate in the Web browser space, without
-the dependency of over 30 years of legacy code, that was firefox. Main technical goal, was creation of
-concurrent implementations to problems, which historically had only sequential implementations. These included
-concurrent layout of elements on a page, concurrent computation of CSS styles.
+the dependency of over 30 years of legacy code, that was Firefox.
 
-
+\subsection{Language basics}
 Basic concepts of the Rust language are very similar to other C based languages. Basic structure is denoted by braces,
 It has functions, a module system, and other features, that will be uninteresting to intermediate programmer.
 However, some of the more advanced concepts make this language particularly well suited for large concurrent systems, and
 will be explored later in this chapter.
 
-\subsection{Language basics}
 Language has 2 primary conceptual entities, types, and traits.
 For the types, language supports product and sum types(structs and enums), and references (which can be mutable or immutable).
 Traits are more interesting feature. They are similar to interfaces in Java, but their closest analogy would be typeclasses from Haskell.
@@ -283,7 +281,7 @@ systems programming language. These features are:
     \item Generic programming based on traits
     \item Memory model that allows safety without garbage collector
     \item Primitives to eliminate data races
-    \item Built in build system and package manager
+    \item Integrated build system and package manager
 \end{itemize}
 
 \subsection{Generic programming, traits}
@@ -311,38 +309,40 @@ other language features, and must be understood in order to effectively use the 
 Below is an example of a simple trait.
 
 
+%@formatter:off
 \begin{code}[language=rust,label={ord_trait},caption={Trait definition}]
     pub trait Ord: Eq + PartialOrd<Self> {
-    fn cmp(&self, other: &Self) -> Ordering;
-    fn max(self, other: Self) -> Self where Self: Sized {
-    if other >= self { other } else { self }
-    }
+        fn cmp(&self, other: &Self) -> Ordering;
+        fn max(self, other: Self) -> Self where Self: Sized {
+            if other >= self { other } else { self }
+        }
     }
 \end{code}
+%@formatter:on
 
 \autoref{ord_trait} Shows definition of an Ord trait that defines complete ordering over implementors type. This trait specifies Additional constraints for implementing types
 (Also called supertrait constraints). Every type that implemenrs Ord, must also implement Eq, and PartialOrd trait with generic
 argument of impelemting type. The implementor, must provide implementation for \fun{cmp} method, that takes an one argument of implementors type,
 and returns an ordering. The trait definition also specifies \fun{max} method for types, that implement Sized trait, and provides default
 implementation.
-
-The Self keyword is used to refer to implementing type, in the trait definition.
-
+The Self keyword is used to refer to implementing type in the trait definition.
 Traits can also be generic, accepting type parameters, such as the PartialOrd trait used earlier.
 
+%@formatter:off
 \begin{code}[language=rust,label={ord_impl},caption={Trait implementation}]
     impl Ord for bool {
-    fn cmp(&self, other : &bool) -> Ordering {
-    if self & !other {
-    return Ordering::Greater;
-    }
-    if self == other {
-    return Ordering::Equal;
-    }
-    return Ordering::Less;
-    }
+        fn cmp(&self, other : &bool) -> Ordering {
+            if self & !other {
+                return Ordering::Greater;
+            }
+            if self == other {
+                return Ordering::Equal;
+            }
+            return Ordering::Less;
+        }
     }
 \end{code}
+%@formatter:on
 
 \autoref{ord_impl} shows simple implementation of Ord trait specified earlier for boolean data type. This sample
 uses an impl block, to implement a trait for specific type. Impl block can be generic, and have to provide
@@ -350,9 +350,9 @@ implementations for all functions that do not have default implementations speci
 
 \subsection{Marker traits}
 The traits \trait{Eq} and \trait{PartialOrd} used earlier are self explanatory, they denote the availability of equality comparison, and partial order
-in implementing types. However, the \trait{Sized} trait might not be so easy top comprehend.
+in implementing types. However, the \trait{Sized} trait might not be so easy to comprehend.
 
-This trait belongs to special category of traits, called marker traits. These include \trait{Send} , \trait{Sync}, \trait{Sized} and several others
+This trait belongs to special category of traits, called marker traits. These include \trait{Send} , \trait{Sync}, \trait{Sized} and several others.
 The marker traits do not provide any functions and serve, as their name implies, as markers. They are used to mark specific
 types. The \trait{Sized} trait marks types, which have their sizes defined at compile time, and is automatically implemented
 for these types by compiler. The example of unsized type might be \type{[u8]} , which is an arrray with unknown length.
@@ -363,13 +363,9 @@ this chapter.
 \subsection{Memory managment}
 Modern programming languages primarily use one of 2 approaches to manage memory.
 
-The grabage collection is an approach, most commonly used in High-level languages. It can be performed
-by reference counting (Swift \& Objective-C, Lua), where each object contains a reference count, that is modified
-by crating and destroying references to that object. Object is deallocated when reference count reaches zero.
-This approach has problem with cyclic object graphs, which require so called "weak" references, that are
-not included in strong reference count. Second approach for garbage collection is tracing garbage collection.
-In this approach, the object graph is traversed, and reachable objects are marked. Unreachable objects stay unmarked during
-this traversal, and are deallocatead. This however requires suspending of a program to perform the traversal.
+The garbage collection is an approach most commonly used in High-level languages. 2 Most common implementations
+are reference counting and tracing garbage collection. Both of these approaches have drawbacks, primary ones being
+difficulty handling reference cycles for reference counting and necessary program pauses for tracing garbage collection
 
 Second common approach used is called RAII, which stands for "Resource acquisition is initialization". It is most
 prominently associated with C++, but is used in D, Ada, and Rust. This approach was originally developed for exception safe
@@ -383,11 +379,9 @@ and released during destruction. The object can have unconstrained lifetime (All
 lifetime (Allocated on the stack).
 
 In C++ the creation and destruction of object is performed by specific functions(Constructor and destructor). Rust does
-not support object oriented programming in a classical sense. The creation of struct is performed by enumerating all its
-components and values, the creation of enum is performed by specifying which variant of an enum should be created, and enumerating
-all components of this variant.
+not support object oriented programming in a classical sense. The data types are created structurally(enumerating all component values).
 
-The destruction of "Objects" is performed with the help of a trait system. If a type, implements the \trait{Drop} trait,
+The destruction of values is performed with the help of a trait system. If a type, implements the \trait{Drop} trait,
 it must implement the \fun{drop} method, which has similar semantics to C++ destructor. This method will be invoked
 when variable of this type goes out of scope, and memory associated with it will then be deallocated
 
@@ -398,7 +392,7 @@ The drawback of this approach, is unability to express a type, that should not b
 
 The move semantics on the other hand, can express this concept easily. With copy, the assignment to a variable, invalidates the
 old variable. In C++ move semantics, the object referenced by old variable is replaced by and "Empty" object ( an object
-that is safe to destruct, but this destruction will not invalidate copied object).
+that is safe to destruct, and its destruction will not invalidate copied object).
 
 In rust, the invalidation of moved-from variables is enforced at compile time, and usage of invalidated variable will result in a
 compiler error. Rust provides only move semantics, with copy semantics emulated by the \trait{Clone} trait.
@@ -408,8 +402,8 @@ Conceptually, the move semantic are used to express the concept of ownership. If
 that object , and is responsible for it's destruction. However, requiring programmer to transfer ownership of an object every time
 it is passed into a function would be extremely tedious on programmer side, and copying of an object would degrade performance.
 
-Rust also provides a way to reference objects, without moving or copying them. Usage of \verb|&| or
-\verb|&mut| sigils, will create immutable and mutable reference respectively. Why 2 reference types? This is
+Rust also provides a way to reference objects, without moving or copying them. By using \verb|&| or
+\verb|&mut| sigil, the programmer can create immutable and mutable reference respectively. Why 2 reference types? This is
 done to ensure memory safety by disallowing mutation and aliasing at the same time.
 
 We can create any number of immutable references to an object, but these references can't mutate referenced object, or
@@ -428,14 +422,14 @@ The ownership and borrowing system prevents these kinds of data races, but Rust 
 constraints in multithreaded programs. Primary building blocks are 2 marker traits. The \trait{Send} and \trait{Sync} traits.
 
 The \trait{Send} trait denotes that the implementor can be safely transferred to a different thread. This trait is automatically
-implemented by compiler, when appropriate. For example, objects that reference thread local storage do not implement send.
+implemented by compiler, when appropriate. For example, objects that reference thread local storage do not implement \trait{Send}.
 
-The \trait{Sync} trait is implemented for types that can be safely shared between threads(Reference to it can be shared between threads).
+The \trait{Sync} trait is implemented for types that can be safely shared between threads(Reference can be shared between threads).
 
 These 2 traits are then used by library abstractions like \type{Mutex} and \type{Rwlock} to ensure memory safety and data race free code.
 For example, the \type{Mutex} abstraction is used to protect an object with a mutex. The \type{Mutex} struct is generic,
-with one type parameter, that denotes contained value, which must implement \trait{Send} trait
-This ensures, that the contained value can be safely shared between threads. The mutex itself implements both \trait{Send} and \trait{Sync} traits,
+with one type parameter, that denotes contained value, which must implement \trait{Send} trait.
+This ensures that the contained value can be safely shared between threads. The mutex itself implements both \trait{Send} and \trait{Sync} traits,
 meaning mutex can be safely shared between threads.
 
 \subsection{Build system and package manager}
@@ -454,34 +448,34 @@ also require dependencies from this repository.
 
 This improvement encourages development and usage of small, domain specific libraries, which in
 turn allows for the standard library to be extremely small, on par with C++, without reducing productivity.
-The rust standard library focuses on providing the tools for building abstractions, like the Marker traits,
-and common abstractions like generic collection, concurrency primitves etc.
 
-\subsection{Actix}
+\section{Actix}
 One of primary reasons for choosing rust was the choice of Actix\cite{web:actix} library. Actix is a library that provides abstractions
 for implementing applications with Architecture based on actor model. It provides runtime system for managing actor, that is
 based on Tokio libarry, which is core for asynchronous programming in rust(Similar to LibUV). It also provides
 traits for defining actors, implementing their behavior in response to messages.
 
-\subsubsection{Actor in actix}
+\subsection{Actor in actix}
 Actor in actix is a structure, that has some wider state attached to it. This structure is created by programmer, and must
 implement the \trait{Actor} trait. The \trait{Actor} trait has an associated type, that defines the context in which the actor will be run,
 and several methods, for dealing with actor lifetime.
 The actor context defines how will the actor receive messages, manages actor mailbox, and several other
-supprting components, but its detailed description is out of the scope of this thesis.
+supporting components, but its detailed description is out of the scope of this thesis.
 
 The programmer will also have to implement \trait{Handler} trait for every message that it wants to handle.
 
+%@formatter:off
 \begin{code}[language=rust,label={handler_trait},caption={Handler trait}]
     pub trait Handler<M> where Self: Actor, M: Message
     {
-    type Result: IntoResponse<Self, M>;
+        type Result: IntoResponse<Self, M>;
 
-    /// Method is called for every message received by this Actor
-    fn handle(&mut self, msg: M, ctx: &mut Self::Context) -> Self::Result;
+        /// Method is called for every message received by this Actor
+        fn handle(&mut self, msg: M, ctx: &mut Self::Context) -> Self::Result;
 
     }
 \end{code}
+%@formatter:on
 
 The implemented \fun{handle} method runs synchronously, but asynchronous computation
 can be started by returning a value that implements a  \trait{Future} trait, from the handle method, or by utilizing the \fun{spawn}
@@ -490,50 +484,33 @@ method on the ctx argument to spawn a new asynchronous task in same context.
 After creating an actor, the actor must be started. This is done inside a runtime system. This system must be manually created
 upon sthe start of first actor, or is implictly provided, if starting an actor from another running one. By starting
 an actor, the system will take ownership of this actor, will create runtime context for it. After starting an actor, the runtime
-context returns an address of this actor. The address is in form of a \type{Addr<A>}struct, that provides methods for sending messages to
-an actor.
+context returns an address of this actor.
 
-\todo{Remove this ? Do we need it ?}
-\subsubsection{Asynchronous computation}
-Actix is built upon the \textbf{Tokio} library, which provides basis for asynchronous applications. It is conceptually similar
-to the libUV library. The basic cnconurrency primitive on this layer is a \textbf{Task}. A task is a composition
-of \textbf{Future} values. Most commonly constructed by creating A Future, that is resolved upon a completion of asynchronous
-IO operation, and then applying different combinator Futures, that modify resulting value. The concept of a future is very similar
-to Javascript promise, and has recently been adopted into standard library to serve as a basis for Async-await style programming.
-\todo{Cite C\#, or JS async-await}
 
-Actors cant send message using only adresses. The \type{Addr} struct provides 2 primary methods for sending messages.
-The \fun{send} method will send a message to another actor, and will return a future, that will eventuially resolve into
-returned value. \fun{do\_send} will send a message, but will not return any value, providing fire-and-forget type of
-communication. The only constraint placed on the message result type, is that the returned value can't contain any local
-references.
-
-The \fun{send} method is more interesting, because actor can react to message responses in asynchronous way.
-A very common pattern is sending a message, then using several combinators from \trait{Future} trait to modify actor
-state on returned value, and eventually asynchronously return another value in response to received message.
-
+%@formatter:off
 \begin{code}[language=rust,label={msg_example},caption={Asynchronous message handling example}]
     impl Handler<IngestUpdate> for Ingest {
-    type Result = Box<Future<Item=usize,Error=()>>;
+        type Result = Box<Future<Item=usize,Error=()>>;
 
-    fn handle(&mut self, msg: IngestUpdate, ctx: &mut Context<Self>) {
-    Box::new(self.db.send(db::SaveOhlc{
-    id : msg.spec.pair_id().clone(),
-    ohlc : msg.ohlc
-    })
-    .then(|v| if v.is_err() { panic!("DB Error")} else { return Ok(v.count) })
-    )
-    }
+        fn handle(&mut self, msg: IngestUpdate, ctx: &mut Context<Self>) {
+            Box::new(self.db.send(db::SaveOhlc{
+                id : msg.spec.pair_id().clone(),
+                ohlc : msg.ohlc
+            })
+            .then(|v| if v.is_err() { panic!("DB Error")} else { return Ok(v.count) }))
+        }
     }
 \end{code}
+%@formatter:on
 
-\autoref{msg_example} showas precisely this pattern. The \type{Ingest} actor receives \type{IngestUpdate} message,
+\autoref{msg_example} shows precisely implementation of the \trait{Handler} trait. The \type{Ingest} actor receives \type{IngestUpdate} message,
 and in response then sends \type{SaveOhlc} message to \type{db} actor. Then, using the \fun{then} combinator, it
 verifies that the operation completed sucessfully, and returns number of written rows to original messeage sender.
 
 The actual computation is not started in the handle method. Rather the computation is described by creation
 of a value that implements the \trait{Future} trait in this method, and actual computation is started after returning
 the value from \fun{handle} method, when the task created is spawned on event loop in which the actor is running.
+
 
 \subsection{Networked actors in actix}
 While actix provided extremely well designed base for implementing concurrent applications based on actor model, it has
@@ -592,13 +569,13 @@ Basic used primitives are:
     \item Namespace - Is a tool used to partition resources into disjoint sets.
     \item Pod - A pod is a basic scheduling unit, it contains one or more containers, has assigned unique IP address
     withing a cluster,and can define a storage volume, that it exposes to its containers.
-    \item Service - Is a set of homogenous pods, that work together. The service mainly serves for service
-    discovery, and round-robin balancing of network connections to individual pods.
-    \item Deployment - Represents an object, that ensures availability of several pods,
+    \item Service - Is a set of homogenous pods, that work together. It's main goal is to expose information about running
+    pods to internal DNS.
+    \item Deployment - Serves as a watchdog that automatically ensures there are pods in a healthy state available to
+    serve incoming requests
     \item Volume - Object representing a persistent storage.
 \end{itemize}
 
-\todo{Diagram, Application, inside container image, then VM, contains Docker images, on top is kubernetes managing them}
 
 \chapter{Design}
 \label{chapter:design}
@@ -609,7 +586,7 @@ concepts and technolgoies outlined in \autoref{chapter:theory}.
 
 \section{General system design}
 System is designed as a collection of loosely coupled components, running inside virtualized environment provided by kubernetes, which
-can be distributed across many computing nodes, basic diagram of intended architecture can be found in \autoref{img:arch}.
+can be distributed across many computing nodes. Basic diagram of intended architecture can be found in \autoref{img:arch}.
 
 Each component will be implemented as a set of actors, inside a single process and communicate with other components
 over ZeroMQ using both Request reply and Pub-Sub communication patterns.
@@ -619,15 +596,16 @@ The actual communication protocol will be implemented in \verb|actix-net| librar
 The user facing part of the system will be a web application, that will be also implemented using the same technologies
 as the system itself.
 
+
 \begin{figure}[H]
-    \includegraphics[width=\textwidth]{obrazky-figures/Basic architecture.png}
+    \includegraphics[width=\textwidth]{obrazky-figures/Deployment Diagram1.png}
     \caption{Basic architecture}
     \label{img:arch}
 \end{figure}
 
 
 \section{Component design}
-By using Kubernetes we basically virtualized the computing environment. The environment as percieved by individual components
+By using Kubernetes we virtualized the computing environment. The environment as percieved by individual components
 will just be a set of connected Docker containers with access to DNS server, that contains information about other components.
 Kubernetes also provides virtualized network environment, making it appear as if all containers were on a same network.
 
@@ -645,16 +623,26 @@ Application is divided into several components/services:
     to Core service, and performs actions requested by Core service on exchanges
 \end{itemize}
 
+\begin{figure}[H]
+    \includegraphics[width=\textwidth]{obrazky-figures/Service communication diagram.png}
+    \caption{Service communication diagram}
+    \label{img:service_comm}
+\end{figure}
+
+\autoref{img:service_comm} shows a communication diagram that describes communication between individual services, that
+will occur in response to receiving new financial data from an exchange. The system will store this information
+into persistent storage for later use, and if the information is up to date, it will initiate strategy evaluation
+for strategies applied to currency of incoming data.
 
 \subsection{Individual service architecture}
-Each of these services will be comprised of one or more Kubernetes \kubecomp{service}-\kubecomp{deployment} pairs. The
-\kubecomp{service} part will ensure availability of information about individual pods on kubernetes' internal DNS server, .
+Each of these services will be comprised of one or more kubernetes \kubecomp{service}-\kubecomp{deployment} pairs. The
+\kubecomp{service} part will ensure availability of information about individual pods on kubernetes' internal DNS server.
 The \kubecomp{deployment} part will ensure the availability of actual pods.
 
 Each service will be comprised of one ore more \kubecomp{pods} that will be managed by \kubecomp{deployment}. Each \kubecomp{pod}
 will contain base communication actor from \verb|actix-net| library, and several other actors to support communicatin with other services. In addition to
 these supporting actors, it will also contain varying number of actors, that will collectively implement
-the desired functionality of a particular Pod.
+the desired functionality of a particular Service.
 
 \section{Communication \& actix-net}
 \label{section:actix_net}
@@ -665,7 +653,7 @@ should be usable by other projects.
 \subsection{Underlying protocol}
 We chose to use ZeroMQ\cite{hintjens2011} as an underlying protocol instead of TCP/UDP because of several factors. The ZeroMQ can be used over
 many different transport types, including TCP, UDP, Unix pipes, PGM or shared memory. Another benefit is the added flexibility; While
-TCP requires estabilishing connection in a particular order (Bind then Connect), ZeroMQ does not have similar constraints.
+TCP requires estabilishing connection in a particular order (Bind then Connect), while ZeroMQ does not have similar constraints.
 
 It also provides wide array of socket types to implement different communication paradigms. We primarily use 2 of them.
 
@@ -686,8 +674,20 @@ The actix-web library, which is used to implement the web application, is also b
 
 \subsection{Communication protocol}
 Each component will utilize several ZeroMQ sockets. The primary socket will be of Dealer type, and will serve as an endpoint
-for accepting connections from other components.  In addition to one Dealer socket, each component will alse create a router
+for accepting connections from other components. In addition to one Dealer socket, each component will alse create a router
 socket for each connection to another component. The requests will be sent over this router socket.
+
+\begin{figure}[H]
+    \includegraphics[width=\textwidth]{obrazky-figures/Actix-net communication.png}
+    \caption{Actix-net communication}
+    \label{img:actix_net}
+\end{figure}
+In \autoref{img:actix_net} you can see simple sequence diagram showing types of most common interactions with the library. The \actor{Communicator}
+actor serves as a entry point into the library. By creating and sending \msg{Connect} message to this actor, the \actor{Node} actor is created,
+and the address of created node is retruned into user code. User can use the \actor{Node} actor for sending messages to
+remote nodes. User can register global handlers for specific message type
+using the \msg{RegisterRecipient} message, and specific actors using the \msg{RegisterActor} message. The response to \msg{RegisterActor}
+message is global actor address, which can be sent to other nodes, and used to send messages to specific actor on local node.
 
 \section{Strategies}
 In \autoref{chapter:current_state} we have described several implementations of automatic trading systems. Each one of them
@@ -696,7 +696,8 @@ utilized some kind of programming language to define a trading strategy. In this
 The system will have to support execution of user-written code. This fact poses a security concern. Because the user
 written code can perform arbitrary actions permitted by given programming language, we must carefully choose the programming
 language that will be used. Because implemented strategy will be operating with large amount of financial data, another
-concern is performance. And finally, chosen language should be easy to use for begginers.
+concern is performance. And finally, since the intended users of this application are not programmers, the chosen language
+should be easy to use for begginers.
 
 \subsection{Language choice}
 These requirements severely limit possible choices. We can't accept user-compiled code, because of security concerns.
@@ -706,17 +707,18 @@ on-demand compilation of user written strategies.
 Managed languages like Java or C\# are a better choice, but they still require large runtimes with long start up times, therefore
 are not well suited for running short-lived scripts.
 
-Scripting languages like Lua, Python or JavaScript seem like the best choice for this goal, with the small drawback of
+Scripting languages like Lua, Python or JavaScript seem like the best choice for this goal, with the drawback of
 reduced performance.
 
 \subsection{Lua}
-Ultimately, the Lua language was chosen as a primary language for implementing user defined strategies.  There were several
+Ultimately, the Lua language was chosen as a primary language for implementing user defined strategies. There were several
 key properties, which caused this decision.
 
 \begin{itemize}
     \item Embeddability - Lua runtime is smaller than 256Kb, has virtually no start up time and can be embedded in application.
     as a simple library. In comparison, neither Python nor JavaScript runtimes can be embedded in the application, and both
     require large standard libraries
+    \item Extensibility - Basic lua standard library can be easily extended with code written in host language.
     \item Expressive power - While extremely simple, lua provides tools to model virtually any programming paradigm with ease
     \item Speed - While lua is a scripting language, that can't possibly compete with compiled language in this space,
     it is one of the fastest scripting languages available.
@@ -729,22 +731,50 @@ This variability of computational load on the system was primary reason for desi
 
 The service that is most affected by this variablity is the strategy evaluation service. This service needs to
 dynamically change the amount of used resources.
-\todo{Done as a autoscaling kubernetest hingy}
-\todo{Load balancing part}
-\todo{Dynbamically scaled number of workers}
-\todo{Database latency, other issues, each worker will work on many tasks concurrently}
 
-\todo{Diagram, Load balancer -> Worker container -> contains multiple worker actors -> backend database actors}
-\todo{Communication diagram, Ready request,  work, work, work -> Finish, Finish, Finish ,}
+This will require specific architecture. The service will be divided into 2 parts. The control and the worker layers.
+The control layer will be a single Kubernetes pod, that will serve as an endpoint to rest of the system. It will receive
+strategy evaluation requests from Core service, and will pass them to individual workers int the worker layer.
+Each worker will be a single pod with multiple worker actors, each of which will register itself with control layer.
 
-\todo{Pool of evaluators}
-\todo{Implement load balancing between them}
-\todo{Let kubernetes take care of scaling the application and distributing evaluators}
+The control layer will also perform load balancing, ensuring that no single worker is over- or underutilized.
+
+Then, the kubernetes horizontal pod autoscaler\footnote{\url{https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/}} will be used to dynamically addjust number of pods. In addition to that,
+the Google Kubernetes Engine also supports automatic node provisioning, meaning we can automate every part of scaling the system
+compute capabilities.
 
 \chapter{Current state of the project}
+The project, as designed in previous chapter is currrently under heavy development. The kubernetes architecture is already implemented,
+and there are several rudimentary services running on this architecture. Thise are Exchange service connecting to the
+Bitfinex exchange, the persistence service storing financial data into PostgreSQL database, and a web service
+that serves basic web site with authentication. There are several issues with current implementation, most important one
+being the usage of single PosgreSQL database in the persistence service. This database will almost certainly become a bottleneck
+in the future, and for the actual implementation will have to be changed to a database that supports horizontal scaling.
 
-\chapter{Conclusion}
-\chapter{conclusion}
+These components communicate by using an incomplete implementation of \verb|actix-net| library. In current state, this library supports
+request-reply style of communication between actors on diferrent virtual machines.
+
+The whole project is managed by a single Makefile, making deployments of new versions quick and easy.
+
+\chapter{Conclusion \& Future work}
+The title of ths thesis is a Design and development of distributed system that would perform a specific function.
+Most of the work performed so far was design of the system, and implementation of supporting technologies. The
+future development plan starts with finishing the \verb|actix-net| library. Then, designing and implementing a persistence
+service that would resolve bottlenecks found in current solution.
+
+After issues with this part of the system are resolved, the next step will be implementation of the strategey evaluation service,
+and implementation of order execution functionality into exchange service. These 2 changes will make the system able to perform its
+primary function, that being automatic trading based on a strategy.
+
+Next step  will be the implementation
+of the web application that will make the system implemented in previous step accessible to users. This involves the implementation of user managment,
+and inclusion of user data into the rest of the system.
+
+After the web application implementation is complete, the performance of implemented system will be measured. The target of the measurements
+will be the latency between system receiving new financial data, and system being able to  execute orders resulting from
+evaluation of strategies using this new data. The measurements will be performed with different amount of
+load on the system, but the system configuration will not be changed. The expected result of these measurements is the
+invariance of system latency based on system load.
 
 
 
