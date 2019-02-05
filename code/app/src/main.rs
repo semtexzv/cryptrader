@@ -1,5 +1,6 @@
-#![feature(await_macro, futures_api, async_await, box_syntax)]
+#![feature(box_syntax,associated_type_defaults)]
 #![allow(dead_code, unused_variables, unused_imports, unreachable_code)]
+
 pub mod prelude;
 pub mod exch;
 pub mod ingest;
@@ -36,11 +37,15 @@ fn main() {
 
         match matches.subcommand().0 {
             "ingest" => {
-                ingest::Ingest::new(base);
+                let (ingest, out) = ingest::Ingest::new(base.clone());
+                let (rescaler, rout) = ingest::rescaler::Rescaler::new(base.clone(), out);
             }
             "bitfinex" => {
-                common::actix::Arbiter::spawn(exch::bitfinex::BitfinexOhlcSource::new_sync(base)
-                    .then(|v| { v.unwrap(); result(Ok(())) })
+                common::actix::Arbiter::spawn(exch::bitfinex::BitfinexOhlcSource::new(base)
+                    .then(|v| {
+                        v.unwrap();
+                        result(Ok(()))
+                    })
                 );
             }
             _ => {

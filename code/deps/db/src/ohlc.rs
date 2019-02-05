@@ -6,9 +6,7 @@ use crate::{
     ConnType,
     schema::{
         self,
-        ohlc::{
-            self, *,
-        },
+        ohlc,
         users,
     },
 };
@@ -81,6 +79,8 @@ impl Handler<SaveOhlc> for Database {
 
     fn handle(&mut self, msg: SaveOhlc, ctx: &mut Self::Context) {
         let SaveOhlc { id, ohlc } = msg;
+        use self::schema::ohlc::*;
+
         let conn: &ConnType = &self.0.get().unwrap();
 
         let new_ohlc: Vec<DbOhlc> = ohlc.iter().map(|candle| {
@@ -119,8 +119,61 @@ impl Handler<SaveOhlc> for Database {
     }
 }
 
-pub struct OhlcCounts {
-}
+pub struct OhlcCounts {}
+
 impl Message for OhlcCounts {
-    type Result = HashMap<PairId,usize>;
+    type Result = HashMap<PairId, usize>;
+}
+
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct OhlcHistory {
+    pair: PairId,
+    since: i64,
+}
+
+impl Message for OhlcHistory {
+    type Result = Result<BTreeMap<u64, Ohlc>>;
+}
+
+impl OhlcHistory {
+    pub fn new(pair: PairId, since: i64) -> Self {
+        OhlcHistory {
+            pair,
+            since,
+        }
+    }
+}
+
+
+impl Handler<OhlcHistory> for Database {
+    type Result = Result<BTreeMap<u64, Ohlc>>;
+
+    fn handle(&mut self, msg: OhlcHistory, ctx: &mut Self::Context) -> Self::Result {
+        use self::schema::ohlc::*;
+
+        let conn: &ConnType = &self.0.get().unwrap();
+
+        let min_time = msg.since as i64;
+
+        let q = schema::ohlc::table
+            .filter(schema::ohlc::time.ge(min_time))
+            .filter(schema::ohlc::exchange.eq(exchange))
+            .filter(schema::ohlc::pair.eq(msg.pair.pair().to_string()))
+            .order(schema::ohlc::time.asc());
+
+        let vals: BTreeMap<u64, Ohlc> = q.load::<DbOhlc>(conn).expect("Could not query DB")
+            .iter()
+            .map(|c| (c.time as u64, Ohlc {
+                time: (c.time) as _,
+                open: c.open,
+                high: c.high,
+                low: c.high,
+                close: c.close,
+                vol: c.vol,
+
+            })).collect();
+
+        return Ok(vals);
+    }
 }

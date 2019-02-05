@@ -13,6 +13,9 @@ K8S_FILES 	  := $(shell find $(K8S_DIR) -name '*.yaml' | sed 's:$(K8S_DIR)/::g')
 
 LOAD_VARS = $(foreach v,$(DOCKER_FILES), env $$( cat $(v) ))
 
+.PHONY: deploy
+deploy: build-k8s $(DOCKER_FILES)
+	kubectl apply -f $(K8S_BUILD_DIR)
 
 ./target/docker/%: phony
 	APP_NAME=$* $(MAKE) -C . -f ./ops/make/App.mk ./target/docker/$*
@@ -28,13 +31,14 @@ build-k8s: $(K8S_BUILD_DIR) $(DOCKER_FILES)
 		$(LOAD_VARS) envsubst <$(K8S_DIR)/$$file >$(K8S_BUILD_DIR)/$$file ;\
 	done
 
-.PHONY: deploy
-deploy: build-k8s $(DOCKER_FILES)
-	kubectl apply -f $(K8S_BUILD_DIR)
-
-
+ARCHIVE=xhorni14.zip
 clean:
 	rm -rf ./target
+	rm -rf $(ARCHIVE)
 
 doc:
-	$(MAKE) -C thesis
+	$(MAKE) pdf -C thesis
+
+archive:
+	zip -r $(ARCHIVE) . -x "target/*" -x $(ARCHIVE) -x ".git/*"  -x "thesis/out" -x "cryptrader/*"
+

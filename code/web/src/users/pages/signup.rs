@@ -16,7 +16,7 @@ impl Signup {
             return Ok(redirect_to(request, "homepage"));
         }
 
-        let base: BaseTemplateInfo = comp_await!(BaseTemplateInfo::from_request(&request))?;
+        let base: BaseTemplateInfo = await_compat!(BaseTemplateInfo::from_request(&request))?;
         return Ok(render(Self { base, errors: None }));
     }
 
@@ -26,7 +26,7 @@ impl Signup {
             return Ok(redirect_to(request, "homepage"));
         }
 
-        let base: BaseTemplateInfo = comp_await!(BaseTemplateInfo::from_request(&request))?;
+        let base: BaseTemplateInfo = await_compat!(BaseTemplateInfo::from_request(&request))?;
 
         let mut user = user.into_inner();
         if let Err(e) = user.validate() {
@@ -35,7 +35,7 @@ impl Signup {
 
         user.password = djangohashers::make_password(&user.password);
 
-        match comp_await!(request.state().db.send(user))? {
+        match await_compat!(request.state().db.send(user))? {
             Ok(user) => {
                 request.session().set("email", user.email).unwrap();
                 request.session().set("uid", user.id).unwrap();

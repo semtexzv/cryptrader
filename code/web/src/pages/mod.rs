@@ -20,7 +20,7 @@ pub struct Homepage {
 }
 
 async fn root(req: HttpRequest<State>) -> Result<impl Responder> {
-    let base = comp_await!(BaseTemplateInfo::from_request(&req))?;
+    let base = await_compat!(BaseTemplateInfo::from_request(&req))?;
     Ok(render(Homepage { base }))
 }
 

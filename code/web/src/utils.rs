@@ -5,7 +5,7 @@ use std::borrow::Borrow;
 use common::validator::ValidationErrors;
 use std::future::Future;
 
-pub use actix_web_async_await::{await as comp_await, compat};
+pub use actix_web_async_await::*;
 
 use crate::users::middleware::UserAuthentication;
 

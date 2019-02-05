@@ -28,53 +28,47 @@ impl Actor for BitfinexOhlcSource {
 
 
 impl BitfinexOhlcSource {
-
-    pub fn new_sync(comm : CommAddr) -> impl Future<Item=Addr<Self>,Error=Error> {
-        actix_web_async_await::compat(Self::new)(comm)
-    }
-
-    pub async fn new(comm: CommAddr) -> Result<Addr<Self>, Error> {
+    pub fn new(comm: CommAddr) -> impl Future<Item=Addr<Self>, Error=Error> {
         let client = ws::Client::new("wss://api.bitfinex.com/ws/2").connect().from_err();
         let pairs = ::apis::bitfinex::get_available_pairs();
+        let node = comm.connect_to(format!("tcp://{}:42042", crate::ingest::SERVICE_NAME));
 
-        let ((rx, mut tx), pairs) = comp_await!(Future::join(client, pairs))?;
+        Future::join3(client, pairs, node).map(|((rx, mut tx), pairs, node)| {
+            let interval = OhlcPeriod::Min1;
+            let interval_secs = interval.seconds();
 
-        let interval = OhlcPeriod::Min1;
-        let interval_secs = interval.seconds();
+            println!("Bitfinex: Connected");
 
-        println!("Bitfinex: Connected");
-
-        for pair in pairs.iter() {
-            let trade_sym = pair.bfx_trade_sym();
-            let ohlc_sub = json!({
+            for pair in pairs.iter() {
+                let trade_sym = pair.bfx_trade_sym();
+                let ohlc_sub = json!({
                         "event" : "subscribe",
                         "channel" : "candles",
                         "key" : format!("trade:{}:{}", interval.bfx_str() ,trade_sym),
                     });
 
-            let ticker_sub = json!({
+                let ticker_sub = json!({
                         "event" : "subscribe",
                         "channel" : "ticker",
                         "symbol" : pair.to_bfx_pair(),
                     });
-            tx.text(json::to_string(&ohlc_sub).unwrap());
-            tx.text(json::to_string(&ticker_sub).unwrap());
-        }
-        println!("Send {} pair requests", pairs.len());
-
-        let node = comp_await!(comm.connect_to(format!("tcp://{}:42042", crate::ingest::SERVICE_NAME)))?;
-
-        Ok(Actor::create(|ctx| {
-            BitfinexOhlcSource::add_stream(rx, ctx);
-
-            BitfinexOhlcSource {
-                ingest_node: node,
-                comm,
-                ws: tx,
-                ohlc_ids: BTreeMap::new(),
-                ticker_ids: BTreeMap::new(),
+                tx.text(json::to_string(&ohlc_sub).unwrap());
+                tx.text(json::to_string(&ticker_sub).unwrap());
             }
-        }))
+            println!("Send {} pair requests", pairs.len());
+
+            Actor::create(|ctx| {
+                BitfinexOhlcSource::add_stream(rx, ctx);
+
+                BitfinexOhlcSource {
+                    ingest_node: node,
+                    comm,
+                    ws: tx,
+                    ohlc_ids: BTreeMap::new(),
+                    ticker_ids: BTreeMap::new(),
+                }
+            })
+        })
     }
 }
 
@@ -105,7 +99,7 @@ impl StreamHandler<ws::Message, ws::ProtocolError> for BitfinexOhlcSource {
             if let Ok(msg) = json::from_str::<api::Msg>(&str) {
                 match msg {
                     api::Msg(id, ref t, ref val) if t != "hb" && id != 0 => {
-                        let mut found = false;
+                        let found = false;
                         if let Some(pair) = self.ohlc_ids.get(&id) {
                             let spec = OhlcSpec::new_m("bitfinex", pair);
                             if let Ok(snap) = json::from_value::<Vec<api::BfxCandle>>(val.clone()) {

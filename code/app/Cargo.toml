@@ -13,12 +13,6 @@ serde = "*"
 
 actix-net = { path = "../deps/actix-net" }
 actix-arch = { path = "../deps/actix-arch" }
-actix-web-async-await = { path = "../deps/actix-web-async-await"}
 
 apis = { path = "../deps/apis" }
 db = { path = "../deps/db" }
-
-
-# sentry = { version = "0.12.0", features = ["with_failure","with_log"] }
-# sentry-actix = "0.12.0"
-

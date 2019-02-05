@@ -28,7 +28,4 @@ db = { path = "../deps/db" }
 
 askama = { version  = "*", features = ["actix-web", "serde-json"]   }
 
-# sentry =  { version = "0.12.0", features = ["with_failure","with_log"] }
-# sentry-actix = "0.12.0"
-
 djangohashers = "^0.3"

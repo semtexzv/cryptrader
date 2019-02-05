@@ -21,7 +21,6 @@ use common::{
 };
 
 use diesel::prelude::*;
-use diesel::*;
 use diesel_migrations::*;
 
 embed_migrations!("./migrations");
@@ -71,22 +70,6 @@ impl Actor for Database {
     type Context = SyncContext<Self>;
 }
 
-
-pub struct OhlcHistory {
-    exch: String,
-    pair: PairId,
-    since: Option<u64>,
-}
-
-impl OhlcHistory {
-    pub fn new(exch: String, pair: PairId, since: impl Into<Option<u64>>) -> Self {
-        OhlcHistory {
-            exch,
-            pair,
-            since: since.into(),
-        }
-    }
-}
 
 /*
 

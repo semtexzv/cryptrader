@@ -3,4 +3,6 @@ extern crate common;
 extern crate actix_net;
 
 pub mod prelude;
-pub mod discovery;
+
+pub mod pubsub;
+pub mod svc;

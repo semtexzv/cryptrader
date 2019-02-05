@@ -1,4 +1,4 @@
-#![feature(box_syntax, core_intrinsics)]
+#![feature(box_syntax, core_intrinsics, trait_alias)]
 #![feature(specialization)]
 
 #![allow(unused_imports, dead_code, unused_variables)]
@@ -71,6 +71,7 @@ use common::prelude::*;
 use futures::prelude::*;
 pub use base::{
     msg::{
+        Remotable,
         RemoteMessage,
         RemoteError,
         RegisterRecipientHandler,
@@ -94,7 +95,7 @@ use addr::{
     comm::Communicator,
     msg::RegisterRemoteActor,
 };
-
+#[derive(Clone)]
 pub struct CommAddr {
     addr: Addr<Communicator>
 }
@@ -153,6 +154,7 @@ pub enum Subscriber {}
 
 pub struct Publisher {}
 
+#[derive(Clone)]
 pub struct NodeAddr {
     addr: Addr<BaseNode>
 }

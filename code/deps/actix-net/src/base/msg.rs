@@ -34,11 +34,15 @@ pub trait RemoteMessage: Message + Send + Serialize + DeserializeOwned + Send
     }
 }
 
-impl<T: Message + Send + Serialize + DeserializeOwned + Send> RemoteMessage for T
-    where Self::Result: Send + Serialize + DeserializeOwned + Send,
-{}
+pub trait Remotable = Send + Serialize + DeserializeOwned + 'static;
+
+impl<T: Message + Remotable> RemoteMessage for T
+    where Self::Result: Remotable {}
+
 
 pub trait Announcement: RemoteMessage<Result=()> {}
+
+impl<T: RemoteMessage<Result=()>> Announcement for T{}
 
 /// Request for connection to remote node, sent by application code
 #[derive(Debug, Clone)]

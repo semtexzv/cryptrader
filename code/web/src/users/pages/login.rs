@@ -18,12 +18,12 @@ impl Login {
         if request.is_authenticated() {
             return Ok(redirect_to(request, "homepage"));
         }
-        let base: BaseTemplateInfo = comp_await!(BaseTemplateInfo::from_request(&request))?;
+        let base: BaseTemplateInfo = await_compat!(BaseTemplateInfo::from_request(&request))?;
         return Ok(render(Self { base, errors: None }));
     }
 
     pub async fn post_async((request, login): (HttpRequest<State>, Form<UserLogin>)) -> Result<HttpResponse> {
-        let base: BaseTemplateInfo = comp_await!(BaseTemplateInfo::from_request(&request))?;
+        let base: BaseTemplateInfo = await_compat!(BaseTemplateInfo::from_request(&request))?;
 
         let url = request.url_for("homepage", &[""; 0]).unwrap();
         let homepage = Ok(redirect(url.as_str()));
@@ -39,7 +39,7 @@ impl Login {
         }
 
         let password = login.password.clone();
-        let res: Result<db::User, _> = comp_await!(request.state().db.send(login))?;
+        let res: Result<db::User, _> = await_compat!(request.state().db.send(login))?;
 
         return match res {
             Ok(user) => {
