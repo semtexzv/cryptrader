@@ -1,19 +1,7 @@
 use crate::prelude::*;
-use crate::base::{
-    comm::{
-        ZMQ_CTXT,
-        BaseCommunicator,
-    },
+use crate::base::comm::{
+    BaseCommunicator, ZMQ_CTXT,
 };
-use futures::{
-    sync::oneshot::Sender,
-    sync::mpsc::{
-        UnboundedSender,
-        UnboundedReceiver,
-        unbounded,
-    },
-};
-
 
 pub struct Publisher {
     uuid: Uuid,
@@ -31,6 +19,7 @@ impl Publisher {
             .bind(&addr)
             .build()
     }
+
     fn socket_to(uuid: &Uuid, addr: &str) -> Result<Pub, tzmq::Error> {
         Pub::builder(ZMQ_CTXT.clone())
             .identity(uuid.as_bytes())
@@ -62,16 +51,57 @@ impl Publisher {
                 sender: tx,
             }
         }));
-        /*
-        Ok(Arbiter::start(move |ctx: &mut Context<BaseCommunicator>| {
-            BaseCommunicator {
+    }
+}
+
+pub struct Subscriber {
+    uuid: Uuid,
+}
+
+impl Actor for Subscriber {
+    type Context = Context<Self>;
+}
+
+impl StreamHandler<Multipart, tzmq::Error> for Subscriber {
+    fn handle(&mut self, item: Multipart, ctx: &mut Self::Context) {
+        unimplemented!()
+    }
+}
+
+impl Subscriber {
+    fn socket_on(uuid: &Uuid, addr: &str) -> Result<Sub, tzmq::Error> {
+        Sub::builder(ZMQ_CTXT.clone())
+            .identity(uuid.as_bytes())
+            .bind(&addr)
+            .filter(b"")
+            .build()
+    }
+
+    fn socket_to(uuid: &Uuid, addr: &str) -> Result<Sub, tzmq::Error> {
+        Sub::builder(ZMQ_CTXT.clone())
+            .identity(uuid.as_bytes())
+            .connect(&addr)
+            .filter(b"")
+            .build()
+    }
+
+    fn new(comm: &BaseCommunicator, addr: &str, on: bool) -> Result<Addr<Self>, failure::Error> {
+        let uuid = comm.uuid;
+
+        let socket = if on {
+            Self::socket_on(&uuid, addr)
+        } else {
+            Self::socket_to(&uuid, addr)
+        }?;
+
+        let stream = socket.stream();
+
+        return Ok(Subscriber::create(move |ctx| {
+            Self::add_stream(stream, ctx);
+
+            Subscriber {
                 uuid,
-                registry: HashMap::new(),
-                router_sink: tx,
-                nodes: HashMap::new(),
-                node_names: HashMap::new(),
             }
-        }))
-        */
+        }));
     }
 }

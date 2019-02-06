@@ -8,4 +8,4 @@ path = "../../common"
 
 [dependencies]
 serde = "*"
-actix-net= { path = "../actix-net"}
+actix-comm = { path = "../actix-comm"}

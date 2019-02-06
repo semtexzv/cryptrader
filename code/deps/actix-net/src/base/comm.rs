@@ -1,46 +1,17 @@
-use ::prelude::*;
+use crate::prelude::*;
+use crate::msg::*;
 
-use std::collections::HashMap;
-use tzmq::{
-    self,
-    Multipart,
-    async_types::{
-        MultipartSink,
-        MultipartStream,
-        MultipartSinkStream,
-    },
-};
-use futures::sync::oneshot;
-use common::bytes::Bytes;
+use crate::base::node::BaseNode;
+use crate::base::recipient::LocalRecipientHandler;
+use crate::base::recipient::RemoteMessageHandler;
 
-use futures::{
-    sync::oneshot::Sender,
-    sync::mpsc::{
-        UnboundedSender,
-        UnboundedReceiver,
-        unbounded,
-    },
-};
 
-use super::{
-    msg::*,
-    node::{
-        BaseNode,
-    },
-    recipient::{
-        RemoteMessageHandler, LocalRecipientHandler,
-    },
-};
 
 lazy_static! {
     pub(crate) static ref ZMQ_CTXT  : Arc<zmq::Context> = Arc::new(zmq::Context::new());
 }
 
 pub(crate) const HEARTBEAT_INTERVAL: Duration = Duration::from_secs(10);
-
-pub type NodeIdentity = Vec<u8>;
-pub type MsgType = Cow<'static, str>;
-type IdentifiedMessage = (NodeIdentity, MessageWrapper);
 
 
 pub(crate) struct NodeInfo {
@@ -114,7 +85,7 @@ impl BaseCommunicator {
     }
 }
 
-impl StreamHandler<(NodeIdentity, MessageWrapper), failure::Error> for BaseCommunicator {
+impl StreamHandler<IdentifiedMessage, failure::Error> for BaseCommunicator {
     fn handle(&mut self, (node_identity, data): (NodeIdentity, MessageWrapper), ctx: &mut Self::Context) {
         let id = Uuid::from_slice(&node_identity).unwrap();
 
@@ -213,21 +184,21 @@ impl Handler<ConnectToNode> for BaseCommunicator {
     }
 }
 
-impl<M> Handler<RegisterRecipientHandler<M>> for BaseCommunicator
-    where M: RemoteMessage + Send + Serialize + DeserializeOwned + 'static,
-          M::Result: Send + Serialize + DeserializeOwned + 'static
+impl<M> Handler<RegisterHandler<M>> for BaseCommunicator
+    where M: RemoteMessage + Remotable,
+          M::Result: Remotable
 
 {
     type Result = ();
 
-    fn handle(&mut self, reg_msg: RegisterRecipientHandler<M>, ctx: &mut Self::Context) {
+    fn handle(&mut self, reg_msg: RegisterHandler<M>, ctx: &mut Self::Context) {
         self.registry.insert(M::type_id(), Box::new(LocalRecipientHandler::new(reg_msg.recipient)));
     }
 }
 
 impl<M> Handler<DispatchRemoteRequest<M>> for BaseCommunicator
-    where M: RemoteMessage + Send + Serialize + DeserializeOwned + 'static,
-          M::Result: Send + Serialize + DeserializeOwned + 'static
+    where M: RemoteMessage + Remotable,
+          M::Result: Remotable
 {
     type Result = Response<M::Result, RemoteError>;
 

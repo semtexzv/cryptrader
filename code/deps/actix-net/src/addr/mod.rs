@@ -1,18 +1,15 @@
-use ::prelude::*;
+use crate::prelude::*;
+use crate::msg::*;
 
 pub mod comm;
 pub mod msg;
-
-use base::{
-    msg::RemoteMessage,
-};
 
 pub trait MessageRegistry<A: RemoteActor> {
     fn register<M>(&mut self)
         where A: Handler<M>,
               A::Context: actix::dev::ToEnvelope<A, M>,
-              M: RemoteMessage + Send + Serialize + DeserializeOwned + 'static,
-              M::Result: Send + Serialize + DeserializeOwned + 'static;
+              M: RemoteMessage + Remotable,
+              M::Result: Remotable;
 }
 
 
@@ -49,6 +46,7 @@ pub struct RemoteAddr<A: RemoteActor> {
     pub(crate) r: RemoteRef<A>,
     pub(crate) comm: Addr<comm::Communicator>,
 }
+
 impl<A, M, B> actix::dev::MessageResponse<A, M> for RemoteAddr<B>
     where A: Actor,
           B: RemoteActor,
@@ -77,10 +75,6 @@ impl<A: RemoteActor> RemoteAddr<A> {
 }
 
 
-
-
-
-
 impl<A: RemoteActor> RemoteAddr<A> {
     pub fn from_ref(ctx: Addr<comm::Communicator>, r: &RemoteRef<A>) -> Self {
         return RemoteAddr {
@@ -91,7 +85,7 @@ impl<A: RemoteActor> RemoteAddr<A> {
 
     pub fn send<M>(&self, msg: M) -> msg::AddressedRequest<M>
         where A: Handler<M>,
-              M: RemoteMessage + Send + Serialize + DeserializeOwned + 'static,
+              M: RemoteMessage + Remotable,
               M::Result: Send + Serialize + DeserializeOwned
     {
         let rec = self.comm.clone().recipient::<msg::SendAddressedMessage<M>>();
@@ -106,7 +100,7 @@ impl<A: RemoteActor> RemoteAddr<A> {
     }
     pub fn do_send<M>(&self, msg: M)
         where A: Handler<M>,
-              M: RemoteMessage + Send + Serialize + DeserializeOwned + 'static,
+              M: RemoteMessage + Remotable,
               M::Result: Send + Serialize + DeserializeOwned
     {
         self.comm.do_send(msg::SendAddressedMessage {
@@ -119,7 +113,7 @@ impl<A: RemoteActor> RemoteAddr<A> {
 
     pub fn try_send<M>(&self, msg: M) -> Result<(), SendError<M>>
         where A: Handler<M>,
-              M: RemoteMessage + Send + Serialize + DeserializeOwned + 'static,
+              M: RemoteMessage + Remotable,
               M::Result: Send + Serialize + DeserializeOwned
     {
         self.comm.try_send(msg::SendAddressedMessage {

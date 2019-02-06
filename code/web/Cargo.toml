@@ -20,7 +20,7 @@ serde = "*"
 actix-web = "*"
 actix-web-async-await = { path = "../deps/actix-web-async-await"}
 
-actix-net = { path = "../deps/actix-net" }
+actix-comm = { path = "../deps/actix-comm" }
 actix-arch = { path = "../deps/actix-arch" }
 
 apis = { path = "../deps/apis" }

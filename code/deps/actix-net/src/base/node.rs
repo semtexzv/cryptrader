@@ -1,29 +1,8 @@
-use ::prelude::*;
-use std::sync::Arc;
+use crate::prelude::*;
+use crate::msg::*;
+use crate::base::comm::BaseCommunicator;
+use crate::base::comm::HEARTBEAT_INTERVAL;
 
-use tzmq::{
-    self,
-    async_types::{MultipartSink, MultipartStream, MultipartSinkStream},
-};
-
-use futures::sync::oneshot;
-use futures::sync::mpsc::{
-    UnboundedSender, UnboundedReceiver,
-};
-use futures::sync::mpsc::unbounded;
-
-
-use super::{
-    msg::*,
-    comm::{
-        HEARTBEAT_INTERVAL,
-        BaseCommunicator,
-        MsgType,
-    },
-    recipient::{
-        RemoteRecipient, RemoteRequest,
-    },
-};
 
 /// Struct that holds outgoing connection to one separate node
 /// It sends reqeuests, and receives responses over this connection,
@@ -129,8 +108,8 @@ impl StreamHandler<Multipart, failure::Error> for BaseNode {
 }
 
 impl<M> Handler<SendRemoteRequest<M>> for BaseNode
-    where M: RemoteMessage + Send + Serialize + DeserializeOwned + 'static,
-          M::Result: Send + Serialize + DeserializeOwned + 'static
+    where M: RemoteMessage + Remotable,
+          M::Result: Remotable
 {
     type Result = Response<M::Result, RemoteError>;
 

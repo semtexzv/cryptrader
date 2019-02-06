@@ -5,17 +5,8 @@ pub use std::{
 };
 pub use futures::{
     prelude::*,
-    Stream,
-    Sink,
-    sync::{
-        oneshot,
-        oneshot::Sender,
-        mpsc::{
-            UnboundedSender,
-            UnboundedReceiver,
-            unbounded,
-        },
-    },
+    sync::mpsc::{channel, Sender, Receiver},
+    sync::oneshot::{channel as oneshot, Sender as OneSender, Receiver as OneReceiver},
 };
 
 pub use uuid::Uuid;
@@ -36,4 +27,3 @@ pub use tzmq::{
         MultipartSinkStream,
     },
 };
-

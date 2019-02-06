@@ -1,16 +1,7 @@
-use ::prelude::*;
+use crate::prelude::*;
+use crate::msg::*;
+use crate::base::node::BaseNode;
 
-use futures::sync::oneshot::{self, Sender};
-use tokio::timer::{
-    Delay, Timeout,
-};
-use std::time::{
-    Duration, Instant,
-};
-use super::{
-    node::{BaseNode},
-    msg::*,
-};
 
 pub(crate) trait RemoteMessageHandler: Send {
     fn handle(&self, msg: WrappedType, sender: Sender<Result<WrappedType, RemoteError>>);
@@ -54,15 +45,15 @@ impl<M> RemoteMessageHandler for LocalRecipientHandler<M>
 
 #[must_use = "You should use RemoteRequests, dropping them means message response is ignored"]
 pub struct RemoteRequest<M>
-    where M: RemoteMessage + Send + Serialize + DeserializeOwned + 'static,
-          M::Result: Send + Serialize + DeserializeOwned
+    where M: RemoteMessage + Remotable,
+          M::Result: Remotable
 {
     inner: Request<BaseNode, SendRemoteRequest<M>>,
 }
 
 impl<M> RemoteRequest<M>
-    where M: RemoteMessage + Send + Serialize + DeserializeOwned,
-          M::Result: Send + Serialize + DeserializeOwned
+    where M: RemoteMessage + Remotable,
+          M::Result: Remotable
 {
     pub(crate) fn new(inner: Request<BaseNode, SendRemoteRequest<M>>) -> Self {
         RemoteRequest {
@@ -72,8 +63,8 @@ impl<M> RemoteRequest<M>
 }
 
 impl<M> ::futures::Future for RemoteRequest<M>
-    where M: RemoteMessage + Send + Serialize + DeserializeOwned,
-          M::Result: Send + Serialize + DeserializeOwned
+    where M: RemoteMessage + Remotable,
+          M::Result: Remotable
 {
     type Item = M::Result;
     type Error = RemoteError;
@@ -90,15 +81,15 @@ impl<M> ::futures::Future for RemoteRequest<M>
 }
 
 pub struct RemoteRecipient<M>
-    where M: RemoteMessage + Send + Serialize + DeserializeOwned,
-          M::Result: Send + Serialize + DeserializeOwned
+    where M: RemoteMessage + Remotable,
+          M::Result: Remotable,
 {
     node: Addr<BaseNode>,
     _p: PhantomData<M>,
 }
 
 impl<M> RemoteRecipient<M>
-    where M: RemoteMessage + Send + Serialize + DeserializeOwned + 'static,
+    where M: RemoteMessage + Remotable,
           M::Result: Send + Serialize + DeserializeOwned
 {
     pub(crate) fn new(node: Addr<BaseNode>) -> Self {

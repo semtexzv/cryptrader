@@ -11,7 +11,7 @@ path = "../common"
 clap = "*"
 serde = "*"
 
-actix-net = { path = "../deps/actix-net" }
+actix-comm = { path = "../deps/actix-comm" }
 actix-arch = { path = "../deps/actix-arch" }
 
 apis = { path = "../deps/apis" }

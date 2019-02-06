@@ -1,6 +1,6 @@
 #![feature(core_intrinsics)]
 extern crate common;
-extern crate actix_net;
+extern crate actix_comm;
 
 pub mod prelude;
 

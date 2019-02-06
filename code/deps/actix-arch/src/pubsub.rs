@@ -1,5 +1,5 @@
 use crate::prelude::*;
-use actix_net::base::msg::Announcement;
+use actix_comm::msg::Announcement;
 
 
 pub struct Subscribe<A: Announcement + Clone + 'static> {

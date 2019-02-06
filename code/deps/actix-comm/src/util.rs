@@ -1,0 +1,69 @@
+use crate::prelude::*;
+use crate::msg::*;
+
+
+#[derive(Message)]
+#[rtype(result = "Result<WrappedType,RemoteError>")]
+pub(crate) struct ErasedMessage(MsgType, WrappedType);
+
+pub(crate) trait MessageHandler: Send {
+    fn handle(&self, typ: MsgType, msg: WrappedType, sender: OneSender<Result<WrappedType, RemoteError>>);
+}
+
+
+pub(crate) struct RecipientHandler<M>(pub(crate) Recipient<M>)
+    where M: RemoteMessage + Remotable,
+          M::Result: Remotable;
+
+impl<M> MessageHandler for RecipientHandler<M>
+    where M: RemoteMessage + Remotable,
+          M::Result: Remotable
+{
+    fn handle(&self, typ: MsgType, msg: WrappedType, sender: OneSender<Result<WrappedType, RemoteError>>) {
+        let msg = M::from_wrapped(&msg).unwrap();
+        let fut = self.0.send(msg);
+        let fut = fut.then(move |res| {
+            let reply = res
+                .map(|data| M::res_to_wrapped(&data).unwrap())
+                .map_err(Into::into);
+            sender.send(reply).unwrap();
+            Ok::<_, ()>(())
+        });
+
+        Arbiter::spawn(fut);
+    }
+}
+
+pub(crate) struct DefaultHandler(pub(crate) Recipient<ErasedMessage>);
+
+impl MessageHandler for DefaultHandler {
+    fn handle(&self, typ: MsgType, msg: WrappedType, sender: OneSender<Result<WrappedType, RemoteError>>) {
+        let fut = self.0.send(ErasedMessage(typ, msg));
+        let fut = fut.then(move |res| {
+            let res = res.map_err(|_| RemoteError::MailboxClosed).and_then(|e| e);
+            sender.send(res).unwrap();
+            Ok::<_, ()>(())
+        });
+
+        Arbiter::spawn(fut);
+    }
+}
+
+#[derive(Default)]
+pub(crate) struct HandlerRegistry(HashMap<MsgType, Box<MessageHandler>>, Option<Box<MessageHandler>>);
+
+impl HandlerRegistry {
+    pub fn register(&mut self, typ: MsgType, handler: Box<MessageHandler>) {
+        self.0.insert(typ, handler);
+    }
+    pub fn get(&self, typ: &MsgType) -> Option<&Box<MessageHandler>> {
+        return self.0.get(typ).or(self.1.as_ref());
+    }
+    pub fn unregister(&mut self, typ: &MsgType) -> Option<Box<MessageHandler>> {
+        self.0.remove(typ)
+    }
+    pub fn set_default(&mut self, handler: Box<MessageHandler>) {
+        self.1 = Some(handler)
+    }
+}
+

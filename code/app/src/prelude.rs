@@ -1,6 +1,6 @@
 pub use common::*;
 
-pub use actix_net::*;
+pub use actix_comm::*;
 pub use actix_arch::{
     self,
     pubsub::{PubSub, Subscribe, Unsubscribe},

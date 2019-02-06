@@ -1,34 +1,17 @@
-use ::prelude::*;
+use crate::prelude::*;
+use crate::msg::*;
 
-use super::{
-    RemoteActor, RemoteRef, RemoteAddr,
-    msg::RegisterRemoteActor,
-};
-use base::{
-    comm::{
-        BaseCommunicator,
-        NodeIdentity,
-    },
-    msg::RemoteMessage,
-};
+use crate::base::comm::BaseCommunicator;
+use crate::addr::msg::RegisterRemoteActor;
+use crate::addr::RemoteActor;
+use crate::addr::RemoteAddr;
+use crate::addr::msg::AddressedMessage;
+use crate::addr::RemoteRef;
+use crate::addr::msg::SendAddressedMessage;
+use crate::base::node::BaseNode;
 
-
-use super::{
-    msg::{
-        SendAddressedMessage, AddressedMessage,
-    },
-};
-use base::{
-    msg::{
-        RemoteError, RegisterRecipientHandler,
-    }
-};
-
-
-use common::HashMap;
 
 pub(crate) type ActorType = &'static str;
-pub(crate) type MsgType = Cow<'static, str>;
 
 
 pub struct Communicator {
@@ -53,8 +36,8 @@ impl Communicator {
         })
     }
     pub(crate) fn recipient_map<M>(&mut self) -> &mut HashMap<Uuid, Recipient<M>>
-        where M: RemoteMessage + Send + Serialize + DeserializeOwned + 'static,
-              M::Result: Send + Serialize + DeserializeOwned + 'static
+        where M: RemoteMessage + Remotable,
+              M::Result: Remotable
     {
         self.recipients.entry::<HashMap<Uuid, Recipient<M>>>().or_insert_with(|| HashMap::new())
     }
@@ -82,14 +65,14 @@ impl<A: RemoteActor> Handler<RegisterRemoteActor<A>> for Communicator {
         impl<'a, A: RemoteActor> super::MessageRegistry<A> for Registrar<'a, A> {
             fn register<M>(&mut self) where A: Handler<M>,
                                             A::Context: actix::dev::ToEnvelope<A, M>,
-                                            M: RemoteMessage + Send + Serialize + DeserializeOwned + 'static,
-                                            M::Result: Send + Serialize + DeserializeOwned + 'static {
+                                            M: RemoteMessage + Remotable,
+                                            M::Result: Remotable {
                 let rec_map: &mut HashMap<Uuid, Recipient<M>> =
                     self.comm.recipients.entry::<HashMap<Uuid, Recipient<M>>>().or_insert_with(|| HashMap::new());
 
                 rec_map.insert(self.actor_id, self.actor_addr.clone().recipient());
 
-                self.comm.base.do_send(RegisterRecipientHandler::new(self.addr.clone().recipient::<AddressedMessage<M>>()));
+                self.comm.base.do_send(RegisterHandler::new(self.addr.clone().recipient::<AddressedMessage<M>>()));
             }
         }
 
@@ -99,6 +82,7 @@ impl<A: RemoteActor> Handler<RegisterRemoteActor<A>> for Communicator {
             comm: self,
             addr: ctx.address(),
         });
+        // TODO: Insert name here
 
         let add = RemoteAddr {
             r: RemoteRef {
@@ -113,8 +97,8 @@ impl<A: RemoteActor> Handler<RegisterRemoteActor<A>> for Communicator {
 }
 
 impl<M> Handler<SendAddressedMessage<M>> for Communicator
-    where M: RemoteMessage + Send + Serialize + DeserializeOwned + 'static,
-          M::Result: Send + Serialize + DeserializeOwned + 'static
+    where M: RemoteMessage + Remotable,
+          M::Result: Remotable
 {
     type Result = Response<M::Result, RemoteError>;
 
@@ -125,56 +109,49 @@ impl<M> Handler<SendAddressedMessage<M>> for Communicator
             actor_id: msg.actor_id,
         };
 
-        let dispatch = ::base::msg::DispatchRemoteRequest {
-            req: ::base::msg::SendRemoteRequest::<AddressedMessage<M>>(addressed),
+        let dispatch = DispatchRemoteRequest {
+            req: SendRemoteRequest::<AddressedMessage<M>>(addressed),
             node_id: msg.node_id,
         };
 
-        Response::async(self.base.send(dispatch).flatten().flatten())
+        Response::r#async(self.base.send(dispatch).flatten().flatten())
     }
 }
 
 
 impl<M> Handler<AddressedMessage<M>> for Communicator
-    where M: RemoteMessage + Send + Serialize + DeserializeOwned + 'static,
-          M::Result: Send + Serialize + DeserializeOwned + 'static
+    where M: RemoteMessage + Remotable,
+          M::Result: Remotable
 {
     type Result = Response<M::Result, RemoteError>;
 
     fn handle(&mut self, msg: AddressedMessage<M>, ctx: &mut Self::Context) -> Self::Result {
         let rec = self.recipient_map::<M>();
         if let Some(act) = rec.get(&msg.actor_id) {
-            return Response::async(act.send(msg.msg).map_err(|_| unimplemented!()));
+            return Response::r#async(act.send(msg.msg).map_err(|_| unimplemented!()));
         }
         return Response::reply(Err(RemoteError::ActorNotFound));
     }
 }
 
 
-use base::{
-    node::{BaseNode},
-    msg::{
-        ConnectToNode,
-    }
-};
-
 impl Handler<ConnectToNode> for Communicator {
     type Result = Response<Addr<BaseNode>, failure::Error>;
 
     fn handle(&mut self, msg: ConnectToNode, ctx: &mut Self::Context) -> Self::Result {
-        return Response::async(self.base.send(msg).flatten())
+        return Response::r#async(self.base.send(msg).flatten())
     }
 }
 
 
-impl<M> Handler<RegisterRecipientHandler<M>> for Communicator
-    where M: RemoteMessage + Send + Serialize + DeserializeOwned + 'static,
-          M::Result: Send + Serialize + DeserializeOwned + 'static
+impl<M> Handler<RegisterHandler<M>> for Communicator
+    where M: RemoteMessage + Remotable,
+          M::Result: Remotable
 
 {
     type Result = ();
 
-    fn handle(&mut self, reg_msg: RegisterRecipientHandler<M>, ctx: &mut Self::Context) {
+    fn handle(&mut self, reg_msg: RegisterHandler<M>, ctx: &mut Self::Context) {
         self.base.do_send(reg_msg);
     }
 }

@@ -1,17 +1,18 @@
-use ::prelude::*;
+use crate::prelude::*;
+use crate::base::node::BaseNode;
 
-use super::node::BaseNode;
-use common::bytes::Bytes;
-use std::borrow::Cow;
 
-use super::comm::MsgType;
+pub(crate) type MsgType = Cow<'static, str>;
 
-pub type WrappedType = json::Value;
+pub type NodeIdentity = Vec<u8>;
+pub(crate) type IdentifiedMessage = (NodeIdentity, MessageWrapper);
+pub(crate) type WrappedType = json::Value;
 
+pub trait Remotable = Send + Serialize + DeserializeOwned + 'static;
 
 /// Message that can be sent across Process barrier
-pub trait RemoteMessage: Message + Send + Serialize + DeserializeOwned + Send
-    where Self::Result: Send + Serialize + DeserializeOwned + Send,
+pub trait RemoteMessage: Message + Remotable
+    where Self::Result: Remotable
 {
     fn type_id() -> MsgType {
         unsafe { ::std::intrinsics::type_name::<Self>().into() }
@@ -34,15 +35,11 @@ pub trait RemoteMessage: Message + Send + Serialize + DeserializeOwned + Send
     }
 }
 
-pub trait Remotable = Send + Serialize + DeserializeOwned + 'static;
-
-impl<T: Message + Remotable> RemoteMessage for T
-    where Self::Result: Remotable {}
-
-
 pub trait Announcement: RemoteMessage<Result=()> {}
 
-impl<T: RemoteMessage<Result=()>> Announcement for T{}
+impl<T: Message + Remotable> RemoteMessage for T where Self::Result: Remotable {}
+
+impl<T: RemoteMessage<Result=()>> Announcement for T {}
 
 /// Request for connection to remote node, sent by application code
 #[derive(Debug, Clone)]
@@ -71,61 +68,61 @@ pub(crate) struct NodeConnected {
 
 
 /// Message used to register recipients for remote messages
-pub struct RegisterRecipientHandler<M: RemoteMessage>
-    where M: RemoteMessage + Send + Serialize + DeserializeOwned + 'static,
-          M::Result: Send + Serialize + DeserializeOwned + 'static
+pub struct RegisterHandler<M: RemoteMessage>
+    where M: RemoteMessage + Remotable,
+          M::Result: Remotable
 {
     path: String,
     pub(crate) recipient: Recipient<M>,
 }
 
-impl<M> RegisterRecipientHandler<M>
-    where M: RemoteMessage + Send + Serialize + DeserializeOwned + 'static,
-          M::Result: Send + Serialize + DeserializeOwned + 'static
+impl<M> RegisterHandler<M>
+    where M: RemoteMessage + Remotable,
+          M::Result: Remotable
 {
     pub fn new(rec: Recipient<M>) -> Self {
-        RegisterRecipientHandler {
+        RegisterHandler {
             path: "/".into(),
             recipient: rec,
         }
     }
 
     pub fn with_path(path: String, rec: Recipient<M>) -> Self {
-        RegisterRecipientHandler {
+        RegisterHandler {
             path: path.to_string(),
             recipient: rec,
         }
     }
 }
 
-impl<M> Message for RegisterRecipientHandler<M>
-    where M: RemoteMessage + Send + Serialize + DeserializeOwned + 'static,
-          M::Result: Send + Serialize + DeserializeOwned + 'static
+impl<M> Message for RegisterHandler<M>
+    where M: RemoteMessage + Remotable,
+          M::Result: Remotable
 {
     type Result = ();
 }
 
 pub(crate) struct SendRemoteRequest<M>(pub(crate) M)
-    where M: RemoteMessage + Send + Serialize + DeserializeOwned + 'static,
-          M::Result: Send + Serialize + DeserializeOwned + 'static;
+    where M: RemoteMessage + Remotable,
+          M::Result: Remotable;
 
 impl<M> Message for SendRemoteRequest<M>
-    where M: RemoteMessage + Send + Serialize + DeserializeOwned + 'static,
-          M::Result: Send + Serialize + DeserializeOwned + 'static
+    where M: RemoteMessage + Remotable,
+          M::Result: Remotable
 {
     type Result = Result<M::Result, RemoteError>;
 }
 
 pub(crate) struct DispatchRemoteRequest<M>
-    where M: RemoteMessage + Send + Serialize + DeserializeOwned + 'static,
-          M::Result: Send + Serialize + DeserializeOwned + 'static {
+    where M: RemoteMessage + Remotable,
+          M::Result: Remotable {
     pub(crate)  req: SendRemoteRequest<M>,
     pub(crate) node_id: Uuid,
 }
 
 impl<M> Message for DispatchRemoteRequest<M>
-    where M: RemoteMessage + Send + Serialize + DeserializeOwned + 'static,
-          M::Result: Send + Serialize + DeserializeOwned + 'static,
+    where M: RemoteMessage + Remotable,
+          M::Result: Remotable,
 {
     type Result = Result<M::Result, RemoteError>;
 }

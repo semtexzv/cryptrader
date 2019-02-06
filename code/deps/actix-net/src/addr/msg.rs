@@ -1,14 +1,8 @@
-use prelude::*;
-
-use base::{
-    msg::{
-        RemoteMessage, RemoteError,
-    }
-};
-use addr::{
-    RemoteActor, RemoteAddr,
-    comm::ActorType,
-};
+use crate::prelude::*;
+use crate::msg::*;
+use crate::addr::RemoteActor;
+use crate::addr::RemoteAddr;
+use crate::addr::comm::ActorType;
 
 
 pub struct RegisterRemoteActor<A: RemoteActor> {
@@ -23,8 +17,8 @@ impl<A: RemoteActor> Message for RegisterRemoteActor<A> {
 
 
 pub struct SendAddressedMessage<M>
-    where M: RemoteMessage + Send + Serialize + DeserializeOwned + 'static,
-          M::Result: Send + Serialize + DeserializeOwned + 'static
+    where M: RemoteMessage + Remotable,
+          M::Result: Remotable
 {
     pub(crate) msg: M,
     pub(crate) actor_type: ActorType,
@@ -33,8 +27,8 @@ pub struct SendAddressedMessage<M>
 }
 
 impl<M> SendAddressedMessage<M>
-    where M: RemoteMessage + Send + Serialize + DeserializeOwned + 'static,
-          M::Result: Send + Serialize + DeserializeOwned + 'static
+    where M: RemoteMessage + Remotable,
+          M::Result: Remotable
 {
     fn node_addr(&self) -> Uuid {
         return self.node_id.clone();
@@ -46,23 +40,23 @@ impl<M> SendAddressedMessage<M>
 }
 
 impl<M> Message for SendAddressedMessage<M>
-    where M: RemoteMessage + Send + Serialize + DeserializeOwned + 'static,
-          M::Result: Send + Serialize + DeserializeOwned + 'static
+    where M: RemoteMessage + Remotable,
+          M::Result: Remotable
 {
     type Result = Result<M::Result, RemoteError>;
 }
 
 pub struct AddressedRequest<M>
-    where M: RemoteMessage + Send + Serialize + DeserializeOwned + 'static,
-          M::Result: Send + Serialize + DeserializeOwned + 'static
+    where M: RemoteMessage + Remotable,
+          M::Result: Remotable
 {
     pub(crate) inner: RecipientRequest<SendAddressedMessage<M>>,
 }
 
 
 impl<M> ::futures::Future for AddressedRequest<M>
-    where M: RemoteMessage + Send + Serialize + DeserializeOwned,
-          M::Result: Send + Serialize + DeserializeOwned
+    where M: RemoteMessage + Remotable,
+          M::Result: Remotable
 {
     type Item = M::Result;
     type Error = RemoteError;
@@ -93,14 +87,14 @@ pub struct AddressedMessage<M>
 }
 
 impl<M> Message for AddressedMessage<M>
-    where M: RemoteMessage + Send + Serialize + DeserializeOwned + 'static,
-          M::Result: Send + Serialize + DeserializeOwned + 'static
+    where M: RemoteMessage + Remotable,
+          M::Result: Remotable
 {
     type Result = Result<M::Result, RemoteError>;
 }
 
 
 impl<M> RemoteMessage for AddressedMessage<M>
-    where M: RemoteMessage + Send + Serialize + DeserializeOwned + 'static,
-          M::Result: Send + Serialize + DeserializeOwned + 'static
+    where M: RemoteMessage + Remotable,
+          M::Result: Remotable
 {}
