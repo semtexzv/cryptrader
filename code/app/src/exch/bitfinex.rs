@@ -5,7 +5,7 @@ use ::apis::bitfinex as api;
 use crate::ingest;
 
 pub struct BitfinexOhlcSource {
-    comm: CommAddr,
+    handle : ContextHandle,
     ingest_node: NodeAddr,
     ws: ws::ClientWriter,
 

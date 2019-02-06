@@ -33,7 +33,8 @@ fn main() {
         .get_matches();
 
     common::actix::System::run(move || {
-        let base = actix_comm::CommAddr::new("tcp://*:42042").unwrap();
+        let ctx = actix_comm::ContextHandle::new();
+        //let base = actix_comm::CommAddr::new("tcp://*:42042").unwrap();
 
         match matches.subcommand().0 {
             "ingest" => {

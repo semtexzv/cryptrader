@@ -111,7 +111,7 @@ impl MessageWrapper {
     }
 }
 
-
+/*
 pub trait MessageSourceAddr {
     fn register<M>(&self, rec: Recipient<M>)
         where M: RemoteMessage + Remotable,
@@ -124,4 +124,4 @@ pub trait MessageDestAddr {
               M::Result: Remotable;
 }
 
-
+*/

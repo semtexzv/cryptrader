@@ -4,57 +4,24 @@ use crate::prelude::*;
 use actix_comm::msg::{Remotable, RemoteMessage, RemoteError, Announcement};
 
 pub trait ServiceInfo {
-    type RequestType: RemoteMessage<Result=Self::ResponseType> + Send + Debug + Serialize + DeserializeOwned + 'static;
-    type ResponseType: Send + Debug + Serialize + DeserializeOwned + 'static;
+    type RequestType: RemoteMessage<Result=Self::ResponseType> + Remotable;
+    type ResponseType: Remotable;
     const ENDPOINT: &'static str;
 }
 
 pub trait EndpointInfo {
-    type ConnType: ConnectionInfo;
+    type MsgType = RemoteMessage<Result=()>;
     const ENDPOINT: &'static str;
 }
 
-pub trait ConnectionInfo {
-    type InputType: Remotable;
-    type OutputType: Remotable;
+
+pub struct ServiceConnection<S: ServiceInfo> {
+    _s: PhantomData<S>,
 }
 
-pub struct ReqRepServiceConnectionInfo<M>
-    where M: RemoteMessage + Remotable,
-          M::Result: Remotable
-{
-    _p: PhantomData<M>
-}
-
-impl<M> ConnectionInfo for ReqRepServiceConnectionInfo<M>
-    where M: RemoteMessage + Remotable,
-          M::Result: Remotable,
-{
-    type InputType = M;
-    type OutputType = M::Result;
+pub struct ServiceHandler<S: ServiceInfo> {
+    _s: PhantomData<S>,
 }
 
 
-pub struct PubConnectionInfo<M>
-    where M: Announcement + Remotable {
-    _p: PhantomData<M>
-}
-
-impl<M> ConnectionInfo for PubConnectionInfo<M>
-    where M: Announcement + Remotable {
-    type InputType = ();
-    type OutputType = M;
-}
-
-
-pub struct SubConnectionInfo<M>
-    where M: Announcement + Remotable {
-    _p: PhantomData<M>
-}
-
-impl<M> ConnectionInfo for SubConnectionInfo<M>
-    where M: Announcement + Remotable {
-    type InputType = M;
-    type OutputType = ();
-}
-
+pub struct Publisher<>
