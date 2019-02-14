@@ -22,7 +22,9 @@ impl<M> Handler<SendRequest<M>> for Publish
         let encoded = M::to_wrapped(&msg.0).unwrap();
 
         let wrapped = MessageWrapper::Announcement(M::type_id().into(), encoded);
-        let multipart = wrapped.to_multipart().unwrap();
+        let mut multipart = wrapped.to_multipart().unwrap();
+
+        multipart.push_front(zmq::Message::from_slice(&[]));
 
         let sent = wrap_future(self.sender.clone().send(multipart).unwrap_err().set_err(()).drop_item());
 
@@ -33,7 +35,7 @@ impl<M> Handler<SendRequest<M>> for Publish
 
 
 impl Publish {
-    fn new_on(handle: ContextHandle, addr: &str) -> impl Future<Item=Addr<Self>, Error=tzmq::Error> {
+    pub fn bind(handle: ContextHandle, addr: &str) -> impl Future<Item=Addr<Self>, Error=tzmq::Error> {
         let socket = tzmq::Pub::builder(handle.zmq_ctx.clone())
             .identity(handle.uuid.as_bytes())
             .bind(addr)
@@ -42,7 +44,7 @@ impl Publish {
         Self::create(handle, socket)
     }
 
-    fn new_to(handle: ContextHandle, addr: &str) -> impl Future<Item=Addr<Self>, Error=tzmq::Error> {
+    pub fn connect(handle: ContextHandle, addr: &str) -> impl Future<Item=Addr<Self>, Error=tzmq::Error> {
         let socket = tzmq::Pub::builder(handle.zmq_ctx.clone())
             .identity(handle.uuid.as_bytes())
             .connect(addr)
@@ -51,20 +53,24 @@ impl Publish {
         Self::create(handle, socket)
     }
 
-    fn create(handle: ContextHandle, socket: impl Future<Item=Pub, Error=tzmq::Error>) -> impl Future<Item=Addr<Self>, Error=tzmq::Error> {
-        socket.map(|socket| {
-            let sink = socket.sink(25);
+    fn create(handle: ContextHandle, socket: Result<Pub, tzmq::Error>) -> impl Future<Item=Addr<Self>, Error=tzmq::Error> {
+        future::result(socket.map(|socket| {
+            let sink = socket.sink();
             let (tx, rx) = futures::sync::mpsc::channel(25);
 
             let forward = sink.send_all(rx.map_err(|_| tzmq::Error::Sink));
 
             Actor::create(|ctx| {
-                ctx.spawn(wrap_future(forward.drop_item().drop_err()));
+
+                ctx.spawn(wrap_future(forward.map(|x| {
+                    panic!("Forwarder ended")
+                }).drop_item().drop_err()));
+
                 Publish {
                     handle,
                     sender: tx,
                 }
             })
-        })
+        }))
     }
 }

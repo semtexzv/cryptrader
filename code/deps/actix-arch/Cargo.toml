@@ -2,10 +2,13 @@
 name = "actix-arch"
 version = "0.0.0"
 authors = ["Michal Hornický <semtexzv@gmail.com>"]
+edition = "2018"
 
 [dependencies.common]
 path = "../../common"
 
 [dependencies]
+actix = "*"
 serde = "*"
+futures-util = { path = "../futures-util" }
 actix-comm = { path = "../actix-comm"}

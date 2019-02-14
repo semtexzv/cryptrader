@@ -33,6 +33,7 @@ impl Handler<RegisterDefaultHandler> for Subscribe {
 
 impl StreamHandler<Multipart, tzmq::Error> for Subscribe {
     fn handle(&mut self, mut item: Multipart, ctx: &mut Self::Context) {
+        println!("New multipart");
         let identity = item.pop_front().unwrap().to_vec();
         let data: MessageWrapper = json::from_slice(&item.pop_front().unwrap()).unwrap();
 
@@ -41,27 +42,33 @@ impl StreamHandler<Multipart, tzmq::Error> for Subscribe {
 }
 
 impl Subscribe {
-    fn new_on(handle: ContextHandle, addr: &str) -> impl Future<Item=Addr<Self>, Error=tzmq::Error> {
+    pub fn bind(handle: ContextHandle, addr: &str) -> impl Future<Item=Addr<Self>, Error=tzmq::Error> {
         let socket = tzmq::Sub::builder(handle.zmq_ctx.clone())
             .identity(handle.uuid.as_bytes())
             .bind(addr)
+            .filter(b"")
             .build();
+
         return Self::create(handle, socket);
     }
 
-    fn new_to(handle: ContextHandle, addr: &str) -> impl Future<Item=Addr<Self>, Error=tzmq::Error> {
+    pub fn connect(handle: ContextHandle, addr: &str) -> impl Future<Item=Addr<Self>, Error=tzmq::Error> {
         let socket = tzmq::Sub::builder(handle.zmq_ctx.clone())
             .identity(handle.uuid.as_bytes())
             .connect(addr)
+            .filter(b"")
             .build();
         return Self::create(handle, socket);
     }
 
 
-    fn create(handle: ContextHandle, socket: impl Future<Item=Sub, Error=tzmq::Error>) -> impl Future<Item=Addr<Self>, Error=tzmq::Error> {
-        socket.map(|router| {
+    fn create(handle: ContextHandle, socket: Result<Sub, tzmq::Error>) -> impl Future<Item=Addr<Self>, Error=tzmq::Error> {
+        future::result(socket.map(|socket: Sub| {
             Actor::create(|ctx| {
-                let stream = router.stream();
+                let stream = socket.stream().map(|x| {
+                    println!("Item {:?}", x);
+                    x
+                });
 
                 Self::add_stream(stream, ctx);
                 Subscribe {
@@ -69,15 +76,19 @@ impl Subscribe {
                     registry: Default::default(),
                 }
             })
-        })
+        }))
     }
 
     fn handle_message(&mut self, ctx: &mut Context<Self>, identity: Identity, msg: MessageWrapper) {
         match msg {
             MessageWrapper::Announcement(typ, data) => {
+                println!("Received msg: Handling");
                 if let Some(handler) = self.registry.get(&typ) {
                     let (tx, rx) = oneshot();
                     handler.handle(typ, data, tx);
+                    let rx = rx.map_err(|_| RemoteError::MailboxClosed).flatten();
+                    let wrapped = wrap_future(rx.unwrap_err().set_err(()));
+                    ctx.spawn(wrapped.drop_err().map(|_, _, _| ()));
                 }
             }
             a => {

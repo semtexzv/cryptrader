@@ -1,8 +1,10 @@
 use crate::prelude::*;
 
+/// Struct containing information about this node. Will be shared between all zeromq enabled
+/// actors in this process
 pub struct NetContext {
-    pub(crate) uuid: Uuid,
-    pub(crate) zmq_ctx: Arc<zmq::Context>,
+    pub uuid: Uuid,
+    pub zmq_ctx: Arc<zmq::Context>,
 }
 
 impl NetContext {
@@ -16,3 +18,7 @@ impl NetContext {
 
 
 pub type ContextHandle = Arc<NetContext>;
+/// Create new reference countet handle to a context
+pub fn new_handle() -> ContextHandle {
+    Arc::new(NetContext::new())
+}

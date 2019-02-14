@@ -103,3 +103,5 @@ pub fn first<T, S>(x: (T, S)) -> T { x.0 }
 pub fn clone<T: Clone>(x: &T) -> T { x.clone() }
 
 pub fn deref<T: Copy>(x: &T) -> T { *x }
+
+pub type BoxFuture<I, E> = Box<dyn Future<Item=I, Error=E>>;

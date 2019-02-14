@@ -5,10 +5,10 @@ use common::types::PairId;
 
 
 pub struct Rescaler {
-    comm: CommAddr,
+    handle: ContextHandle,
     db: Addr<db::Database>,
     cache: BTreeMap<PairId, BTreeMap<u64, Ohlc>>,
-    out: Addr<PubSub<OhlcUpdate>>,
+    out: Recipient<OhlcUpdate>,
 }
 
 impl Actor for Rescaler {
@@ -16,20 +16,17 @@ impl Actor for Rescaler {
 }
 
 impl Rescaler {
-    pub fn new(comm: CommAddr, input: Addr<PubSub<OhlcUpdate>>) -> (Addr<Self>, Addr<PubSub<OhlcUpdate>>) {
-        let out = PubSub::new();
-        let out2 = out.clone();
-
-        (Actor::create(move |ctx| {
+    pub fn new(handle: ContextHandle, input: Addr<Proxy<OhlcUpdate>>, out: Recipient<OhlcUpdate>) -> Addr<Self> {
+        Actor::create(move |ctx| {
             let rec = ctx.address().recipient();
             input.do_send(Subscribe::forever(rec));
             Rescaler {
-                comm,
+                handle,
                 db: db::start(),
                 cache: BTreeMap::new(),
                 out,
             }
-        }), out2)
+        })
     }
 }
 
@@ -37,7 +34,7 @@ impl Handler<OhlcUpdate> for Rescaler {
     type Result = ();
 
     fn handle(&mut self, msg: OhlcUpdate, ctx: &mut Self::Context) -> Self::Result {
-        self.out.do_send(msg.clone());
+        self.out.do_send(msg.clone()).unwrap();
         if msg.stable {
             let insert: Box<ActorFuture<Actor=_, Item=_, Error=_>> =
                 if self.cache.get(&msg.spec.pair_id()).is_none() {

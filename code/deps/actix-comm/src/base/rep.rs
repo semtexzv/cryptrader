@@ -2,12 +2,12 @@ use crate::prelude::*;
 use crate::msg::*;
 use crate::ctx::ContextHandle;
 use futures_util::FutureExt;
-
+use futures::sync::mpsc::UnboundedSender;
 
 pub struct Reply {
     handle: crate::ctx::ContextHandle,
     registry: crate::util::HandlerRegistry,
-    sender: Sender<Multipart>,
+    sender: UnboundedSender<Multipart>,
 }
 
 impl Actor for Reply {
@@ -43,28 +43,31 @@ impl StreamHandler<Multipart, tzmq::Error> for Reply {
 }
 
 impl Reply {
-    fn new(handle: ContextHandle, addr: &str) -> impl Future<Item=Addr<Self>, Error=tzmq::Error> {
+    pub fn new(handle: ContextHandle, addr: &str) -> impl Future<Item=Addr<Self>, Error=tzmq::Error> {
         let router = tzmq::Router::builder(handle.zmq_ctx.clone())
             .identity(handle.uuid.as_bytes())
             .bind(addr)
             .build();
 
-        router.map(|router| {
-            let (sink, stream) = router.sink_stream(25).split();
-            let (tx, rx) = futures::sync::mpsc::channel(25);
+        future::result(router.map(|router| {
+            let (sink, stream) = router.sink_stream().split();
+            let (tx, rx) = futures::sync::mpsc::unbounded();
 
             let forward = sink.send_all(rx.map_err(|_| tzmq::Error::Sink));
 
             Actor::create(|ctx| {
                 ctx.spawn(wrap_future(forward.drop_item().drop_err()));
-                Self::add_stream(stream, ctx);
+                Self::add_stream(stream.map(|x| {
+                    println!("ITEM {:?}", x);
+                    x
+                }), ctx);
                 Reply {
                     handle,
                     registry: Default::default(),
                     sender: tx,
                 }
             })
-        })
+        }))
     }
 
     fn handle_message(&mut self, ctx: &mut Context<Self>, identity: Identity, msg: MessageWrapper) {
@@ -82,7 +85,7 @@ impl Reply {
                         .then(move |res, this: &mut Self, ctx| {
                             let msg = MessageWrapper::Response(id, res);
                             let mut mp = msg.to_multipart().unwrap();
-                            mp.push_front(zmq::Message::from_slice(&identity).unwrap());
+                            mp.push_front(zmq::Message::from_slice(&identity));
 
                             let f = this.sender.clone()
                                 .send(mp)
@@ -95,7 +98,7 @@ impl Reply {
                     let resp = MessageWrapper::Response(id, Err(RemoteError::HandlerNotFound));
 
                     let mut multipart = resp.to_multipart().unwrap();
-                    multipart.push_front(zmq::Message::from_slice(&identity).unwrap());
+                    multipart.push_front(zmq::Message::from_slice(&identity));
 
                     let f = self.sender.clone()
                         .send(multipart)

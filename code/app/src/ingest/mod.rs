@@ -1,9 +1,29 @@
 use crate::prelude::*;
-use actix_arch::pubsub::PubSub;
+use actix_arch::proxy::Proxy;
 
 pub mod rescaler;
 
-pub const SERVICE_NAME: &str = "ingest.default.svc";
+pub struct IngestEndpoint;
+
+impl ServiceInfo for IngestEndpoint {
+    type RequestType = IngestUpdate;
+    type ResponseType = ();
+    const ENDPOINT: &'static str = "actix://ingest.default.svc:42042/ingest";
+}
+
+impl EndpointInfo for IngestEndpoint {
+    type MsgType = IngestUpdate;
+    type FanType = FanIn;
+    const ENDPOINT: &'static str = "actix://ingest.default.svc:42042/ingest";
+}
+
+pub struct RescalerOut;
+
+impl EndpointInfo for RescalerOut {
+    type MsgType = OhlcUpdate;
+    type FanType = FanOut;
+    const ENDPOINT: &'static str = "actix://ingest.default.svc:42043/rescaler";
+}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct IngestUpdate {
@@ -36,9 +56,11 @@ impl OhlcUpdate {
 }
 
 pub struct Ingest {
-    comm: CommAddr,
+    handle: ContextHandle,
+    input: ServiceHandler<IngestEndpoint>,
+
     db: Addr<db::Database>,
-    out: Addr<PubSub<OhlcUpdate>>,
+    out: Recipient<OhlcUpdate>,
 }
 
 impl Actor for Ingest {
@@ -46,7 +68,7 @@ impl Actor for Ingest {
 
     fn started(&mut self, ctx: &mut <Self as Actor>::Context) {
         eprintln!("Registering recipient");
-        self.comm.do_register_recipient(ctx.address().recipient::<IngestUpdate>());
+        self.input.register(ctx.address().recipient());
     }
 }
 
@@ -66,23 +88,27 @@ impl Handler<IngestUpdate> for Ingest {
                 ohlc: o,
                 stable: false,
             };
-            self.out.do_send(m);
+            self.out.do_send(m).unwrap()
         }
     }
 }
 
 impl Ingest {
-    pub fn new(comm: CommAddr) -> (Addr<Self>, Addr<PubSub<OhlcUpdate>>) {
-        let out = PubSub::new();
-        let out2 = out.clone();
+    pub fn new(handle: ContextHandle, out: Recipient<OhlcUpdate>) -> BoxFuture<Addr<Self>, failure::Error> {
+        let input = ServiceHandler::new(handle.clone());
 
-        (Actor::create(move |_| {
-            Ingest {
-                comm,
-                db: db::start(),
-                out: out.clone(),
-            }
-        }), out2)
+
+        return box input.map(|input| {
+            Actor::create(move |ctx| {
+                input.register(ctx.address().recipient());
+                Ingest {
+                    handle,
+                    input,
+                    db: db::start(),
+                    out,
+                }
+            })
+        }).map_err(Into::into);
     }
 }
 

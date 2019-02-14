@@ -22,8 +22,8 @@ actix_derive = "*"
 futures-util = { path = "../futures-util"}
 
 [dependencies.zmq]
-version = "*"
+git = "https://github.com/semtexzv/rust-zmq"
 
 [dependencies.tzmq]
 package = "tokio-zmq"
-version = "*"
+git = "https://github.com/semtexzv/tokio-zmq"

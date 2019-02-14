@@ -9,9 +9,11 @@ items:
   spec:
     selector: { layer: input }
     ports:
-      - name: actor-endpoint
-        nodePort: 0
+      - name: ingest
         port: 42042
+
+      - name: rescaled
+        port: 42043
 
 - kind: Deployment
   apiVersion: apps/v1

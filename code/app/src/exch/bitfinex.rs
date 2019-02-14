@@ -4,9 +4,10 @@ use common::actix_web::ws;
 use ::apis::bitfinex as api;
 use crate::ingest;
 
+
 pub struct BitfinexOhlcSource {
     handle : ContextHandle,
-    ingest_node: NodeAddr,
+    ingest : ServiceConnection<ingest::IngestEndpoint>,
     ws: ws::ClientWriter,
 
     ohlc_ids: BTreeMap<i32, TradePair>,
@@ -28,12 +29,12 @@ impl Actor for BitfinexOhlcSource {
 
 
 impl BitfinexOhlcSource {
-    pub fn new(comm: CommAddr) -> impl Future<Item=Addr<Self>, Error=Error> {
+    pub fn new(handle : ContextHandle) -> impl Future<Item=Addr<Self>, Error=Error> {
         let client = ws::Client::new("wss://api.bitfinex.com/ws/2").connect().from_err();
         let pairs = ::apis::bitfinex::get_available_pairs();
-        let node = comm.connect_to(format!("tcp://{}:42042", crate::ingest::SERVICE_NAME));
+        let publ = ServiceConnection::new(handle.clone()).map_err(Into::into);
 
-        Future::join3(client, pairs, node).map(|((rx, mut tx), pairs, node)| {
+        Future::join3(client, pairs, publ).map(|((rx, mut tx), pairs, publ)| {
             let interval = OhlcPeriod::Min1;
             let interval_secs = interval.seconds();
 
@@ -61,8 +62,8 @@ impl BitfinexOhlcSource {
                 BitfinexOhlcSource::add_stream(rx, ctx);
 
                 BitfinexOhlcSource {
-                    ingest_node: node,
-                    comm,
+                    handle,
+                    ingest : publ,
                     ws: tx,
                     ohlc_ids: BTreeMap::new(),
                     ticker_ids: BTreeMap::new(),
@@ -72,6 +73,7 @@ impl BitfinexOhlcSource {
     }
 }
 
+use futures_util::FutureExt;
 
 /// Handle server websocket messages
 impl StreamHandler<ws::Message, ws::ProtocolError> for BitfinexOhlcSource {
@@ -109,23 +111,14 @@ impl StreamHandler<ws::Message, ws::ProtocolError> for BitfinexOhlcSource {
                                     ohlc: candles,
                                 };
 
-                                let fut = wrap_future(self.ingest_node.send(update));
-                                ctx.spawn(fut
-                                    .map_err(|e, _, _| {
-                                        panic!("err: {:?}", e);
-                                        ()
-                                    }));
+
+                                Arbiter::spawn(self.ingest.send(update).unwrap_err().set_err(()).map(|_|()));
                             } else if let Ok(candle) = json::from_value::<api::BfxCandle>(val.clone()) {
                                 let update = ingest::IngestUpdate {
                                     spec,
                                     ohlc: vec![candle.into()],
                                 };
-                                let fut = wrap_future(self.ingest_node.send(update));
-                                ctx.spawn(fut
-                                    .map_err(|e, _, _| {
-                                        panic!("err: {:?}", e);
-                                        ()
-                                    }));
+                                Arbiter::spawn(self.ingest.send(update).unwrap_err().set_err(()).map(|_|()));
                             };
                         }
                     }

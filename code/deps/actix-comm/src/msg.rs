@@ -41,7 +41,7 @@ impl<T: RemoteMessage<Result=()>> Announcement for T {}
 
 #[derive(Message)]
 #[rtype(result = "()")]
-pub struct RegisterHandler<M>(pub(crate) Recipient<M>)
+pub struct RegisterHandler<M>(pub Recipient<M>)
     where M: RemoteMessage + Remotable,
           M::Result: Remotable;
 
@@ -51,12 +51,12 @@ pub struct RegisterDefaultHandler(pub(crate) Recipient<crate::util::ErasedMessag
 
 #[derive(Message)]
 #[rtype(result = "Result<M::Result,RemoteError>")]
-pub(crate) struct SendRequest<M>(pub(crate) M)
+pub struct SendRequest<M>(pub M)
     where M: RemoteMessage + Remotable,
           M::Result: Remotable;
 
 
-/// Is similar to `MailboxError` but contains more variant suited for reporting protocol errors
+/// Is similar to `MailboxError` but contains more variants, which are suited for reporting protocol errors
 /// since remote commuincation is much more dynamic
 #[derive(Debug, Fail, Serialize, Deserialize)]
 pub enum RemoteError {
@@ -88,8 +88,9 @@ pub(crate) enum MessageWrapper {
     Heartbeat,
     Hello,
     Identify(Uuid),
+
     /// Remote request message, consists of message type id, message instance id, and message body
-    /// we need to use encoded data here, so we won't pollute whole API with generuc type
+    /// we need to use encoded data here, so we won't pollute whole API with generic type
     Request(MsgType, u64, WrappedType),
     /// Response to request identified by message id, and its body
     Response(u64, Result<WrappedType, RemoteError>),
@@ -99,7 +100,7 @@ pub(crate) enum MessageWrapper {
 impl MessageWrapper {
     pub(crate) fn to_multipart(&self) -> Result<Multipart, failure::Error> {
         let encoded = json::to_vec(&self)?;
-        let msg = ::zmq::Message::from_slice(&encoded)?;
+        let msg = ::zmq::Message::from_slice(&encoded);
         let multipart = Multipart::from(msg);
         Ok(multipart)
     }

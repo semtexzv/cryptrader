@@ -1,5 +1,5 @@
-#![feature(box_syntax,associated_type_defaults)]
-#![allow(dead_code, unused_variables, unused_imports, unreachable_code)]
+#![feature(box_syntax, associated_type_defaults)]
+#![allow(dead_code, unused_variables, unused_imports, unreachable_code, deprecated)]
 
 pub mod prelude;
 pub mod exch;
@@ -33,16 +33,25 @@ fn main() {
         .get_matches();
 
     common::actix::System::run(move || {
-        let ctx = actix_comm::ContextHandle::new();
-        //let base = actix_comm::CommAddr::new("tcp://*:42042").unwrap();
-
+        let ctx = actix_comm::new_handle();
+        println!("CTX: {:?}", ctx.uuid);
         match matches.subcommand().0 {
             "ingest" => {
-                let (ingest, out) = ingest::Ingest::new(base.clone());
-                let (rescaler, rout) = ingest::rescaler::Rescaler::new(base.clone(), out);
+                let inter = actix_arch::proxy::Proxy::new();
+
+                common::actix::Arbiter::spawn(ingest::Ingest::new(ctx.clone(), inter.clone().recipient())
+                    .then(|v| {
+                        v.unwrap();
+                        result(Ok(()))
+                    }));
+
+                let inter2 = actix_arch::proxy::Proxy::new();
+
+                ingest::rescaler::Rescaler::new(ctx.clone(), inter, inter2.clone().recipient());
             }
             "bitfinex" => {
-                common::actix::Arbiter::spawn(exch::bitfinex::BitfinexOhlcSource::new(base)
+                std::thread::sleep_ms(5000);
+                common::actix::Arbiter::spawn(exch::bitfinex::BitfinexOhlcSource::new(ctx.clone())
                     .then(|v| {
                         v.unwrap();
                         result(Ok(()))
@@ -50,7 +59,7 @@ fn main() {
                 );
             }
             _ => {
-                panic!("Not a valid subcommand")
+                panic!("Not a valid subcommansd")
             }
         }
     });

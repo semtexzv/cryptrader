@@ -3,7 +3,8 @@ pub use common::*;
 pub use actix_comm::export::*;
 pub use actix_arch::{
     self,
-    pubsub::{PubSub, Subscribe, Unsubscribe},
+    svc::*,
+    proxy::{Proxy, Subscribe, Unsubscribe},
 };
 
 pub use apis;
@@ -12,5 +13,7 @@ pub use db;
 pub use common::types::{
     Ohlc, OhlcSpec, OhlcPeriod, TradePair,
 };
+
+
 
 

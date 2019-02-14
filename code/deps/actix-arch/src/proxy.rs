@@ -29,15 +29,15 @@ pub struct Unsubscribe {
 
 impl Message for Unsubscribe { type Result = (); }
 
-pub struct PubSub<A: Announcement> {
+pub struct Proxy<A: Announcement> {
     registry: BTreeMap<Uuid, Recipient<A>>
 }
 
-impl<A: Announcement + Clone + 'static> Actor for PubSub<A> {
+impl<A: Announcement + Clone + 'static> Actor for Proxy<A> {
     type Context = Context<Self>;
 }
 
-impl<A: Announcement + Clone + 'static> Handler<A> for PubSub<A> {
+impl<A: Announcement + Clone + 'static> Handler<A> for Proxy<A> {
     type Result = ();
 
     fn handle(&mut self, msg: A, ctx: &mut Self::Context) -> Self::Result {
@@ -49,7 +49,7 @@ impl<A: Announcement + Clone + 'static> Handler<A> for PubSub<A> {
     }
 }
 
-impl<A: Announcement + Clone + 'static> Handler<Subscribe<A>> for PubSub<A> {
+impl<A: Announcement + Clone + 'static> Handler<Subscribe<A>> for Proxy<A> {
     type Result = ();
 
     fn handle(&mut self, msg: Subscribe<A>, ctx: &mut Self::Context) -> Self::Result {
@@ -57,7 +57,7 @@ impl<A: Announcement + Clone + 'static> Handler<Subscribe<A>> for PubSub<A> {
     }
 }
 
-impl<A: Announcement + Clone + 'static> Handler<Unsubscribe> for PubSub<A> {
+impl<A: Announcement + Clone + 'static> Handler<Unsubscribe> for Proxy<A> {
     type Result = ();
 
     fn handle(&mut self, msg: Unsubscribe, ctx: &mut Self::Context) -> Self::Result {
@@ -65,10 +65,10 @@ impl<A: Announcement + Clone + 'static> Handler<Unsubscribe> for PubSub<A> {
     }
 }
 
-impl<A: Announcement + Clone + 'static> PubSub<A> {
+impl<A: Announcement + Clone + 'static> Proxy<A> {
     pub fn new() -> Addr<Self> {
         Actor::create(|_| {
-            PubSub {
+            Proxy {
                 registry: BTreeMap::new()
             }
         })

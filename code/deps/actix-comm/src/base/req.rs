@@ -3,12 +3,13 @@ use crate::msg::*;
 use crate::ctx::ContextHandle;
 use futures_util::FutureExt as FExt;
 use tokio::util::FutureExt;
+use futures::sync::mpsc::UnboundedSender;
 
 pub type ResponeSender = OneSender<Result<WrappedType, RemoteError>>;
 
 pub struct Request {
     handle: crate::ctx::ContextHandle,
-    sender: Sender<Multipart>,
+    sender: UnboundedSender<Multipart>,
     requests: HashMap<u64, ResponeSender>,
     msgid: u64,
 }
@@ -36,12 +37,13 @@ impl<M> Handler<SendRequest<M>> for Request
 
         let sent = wrap_future(self.sender.clone().send(multipart));
         let resolved = sent.then(move |res: Result<_, _>, this: &mut Self, _ctx: &mut Self::Context| {
+            res.unwrap();/*
             match res {
                 Ok(_) => (),
                 Err(_) => {
                     this.resolve_request(msgid, Err(RemoteError::MailboxClosed));
                 }
-            }
+            }*/
             afut::ok(())
         });
         ctx.spawn(resolved);
@@ -67,29 +69,36 @@ impl StreamHandler<Multipart, tzmq::Error> for Request {
 }
 
 impl Request {
-    fn new(handle: ContextHandle, addr: &str) -> impl Future<Item=Addr<Self>, Error=tzmq::Error> {
+    pub fn new(handle: ContextHandle, addr: &str) -> impl Future<Item=Addr<Self>, Error=tzmq::Error> {
         let router = tzmq::Dealer::builder(handle.zmq_ctx.clone())
             .identity(handle.uuid.as_bytes())
-            .bind(addr)
+            .connect(addr)
             .build();
 
-        router.map(|router| {
-            let (sink, stream) = router.sink_stream(25).split();
-            let (tx, rx) = futures::sync::mpsc::channel(25);
+        future::result(router.map(|router| {
+            let (sink, stream) = router.sink_stream().split();
+            let (tx, rx) = futures::sync::mpsc::unbounded();
 
-            let forward = sink.send_all(rx.map_err(|_| tzmq::Error::Sink));
+            let forward = sink.send_all(rx.map(|i| {
+                println!("Sending MP");
+                i
+            }).map_err(|_| tzmq::Error::Sink));
 
             Actor::create(|ctx| {
                 ctx.spawn(wrap_future(forward.drop_item().drop_err()));
                 Self::add_stream(stream, ctx);
+
+                let hello = MessageWrapper::Hello.to_multipart().unwrap();
+                tx.unbounded_send(hello).unwrap();
+
                 Request {
                     handle,
-                    requests : Default::default(),
+                    requests: Default::default(),
                     sender: tx,
                     msgid: 0,
                 }
             })
-        })
+        }))
     }
 
     pub(crate) fn resolve_request(&mut self, rid: u64, res: Result<WrappedType, RemoteError>) {

@@ -11,6 +11,7 @@ path = "../common"
 clap = "*"
 serde = "*"
 
+futures-util = { path ="../deps/futures-util" }
 actix-comm = { path = "../deps/actix-comm" }
 actix-arch = { path = "../deps/actix-arch" }
 

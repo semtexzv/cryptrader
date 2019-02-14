@@ -9,7 +9,7 @@ items:
     spec:
       selector: { layer: sources }
       ports:
-        - nodePort: 0
+        - name: ingest
           port: 42042
           protocol: TCP
           targetPort: 42042
