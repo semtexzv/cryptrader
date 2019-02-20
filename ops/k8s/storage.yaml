@@ -58,6 +58,9 @@ items:
             volumeMounts:
               - mountPath: /var/lib/postgresql/data
                 name: postgredb
+            resources:
+              requests:
+                cpu: 10m
         volumes:
           - name: postgredb
             persistentVolumeClaim:

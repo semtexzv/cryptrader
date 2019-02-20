@@ -42,7 +42,7 @@ pub fn run() {
         app
             .resource("/healthy", |r| r.method(http::Method::GET).f(check))
             .resource("/ready", |r| r.method(http::Method::GET).f(check))
-            .handler("/static", actix_web::fs::StaticFiles::new("web/static").unwrap().show_files_listing())
+            .handler("/static", actix_web::fs::StaticFiles::new("code/web/static").unwrap().show_files_listing())
             //.resource("/static/{tail:.*}",|r| r.method(http::Method::GET).with(static_file))
             .default_resource(|r| r.h(http::NormalizePath::default()))
     })
@@ -53,7 +53,6 @@ pub fn run() {
 
 fn main() {
     env::set_var("RUST_BACKTRACE", "full");
-    env::set_var("RUST_LOG", "actix_web=debug,diesel=debug,info,warn");
 
     // let _guard = sentry::init("https://46b76bb7e.c294a1a93859dca8b01d103@sentry.io/1339228");
     // sentry::integrations::panic::register_panic_handler();
