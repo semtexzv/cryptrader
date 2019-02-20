@@ -27,7 +27,8 @@ pub struct AuthTemplateInfo {
 
 #[derive(Debug, Serialize)]
 pub struct BaseTemplateInfo {
-    pub auth: AuthTemplateInfo
+    pub auth: AuthTemplateInfo,
+    pub errors : Option<Vec<String>>
 }
 
 impl BaseTemplateInfo {
@@ -36,15 +37,10 @@ impl BaseTemplateInfo {
             auth: AuthTemplateInfo {
                 signed_in: req.is_authenticated(),
                 email: req.session().get("email").unwrap().unwrap_or("".into()),
-            }
+            },
+            errors : None,
         })
     }
-}
-
-
-#[inline(always)]
-pub fn render(template: impl Template) -> HttpResponse {
-    HttpResponse::Ok().content_type("text/html").body(template.borrow().render().unwrap())
 }
 
 
@@ -59,12 +55,17 @@ pub fn redirect_to<S>(req: HttpRequest<S>, name: &str) -> HttpResponse {
     return redirect(url.as_str());
 }
 
-
-#[inline(always)]
-pub async fn async_render(template: impl Template) -> Result<HttpResponse> {
-    Ok(HttpResponse::Ok().content_type("text/html").body(template.render().unwrap()))
-}
 #[inline(always)]
 pub async fn async_redirect(location: &str) -> Result<HttpResponse> {
     Ok(HttpResponse::TemporaryRedirect().header("Location", location).finish())
+}
+
+
+pub fn render<F>(tpl: F) -> HttpResponse
+    where F: FnOnce(&mut std::io::Write) -> std::io::Result<()>
+{
+    let mut out = Vec::new();
+    let _ = tpl(&mut out);
+    return HttpResponse::Ok().content_type("text/html").body(out);
+
 }

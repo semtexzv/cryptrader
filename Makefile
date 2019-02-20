@@ -11,7 +11,7 @@ K8S_DIR       := ./ops/k8s
 K8S_BUILD_DIR := ./target/k8s
 K8S_FILES 	  := $(shell find $(K8S_DIR) -name '*.yaml' | sed 's:$(K8S_DIR)/::g')
 
-LOAD_VARS = $(foreach v,$(DOCKER_FILES), env $$( cat $(v) ))
+LOAD_VARS = $(foreach v,$(DOCKER_FILES) ./ops/additional.env, env $$( cat $(v) ))
 
 .PHONY: deploy
 deploy: build-k8s $(DOCKER_FILES)
@@ -19,7 +19,6 @@ deploy: build-k8s $(DOCKER_FILES)
 
 ./target/docker/%: phony
 	APP_NAME=$* $(MAKE) -C . -f ./ops/make/App.mk ./target/docker/$*
-
 
 $(K8S_BUILD_DIR):
 	@mkdir -p $(K8S_BUILD_DIR)

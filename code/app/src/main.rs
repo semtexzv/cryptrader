@@ -5,6 +5,7 @@ pub mod prelude;
 pub mod exch;
 pub mod ingest;
 
+
 use crate::prelude::*;
 
 use std::env;
@@ -13,12 +14,11 @@ use common::prelude::future::result;
 
 
 fn main() {
+    use futures_util::FutureExt;
+    use common::actix::spawn as arb_spawn;
     env::set_var("RUST_BACKTRACE", "1");
-    env::set_var("RUST_LOG", "app=trace,debug");
 
-
-    env_logger::Builder::from_default_env()
-        .init();
+    env_logger::Builder::from_default_env().init();
 
     let matches = App::new("Trader")
         .subcommand(SubCommand::with_name("ingest")
@@ -27,30 +27,26 @@ fn main() {
         .subcommand(SubCommand::with_name("bitfinex")
             .about("Run Bitfines ohlc source")
         )
-        .subcommand(SubCommand::with_name("web")
-            .about("Run web service")
-        )
         .get_matches();
 
     common::actix::System::run(move || {
         let ctx = actix_comm::new_handle();
-        println!("CTX: {:?}", ctx.uuid);
+
         match matches.subcommand().0 {
             "ingest" => {
-                let inter = actix_arch::proxy::Proxy::new();
+                let i2r = actix_arch::proxy::Proxy::new();
+                let r2d = actix_arch::proxy::Proxy::new();
 
-                common::actix::Arbiter::spawn(ingest::Ingest::new(ctx.clone(), inter.clone().recipient())
-                    .then(|v| {
-                        v.unwrap();
-                        result(Ok(()))
-                    }));
+                let decider = ingest::decision::Decider::new(ctx.clone(), r2d.clone());
+                let rescaler = ingest::rescaler::Rescaler::new(ctx.clone(), i2r.clone(), r2d.clone().recipient());
+                let ingest = ingest::Ingest::new(ctx.clone(), i2r.clone().recipient());
 
-                let inter2 = actix_arch::proxy::Proxy::new();
 
-                ingest::rescaler::Rescaler::new(ctx.clone(), inter, inter2.clone().recipient());
+                arb_spawn(ingest.unwrap_err().drop_item());
+                arb_spawn(rescaler.unwrap_err().drop_item());
+                arb_spawn(decider.unwrap_err().drop_item());
             }
             "bitfinex" => {
-                std::thread::sleep_ms(5000);
                 common::actix::Arbiter::spawn(exch::bitfinex::BitfinexOhlcSource::new(ctx.clone())
                     .then(|v| {
                         v.unwrap();
@@ -58,6 +54,8 @@ fn main() {
                     })
                 );
             }
+            "eval-balancer" => {}
+            "eval-worker" => {}
             _ => {
                 panic!("Not a valid subcommansd")
             }

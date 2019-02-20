@@ -1,0 +1,19 @@
+@use crate::prelude::*;
+@use crate::templates::*;
+@use db::User;
+
+@(base : &BaseTemplateInfo, user : &User)
+
+@:layout(base, {
+
+<div class="d-flex align-content-center justify-content-center align-items-center">
+    <form method="post" action="/users/me">
+        <label for="name"> Name </label>
+        <input class="form-control" id="name" name="name" value="@(user.name.as_ref().map(Deref::deref).unwrap_or(""))">
+        <label for="email"> Email </label>
+        <input class="form-control" id="email" name="email" value="@(user.email)">
+        <input class="form-control" id="submit" type="submit" value="Submit"/>
+    </form>
+</div>
+
+})

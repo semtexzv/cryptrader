@@ -7,7 +7,7 @@ use crate::ingest;
 
 pub struct BitfinexOhlcSource {
     handle : ContextHandle,
-    ingest : ServiceConnection<ingest::IngestEndpoint>,
+    ingest : Publisher<ingest::IngestEndpoint>,
     ws: ws::ClientWriter,
 
     ohlc_ids: BTreeMap<i32, TradePair>,
@@ -32,13 +32,13 @@ impl BitfinexOhlcSource {
     pub fn new(handle : ContextHandle) -> impl Future<Item=Addr<Self>, Error=Error> {
         let client = ws::Client::new("wss://api.bitfinex.com/ws/2").connect().from_err();
         let pairs = ::apis::bitfinex::get_available_pairs();
-        let publ = ServiceConnection::new(handle.clone()).map_err(Into::into);
+        let publ = Publisher::new(handle.clone()).map_err(Into::into);
 
         Future::join3(client, pairs, publ).map(|((rx, mut tx), pairs, publ)| {
             let interval = OhlcPeriod::Min1;
             let interval_secs = interval.seconds();
 
-            println!("Bitfinex: Connected");
+            info!("Bitfinex: Connected");
 
             for pair in pairs.iter() {
                 let trade_sym = pair.bfx_trade_sym();
@@ -56,7 +56,7 @@ impl BitfinexOhlcSource {
                 tx.text(json::to_string(&ohlc_sub).unwrap());
                 tx.text(json::to_string(&ticker_sub).unwrap());
             }
-            println!("Send {} pair requests", pairs.len());
+            debug!("Send {} pair requests", pairs.len());
 
             Actor::create(|ctx| {
                 BitfinexOhlcSource::add_stream(rx, ctx);
@@ -73,7 +73,6 @@ impl BitfinexOhlcSource {
     }
 }
 
-use futures_util::FutureExt;
 
 /// Handle server websocket messages
 impl StreamHandler<ws::Message, ws::ProtocolError> for BitfinexOhlcSource {
@@ -112,13 +111,14 @@ impl StreamHandler<ws::Message, ws::ProtocolError> for BitfinexOhlcSource {
                                 };
 
 
-                                Arbiter::spawn(self.ingest.send(update).unwrap_err().set_err(()).map(|_|()));
+                                self.ingest.do_publish(update);
                             } else if let Ok(candle) = json::from_value::<api::BfxCandle>(val.clone()) {
                                 let update = ingest::IngestUpdate {
                                     spec,
                                     ohlc: vec![candle.into()],
                                 };
-                                Arbiter::spawn(self.ingest.send(update).unwrap_err().set_err(()).map(|_|()));
+
+                                self.ingest.do_publish(update);
                             };
                         }
                     }
@@ -132,7 +132,7 @@ impl StreamHandler<ws::Message, ws::ProtocolError> for BitfinexOhlcSource {
     }
 
     fn started(&mut self, ctx: &mut Context<Self>) {
-        println!("Connected");
+        debug!("Connected");
     }
 
     fn finished(&mut self, ctx: &mut Context<Self>) {

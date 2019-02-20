@@ -16,17 +16,19 @@ impl Actor for Rescaler {
 }
 
 impl Rescaler {
-    pub fn new(handle: ContextHandle, input: Addr<Proxy<OhlcUpdate>>, out: Recipient<OhlcUpdate>) -> Addr<Self> {
-        Actor::create(move |ctx| {
-            let rec = ctx.address().recipient();
-            input.do_send(Subscribe::forever(rec));
-            Rescaler {
-                handle,
-                db: db::start(),
-                cache: BTreeMap::new(),
-                out,
-            }
-        })
+    pub fn new(handle: ContextHandle, input: Addr<Proxy<OhlcUpdate>>, out: Recipient<OhlcUpdate>) -> BoxFuture<Addr<Self>, failure::Error> {
+        box future::ok(
+            Actor::create(move |ctx| {
+                let rec = ctx.address().recipient();
+                input.do_send(Subscribe::forever(rec));
+                Rescaler {
+                    handle,
+                    db: db::start(),
+                    cache: BTreeMap::new(),
+                    out,
+                }
+            })
+        )
     }
 }
 

@@ -45,6 +45,7 @@ items:
               image: ${WEB_IMAGE}
               imagePullPolicy: Always
               command: ["/app", "web"]
+              env: [{name: "RUST_LOG", value: ${RUST_LOG}}]
               resources:
                 requests:
                   cpu: 50m

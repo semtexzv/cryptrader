@@ -79,10 +79,7 @@ impl Request {
             let (sink, stream) = router.sink_stream().split();
             let (tx, rx) = futures::sync::mpsc::unbounded();
 
-            let forward = sink.send_all(rx.map(|i| {
-                println!("Sending MP");
-                i
-            }).map_err(|_| tzmq::Error::Sink));
+            let forward = sink.send_all(rx.map_err(|_| tzmq::Error::Sink));
 
             Actor::create(|ctx| {
                 ctx.spawn(wrap_future(forward.drop_item().drop_err()));
@@ -103,7 +100,9 @@ impl Request {
 
     pub(crate) fn resolve_request(&mut self, rid: u64, res: Result<WrappedType, RemoteError>) {
         if let Some(sender) = self.requests.remove(&rid) {
-            sender.send(res).unwrap()
+            // We ignore the result here
+
+            let _ = sender.send(res);
         }
     }
 

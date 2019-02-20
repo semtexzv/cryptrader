@@ -20,7 +20,7 @@ pub trait FanType {
 
 fn addr_to_zmq_local(addr: &str) -> String {
     let url = Url::parse(addr).unwrap();
-    let addr = format!("tcp://127.0.0.1:{}", url.port().unwrap_or(42000));
+    let addr = format!("tcp://*:{}", url.port().unwrap_or(42000));
     addr
 }
 
@@ -150,12 +150,17 @@ impl<E: EndpointInfo> Publisher<E> {
     pub fn do_publish(&self, i: E::MsgType) {
         Arbiter::spawn(self.inner.send(actix_comm::SendRequest(i)).unwrap_err().set_err(()).map(|_| ()));
     }
+
 }
 
+
+#[derive(Clone)]
 pub struct Subscriber<E: EndpointInfo> {
     _e: PhantomData<E>,
     inner: Addr<actix_comm::Subscribe>,
 }
+
+unsafe impl<E: EndpointInfo> Send for Subscriber<E> {}
 
 impl<E: EndpointInfo> Subscriber<E> {
     pub fn new(handle: ContextHandle) -> BoxFuture<Self, tzmq::Error> {

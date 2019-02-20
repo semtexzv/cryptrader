@@ -115,7 +115,7 @@ impl Handler<SaveOhlc> for Database {
             stmt.execute(conn)
                 .expect("Error saving candle into the database");
         }
-        println!("Saved {} items", new_ohlc.len());
+        debug!("Saved {} items", new_ohlc.len());
     }
 }
 

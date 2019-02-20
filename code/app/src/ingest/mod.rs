@@ -1,20 +1,19 @@
 use crate::prelude::*;
 use actix_arch::proxy::Proxy;
+use common::future::BoxFuture;
+
+use std::collections::btree_map::Entry;
+use time::PreciseTime;
 
 pub mod rescaler;
+pub mod decision;
 
 pub struct IngestEndpoint;
-
-impl ServiceInfo for IngestEndpoint {
-    type RequestType = IngestUpdate;
-    type ResponseType = ();
-    const ENDPOINT: &'static str = "actix://ingest.default.svc:42042/ingest";
-}
 
 impl EndpointInfo for IngestEndpoint {
     type MsgType = IngestUpdate;
     type FanType = FanIn;
-    const ENDPOINT: &'static str = "actix://ingest.default.svc:42042/ingest";
+    const ENDPOINT: &'static str = "actix://ingest:42042/ingest";
 }
 
 pub struct RescalerOut;
@@ -22,7 +21,7 @@ pub struct RescalerOut;
 impl EndpointInfo for RescalerOut {
     type MsgType = OhlcUpdate;
     type FanType = FanOut;
-    const ENDPOINT: &'static str = "actix://ingest.default.svc:42043/rescaler";
+    const ENDPOINT: &'static str = "actix://ingest:42043/rescaler";
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -50,24 +49,37 @@ impl OhlcUpdate {
         OhlcUpdate {
             spec,
             ohlc,
+            stable: true,
+        }
+    }
+    fn new_live(spec: OhlcSpec, ohlc: Ohlc) -> Self {
+        OhlcUpdate {
+            spec,
+            ohlc,
             stable: false,
         }
+    }
+    pub fn search_prefix(&self) -> String {
+        return format!("/{}/{}/{:?}", self.spec.exchange(), self.spec.pair(), self.spec.period());
     }
 }
 
 pub struct Ingest {
     handle: ContextHandle,
-    input: ServiceHandler<IngestEndpoint>,
+    input: Subscriber<IngestEndpoint>,
 
     db: Addr<db::Database>,
     out: Recipient<OhlcUpdate>,
+
+    last: BTreeMap<PairId, Ohlc>,
+
 }
 
 impl Actor for Ingest {
     type Context = Context<Self>;
 
     fn started(&mut self, ctx: &mut <Self as Actor>::Context) {
-        eprintln!("Registering recipient");
+        debug!("Registering recipient");
         self.input.register(ctx.address().recipient());
     }
 }
@@ -76,27 +88,14 @@ impl Handler<IngestUpdate> for Ingest {
     type Result = ();
 
     fn handle(&mut self, msg: IngestUpdate, ctx: &mut Context<Self>) {
-        eprintln!("Received ingest update : {:?}", msg);
-        self.db.do_send(db::SaveOhlc {
-            id: msg.spec.pair_id().clone(),
-            ohlc: msg.ohlc.clone(),
-        });
-
-        for o in msg.ohlc.into_iter() {
-            let m = OhlcUpdate {
-                spec: msg.spec.clone(),
-                ohlc: o,
-                stable: false,
-            };
-            self.out.do_send(m).unwrap()
-        }
+        debug!("Received ingest update : {:?}", msg);
+        self.apply_update(msg);
     }
 }
 
 impl Ingest {
     pub fn new(handle: ContextHandle, out: Recipient<OhlcUpdate>) -> BoxFuture<Addr<Self>, failure::Error> {
-        let input = ServiceHandler::new(handle.clone());
-
+        let input = Subscriber::new(handle.clone());
 
         return box input.map(|input| {
             Actor::create(move |ctx| {
@@ -106,9 +105,90 @@ impl Ingest {
                     input,
                     db: db::start(),
                     out,
+                    last: BTreeMap::new(),
                 }
             })
         }).map_err(Into::into);
+    }
+    fn get_last(&mut self, id: &PairId) -> Option<Ohlc> {
+        let mut cached = self.last.entry(id.clone());
+        match cached {
+            Entry::Occupied(oc) => {
+                return Some(oc.get().clone());
+            }
+            Entry::Vacant(vc) => {
+                return None;
+            }
+        }
+    }
+
+    fn set_last(&mut self, id: &PairId, data: Ohlc) {
+        self.last.insert(id.clone(), data);
+    }
+
+    fn new_stable(&mut self, id: &PairId, tick: Ohlc) -> Result<()> {
+        self.out.do_send(OhlcUpdate::new(OhlcSpec::from_pair_1m(id.clone()), tick.clone()));
+        self.set_last(id, tick);
+        Ok(())
+    }
+
+    fn new_live(&mut self, id: &PairId, tick: Ohlc) -> Result<()> {
+        if let Some(l) = self.get_last(id) {
+            let mut update = OhlcUpdate::new(OhlcSpec::from_pair_1m(id.clone()), l.clone());
+            self.out.do_send(update);
+        }
+        self.update_live(id, tick)?;
+        Ok(())
+    }
+
+    fn update_live(&mut self, id: &PairId, tick: Ohlc) -> Result<()> {
+        let mut update = OhlcUpdate::new_live(OhlcSpec::from_pair_1m(id.clone()), tick.clone());
+        self.out.do_send(update);
+        self.set_last(id, tick);
+        Ok(())
+    }
+
+    fn apply_update(&mut self, data: IngestUpdate) -> Result<()> {
+        let id = data.spec.pair_id();
+        let mut last_value = self.get_last(&data.spec.pair_id());
+        let mut last_time = if let Some(ref s) = last_value {
+            s.time
+        } else {
+            0
+        };
+
+        let mut now = (::common::unixtime()) as u64;
+        let mut max_stable_time = now - 60;
+
+        let mut filtered: Vec<Ohlc> = data.ohlc
+            .iter()
+            .filter(|t| t.time >= last_time.saturating_sub(60))
+            .map(|x| x.clone())
+            .collect();
+
+        filtered.sort_by_key(|x| x.time);
+
+        self.db.do_send(db::SaveOhlc {
+            id: data.spec.pair_id().clone(),
+            ohlc: data.ohlc.clone(),
+        });
+
+        for tick in filtered {
+            let tick = tick.clone();
+            let mut exch = data.spec.exch().clone();
+            let mut pair = data.spec.pair().clone();
+            if tick.time > last_time && tick.time <= max_stable_time {
+                debug!("{}/{} NEW STABLE  @ {:?} off: {:?}", exch, pair, tick.time, now - tick.time);
+                self.new_stable(id, tick)?;
+            } else if tick.time > last_time && tick.time > max_stable_time {
+                debug!("{}/{} NEW LIVE    @ {:?} off: {:?}", exch, pair, tick.time, now - tick.time);
+                self.new_live(id, tick)?;
+            } else if tick.time == last_time && tick.time > max_stable_time {
+                debug!("{}/{}  UPDATE LIVE @ {:?} off: {:?}", exch, pair, tick.time, now - tick.time);
+                self.update_live(id, tick)?;
+            }
+        }
+        Ok(())
     }
 }
 

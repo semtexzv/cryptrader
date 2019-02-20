@@ -1,14 +1,11 @@
 use crate::prelude::*;
 use crate::users::middleware::UserAuthentication;
 
-mod me;
-pub use self::me::*;
+pub mod me;
 
-mod signup;
-pub use self::signup::*;
+pub mod signup;
 
-mod login;
-pub use self::login::*;
+pub mod login;
 
 
 pub fn logout(request: HttpRequest<State>) -> HttpResponse {

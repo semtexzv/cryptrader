@@ -17,3 +17,5 @@ actix-arch = { path = "../deps/actix-arch" }
 
 apis = { path = "../deps/apis" }
 db = { path = "../deps/db" }
+
+radix_trie = "*"

@@ -118,6 +118,15 @@ impl OhlcSpec {
     pub fn new_m(exch: impl Into<String>, pair: impl Into<TradePair>) -> Self {
         return Self::new(exch, pair, OhlcPeriod::Min1);
     }
+    pub fn from_pair(pair: impl Into<PairId>, period: impl Into<OhlcPeriod>) -> Self {
+        return OhlcSpec {
+            pair: pair.into(),
+            period: period.into(),
+        };
+    }
+    pub fn from_pair_1m(pair: impl Into<PairId>) -> Self {
+        return Self::from_pair(pair, OhlcPeriod::Min1);
+    }
 
     pub fn exch(&self) -> &str {
         return self.pair.exch();

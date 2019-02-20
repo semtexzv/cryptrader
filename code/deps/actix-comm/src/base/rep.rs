@@ -49,6 +49,7 @@ impl Reply {
             .bind(addr)
             .build();
 
+
         future::result(router.map(|router| {
             let (sink, stream) = router.sink_stream().split();
             let (tx, rx) = futures::sync::mpsc::unbounded();
@@ -57,10 +58,7 @@ impl Reply {
 
             Actor::create(|ctx| {
                 ctx.spawn(wrap_future(forward.drop_item().drop_err()));
-                Self::add_stream(stream.map(|x| {
-                    println!("ITEM {:?}", x);
-                    x
-                }), ctx);
+                Self::add_stream(stream, ctx);
                 Reply {
                     handle,
                     registry: Default::default(),
@@ -72,6 +70,9 @@ impl Reply {
 
     fn handle_message(&mut self, ctx: &mut Context<Self>, identity: Identity, msg: MessageWrapper) {
         match msg {
+            MessageWrapper::Hello => {
+                debug!("Received hello");
+            }
             MessageWrapper::Request(typ, id, data) => {
                 if let Some(handler) = self.registry.get(&typ) {
                     let (tx, rx) = oneshot();

@@ -46,7 +46,7 @@ impl<F: Future> Future for UnwrapErr<F>
     where F::Error: Debug
 {
     type Item = F::Item;
-    type Error = !;
+    type Error = ();
 
     fn poll(&mut self) -> Result<Async<Self::Item>, Self::Error> {
         return Ok(self.0.poll().unwrap());

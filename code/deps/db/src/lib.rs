@@ -35,11 +35,13 @@ pub use crate::users::*;
 
 
 pub fn init_store() {
+    info!("Initializing database");
     let url = format!("postgres://{}:{}@postgres.default.svc:5432/{}", "postgresadmin", "admin123", "postgresdb");
     let connection = ConnType::establish(&url)
         .expect("Error connecting to DB");
 
     embedded_migrations::run(&connection).unwrap();
+    info!("Migrations performed");
 }
 
 
@@ -63,7 +65,7 @@ pub fn start() -> Addr<Database> {
         .build(manager)
         .expect("Failed to create connection pool");
 
-    return SyncArbiter::start(4, move || Database(pool.clone()));
+    return SyncArbiter::start(6, move || Database(pool.clone()));
 }
 
 impl Actor for Database {

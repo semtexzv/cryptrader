@@ -12,7 +12,6 @@ pub use common::{
     },
     env_logger,
 };
-pub use askama::Template;
 pub use db::diesel;
 pub use crate::utils::*;
 pub use crate::State;

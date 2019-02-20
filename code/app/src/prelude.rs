@@ -11,7 +11,7 @@ pub use apis;
 pub use db;
 
 pub use common::types::{
-    Ohlc, OhlcSpec, OhlcPeriod, TradePair,
+    Ohlc, OhlcSpec, OhlcPeriod, TradePair, PairId,
 };
 
 

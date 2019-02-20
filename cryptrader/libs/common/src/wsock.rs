@@ -81,7 +81,7 @@ impl WsClient {
         let (tx, rx) = channel();
 
         let handler = thread::spawn(move || {
-            println!("Connecting to {}", url);
+            debug!("Connecting to {}", url);
             let mut settings = ws::Settings::default();
 
             let mut socket = ws::Builder::new()

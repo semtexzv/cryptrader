@@ -33,11 +33,10 @@ impl Handler<RegisterDefaultHandler> for Subscribe {
 
 impl StreamHandler<Multipart, tzmq::Error> for Subscribe {
     fn handle(&mut self, mut item: Multipart, ctx: &mut Self::Context) {
-        println!("New multipart");
-        let identity = item.pop_front().unwrap().to_vec();
+        let tag = item.pop_front().unwrap().to_vec();
         let data: MessageWrapper = json::from_slice(&item.pop_front().unwrap()).unwrap();
 
-        self.handle_message(ctx, identity, data);
+        self.handle_message(ctx, vec![], data);
     }
 }
 
@@ -65,10 +64,7 @@ impl Subscribe {
     fn create(handle: ContextHandle, socket: Result<Sub, tzmq::Error>) -> impl Future<Item=Addr<Self>, Error=tzmq::Error> {
         future::result(socket.map(|socket: Sub| {
             Actor::create(|ctx| {
-                let stream = socket.stream().map(|x| {
-                    println!("Item {:?}", x);
-                    x
-                });
+                let stream = socket.stream();
 
                 Self::add_stream(stream, ctx);
                 Subscribe {
@@ -82,7 +78,6 @@ impl Subscribe {
     fn handle_message(&mut self, ctx: &mut Context<Self>, identity: Identity, msg: MessageWrapper) {
         match msg {
             MessageWrapper::Announcement(typ, data) => {
-                println!("Received msg: Handling");
                 if let Some(handler) = self.registry.get(&typ) {
                     let (tx, rx) = oneshot();
                     handler.handle(typ, data, tx);

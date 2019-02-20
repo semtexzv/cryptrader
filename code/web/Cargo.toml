@@ -11,7 +11,7 @@ path = "../common"
 
 
 [build-dependencies]
-askama = "*"
+ructe = "*"
 
 [dependencies]
 clap = "*"
@@ -26,6 +26,8 @@ actix-arch = { path = "../deps/actix-arch" }
 apis = { path = "../deps/apis" }
 db = { path = "../deps/db" }
 
-askama = { version  = "*", features = ["actix-web", "serde-json"]   }
+ructe = { version = "*" , features = ["mime03", "sass"]}
+mime = "0.3"
+
 
 djangohashers = "^0.3"

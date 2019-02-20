@@ -29,13 +29,13 @@ pub fn configure(app: App<State>) -> App<State> {
         r.method(Method::GET).with(compat(dispatch))
     })
     .resource("/users/me/", |r| {
-        r.method(Method::GET).with(compat(pages::Me::get));
+        r.method(Method::GET).with(compat(pages::me::get));
     }).resource("/users/signup/", |r| {
-        r.method(Method::GET).with(compat(pages::Signup::get));
-        r.method(Method::POST).with(compat(pages::Signup::post));
+        r.method(Method::GET).with(compat(pages::signup::get));
+        r.method(Method::POST).with(compat(pages::signup::post));
     }).resource("/users/login/", |r| {
-        r.method(Method::GET).with(compat(pages::Login::get_async));
-        r.method(Method::POST).with(compat(pages::Login::post_async));
+        r.method(Method::GET).with(compat(pages::login::get_async));
+        r.method(Method::POST).with(compat(pages::login::post_async));
     }).resource("/users/logout/", |r| {
         r.method(Method::POST).with(pages::logout);
     })
