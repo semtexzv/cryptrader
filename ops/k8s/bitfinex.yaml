@@ -7,7 +7,7 @@ items:
       name: bitfinex
       labels: { app: trader }
     spec:
-      selector: { layer: sources }
+      selector: { layer: sources, exch: bitfinex }
       ports:
         - name: ingest
           port: 42042

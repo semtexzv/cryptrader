@@ -9,6 +9,7 @@ pub use actix_arch::{
 
 pub use apis;
 pub use db;
+pub use db::Database;
 
 pub use common::types::{
     Ohlc, OhlcSpec, OhlcPeriod, TradePair, PairId,

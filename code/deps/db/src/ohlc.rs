@@ -2,7 +2,7 @@ use common::prelude::*;
 use diesel::prelude::*;
 
 use crate::{
-    Database,
+    DbWorker,
     ConnType,
     schema::{
         self,
@@ -74,7 +74,7 @@ impl Message for SaveOhlc {
     type Result = ();
 }
 
-impl Handler<SaveOhlc> for Database {
+impl Handler<SaveOhlc> for DbWorker {
     type Result = ();
 
     fn handle(&mut self, msg: SaveOhlc, ctx: &mut Self::Context) {
@@ -146,7 +146,7 @@ impl OhlcHistory {
 }
 
 
-impl Handler<OhlcHistory> for Database {
+impl Handler<OhlcHistory> for DbWorker {
     type Result = Result<BTreeMap<u64, Ohlc>>;
 
     fn handle(&mut self, msg: OhlcHistory, ctx: &mut Self::Context) -> Self::Result {
@@ -177,3 +177,28 @@ impl Handler<OhlcHistory> for Database {
         return Ok(vals);
     }
 }
+
+/*
+pub fn resampled_ohlc_values(conn: &ConnType, spec: &OhlcSpec, since: u64) -> Vec<Ohlc> {
+    let sql = ::diesel::sql_query(include_str!("../../../sql/ohlc_resampled_tdb.sql"));
+
+    //let since = spec.period().clamp_time(unixtime() as u64 - 400 * spec.period().seconds() as u64);
+
+
+    let vals: Vec<Ohlc> = sql
+        .bind::<Text, _>(&spec.exch())
+        .bind::<Text, _>(&spec.pair().to_string())
+        .bind::<BigInt, _>(spec.period().seconds() as i64)
+        .bind::<BigInt, _>(since as i64)
+        .load::<LoadOhlc>(conn).expect("Could not query db")
+        .iter()
+        .map(|c| c.clone().into()).collect();
+
+
+    //println!("Execution time : {}", t1.to(t2).num_milliseconds());
+
+    return vals;
+}
+
+pub struct ResampledOhlc { }
+*/

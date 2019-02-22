@@ -6,7 +6,7 @@ use common::types::PairId;
 
 pub struct Rescaler {
     handle: ContextHandle,
-    db: Addr<db::Database>,
+    db: Database,
     cache: BTreeMap<PairId, BTreeMap<u64, Ohlc>>,
     out: Recipient<OhlcUpdate>,
 }

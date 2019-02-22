@@ -27,7 +27,7 @@ items:
 - kind: Service
   apiVersion: v1
   metadata:
-    name: postgres
+    name: storage
     labels: { app: trader }
   spec:
     ports: [ { port: 5432 } ]
@@ -48,7 +48,7 @@ items:
         labels: { app: trader, layer: storage }
       spec:
         containers:
-          - name: postgres
+          - name: storage
             image: timescale/timescaledb:1.0.1-pg10
             imagePullPolicy: IfNotPresent
             ports:

@@ -2,7 +2,7 @@ use common::prelude::*;
 use diesel::prelude::*;
 
 use crate::{
-    Database,
+    DbWorker,
     ConnType,
     schema::{self, users, ohlc},
 };
@@ -33,7 +33,7 @@ impl Message for NewUser {
     type Result = Result<User, diesel::result::Error>;
 }
 
-impl Handler<NewUser> for Database {
+impl Handler<NewUser> for DbWorker {
     type Result = Result<User, diesel::result::Error>;
 
     fn handle(&mut self, msg: NewUser, _: &mut Self::Context) -> Self::Result {
@@ -51,7 +51,7 @@ impl Message for UserLookup {
     type Result = Result<User, diesel::result::Error>;
 }
 
-impl Handler<UserLookup> for Database {
+impl Handler<UserLookup> for DbWorker {
     type Result = Result<User, diesel::result::Error>;
 
     fn handle(&mut self, msg: UserLookup, _: &mut Self::Context) -> Self::Result {
@@ -74,7 +74,7 @@ impl Message for UserLogin {
     type Result = Result<User, diesel::result::Error>;
 }
 
-impl Handler<UserLogin> for Database {
+impl Handler<UserLogin> for DbWorker {
     type Result = Result<User, diesel::result::Error>;
 
     fn handle(&mut self, msg: UserLogin, _: &mut Self::Context) -> Self::Result {

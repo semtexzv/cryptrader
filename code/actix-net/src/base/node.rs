@@ -142,7 +142,7 @@ impl<M> Handler<SendRemoteRequest<M>> for BaseNode
 
         let flat = rx
             .map_err(|_| RemoteError::MailboxClosed)
-            .timeout(Duration::from_secs(30))
+            //.timeout(Duration::from_secs(30))
             .map_err(|e| e.into_inner().unwrap_or(RemoteError::Timeout))
             .flatten();
         let flat = flat.map(|v| M::res_from_wrapped(&v).unwrap());

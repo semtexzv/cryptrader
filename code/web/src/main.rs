@@ -15,7 +15,7 @@ use actix_web::HttpResponse;
 include!(concat!(env!("OUT_DIR"), "/templates.rs"));
 
 pub struct State {
-    db: Addr<db::Database>
+    db: Addr<db::DbWorker>
 }
 
 fn check<S>(_: &HttpRequest<S>) -> impl Responder { format!("I'm UP") }
@@ -42,7 +42,7 @@ pub fn run() {
         app
             .resource("/healthy", |r| r.method(http::Method::GET).f(check))
             .resource("/ready", |r| r.method(http::Method::GET).f(check))
-            .handler("/static", actix_web::fs::StaticFiles::new("code/web/static").unwrap().show_files_listing())
+            //.handler("/static", actix_web::fs::StaticFiles::new("code/web/static").unwrap().show_files_listing())
             //.resource("/static/{tail:.*}",|r| r.method(http::Method::GET).with(static_file))
             .default_resource(|r| r.h(http::NormalizePath::default()))
     })

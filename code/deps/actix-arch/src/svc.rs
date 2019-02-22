@@ -6,9 +6,9 @@ use actix_comm::ctx::ContextHandle;
 
 use futures_util::FutureExt;
 
-pub trait ServiceInfo: 'static {
-    type RequestType: Remotable;
-    type ResponseType: Remotable;
+pub trait ServiceInfo: 'static + Debug {
+    type RequestType: Remotable + Debug;
+    type ResponseType: Remotable + Debug;
     const ENDPOINT: &'static str;
 }
 
@@ -111,9 +111,9 @@ pub struct ServiceHandler<S: ServiceInfo> {
 }
 
 #[derive(Message)]
-#[rtype(result="Result<S::ResponseType,RemoteError>")]
-#[derive(Clone,Debug,Serialize,Deserialize)]
-pub struct ServiceRequest<S :ServiceInfo>(pub S::RequestType);
+#[rtype(result = "Result<S::ResponseType,RemoteError>")]
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct ServiceRequest<S: ServiceInfo>(pub S::RequestType);
 
 impl<S: ServiceInfo> ServiceHandler<S> {
     pub fn new(handle: ContextHandle) -> BoxFuture<Self, tzmq::Error> {
@@ -128,11 +128,11 @@ impl<S: ServiceInfo> ServiceHandler<S> {
         });
     }
 
-    pub fn from_other <SS : ServiceInfo>(handle : ContextHandle, o : &ServiceHandler<SS>) -> Self {
+    pub fn from_other<SS: ServiceInfo>(handle: ContextHandle, o: &ServiceHandler<SS>) -> Self {
         return Self {
-            _s : PhantomData,
-            inner : o.inner.clone()
-        }
+            _s: PhantomData,
+            inner: o.inner.clone(),
+        };
     }
 
     pub fn register(&self, rec: Recipient<ServiceRequest<S>>) {
@@ -162,7 +162,6 @@ impl<E: EndpointInfo> Publisher<E> {
     pub fn do_publish(&self, i: E::MsgType) {
         Arbiter::spawn(self.inner.send(actix_comm::SendRequest(i)).unwrap_err().set_err(()).map(|_| ()));
     }
-
 }
 
 

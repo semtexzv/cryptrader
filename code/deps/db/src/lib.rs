@@ -1,3 +1,4 @@
+#![feature(box_syntax)]
 #![allow(unused_imports, proc_macro_derive_resolution_fallback)]
 
 #[macro_use]
@@ -28,15 +29,17 @@ embed_migrations!("./migrations");
 mod schema;
 mod ohlc;
 mod users;
+mod strategies;
 
 pub use crate::schema::*;
 pub use crate::ohlc::*;
 pub use crate::users::*;
+pub use crate::strategies::*;
 
 
 pub fn init_store() {
     info!("Initializing database");
-    let url = format!("postgres://{}:{}@postgres.default.svc:5432/{}", "postgresadmin", "admin123", "postgresdb");
+    let url = format!("postgres://{}:{}@storage.default.svc:5432/{}", "postgresadmin", "admin123", "postgresdb");
     let connection = ConnType::establish(&url)
         .expect("Error connecting to DB");
 
@@ -53,25 +56,128 @@ pub type ConnType = diesel::PgConnection;
 pub type PoolType = diesel::r2d2::Pool<r2d2_diesel::ConnectionManager<diesel::PgConnection>>;
 
 
-pub struct Database(pub PoolType);
+pub struct DbWorker(pub PoolType);
 
-pub fn start() -> Addr<Database> {
+pub fn start() -> Database {
     init_store();
 
-    let url = format!("postgres://{}:{}@postgres.default.svc:5432/{}", "postgresadmin", "admin123", "postgresdb");
+    let url = format!("postgres://{}:{}@storage.default.svc:5432/{}", "postgresadmin", "admin123", "postgresdb");
 
     let manager = r2d2_diesel::ConnectionManager::new(url);
     let pool = diesel::r2d2::Pool::builder()
         .build(manager)
         .expect("Failed to create connection pool");
 
-    return SyncArbiter::start(6, move || Database(pool.clone()));
+    return Database(SyncArbiter::start(6, move || DbWorker(pool.clone())));
 }
 
-impl Actor for Database {
+impl Actor for DbWorker {
     type Context = SyncContext<Self>;
 }
 
+pub struct Invoke<F, R> (pub F)
+    where F: FnOnce(&mut DbWorker, &mut <DbWorker as Actor>::Context) -> Result<R> + Send + 'static,
+          R: Send;
+
+impl<F, R> Message for Invoke<F, R>
+    where F: FnOnce(&mut DbWorker, &mut <DbWorker as Actor>::Context) -> Result<R> + Send + 'static,
+          R: Send + 'static {
+    type Result = Result<R>;
+}
+
+impl<F, R> Handler<Invoke<F, R>> for DbWorker
+    where F: FnOnce(&mut DbWorker, &mut <DbWorker as Actor>::Context) -> Result<R> + Send + 'static,
+          R: Send + 'static {
+    type Result = Result<R>;
+
+    fn handle(&mut self, msg: Invoke<F, R>, ctx: &mut Self::Context) -> Self::Result {
+        return msg.0(self, ctx);
+    }
+}
+
+pub struct Database(Addr<DbWorker>);
+
+impl Database {
+    pub fn invoke<F, R>(&self, f: F) -> BoxFuture<R>
+        where F: FnOnce(&mut DbWorker, &mut <DbWorker as Actor>::Context) -> Result<R> + Send + 'static,
+              R: Send + 'static {
+        box self.0.send(Invoke(f)).map(|x| x.unwrap()).from_err()
+    }
+
+    pub fn do_invoke<F, R>(&self, f: F)
+        where F: FnOnce(&mut DbWorker, &mut <DbWorker as Actor>::Context) -> Result<R> + Send + 'static,
+              R: Send + 'static {
+        self.0.do_send(Invoke(f));
+    }
+
+    pub fn do_save_ohlc(&self, id: PairId, ohlc: Vec<Ohlc>) {
+        self.do_invoke(move |this, ctx| {
+            use crate::schema::ohlc::{self, *};
+
+            let conn: &ConnType = &this.0.get().unwrap();
+
+            let new_ohlc: Vec<DbOhlc> = ohlc.iter().map(|candle| {
+                DbOhlc {
+                    time: candle.time as i64,
+                    exchange: id.exchange().into(),
+                    pair: id.pair().to_string(),
+                    open: candle.open,
+                    high: candle.high,
+                    low: candle.low,
+                    close: candle.close,
+                    vol: candle.vol,
+                }
+            }).collect();
+
+            for data in new_ohlc.chunks(4096) {
+                use diesel::pg::upsert::*;
+
+                let stmt = ::diesel::insert_into(schema::ohlc::table)
+                    .values(data)
+                    .on_conflict((ohlc::time, ohlc::pair, ohlc::exchange))
+                    .do_update()
+                    .set(
+                        (open.eq(excluded(open)),
+                         high.eq(excluded(high)),
+                         low.eq(excluded(low)),
+                         close.eq(excluded(close)),
+                         vol.eq(excluded(vol))
+                        ));
+
+
+                stmt.execute(conn)
+                    .expect("Error saving candle into the database");
+            }
+            debug!("Saved {} items", new_ohlc.len());
+            Ok(())
+        })
+    }
+
+    pub fn ohlc_history(&self,)
+
+    pub fn strat_data(&self, sid: i32) -> BoxFuture<(crate::Strategy, crate::User)> {
+        return self.invoke(move |this, ctx| {
+            use schema::strategies::dsl::*;
+            use schema::users::dsl::*;
+
+            let conn: &ConnType = &this.0.get().unwrap();
+            let (strat, user) = strategies.find(sid).inner_join(users).get_result(conn)?;
+            return Ok((strat, user));
+        });
+    }
+
+    pub fn resampled_ohlc_values(&self, spec: &OhlcSpec, since: u64) -> BoxFuture<Vec<Ohlc>> {
+        let sql = ::diesel::sql_query(include_str!("../sql/ohlc_resampled_tdb.sql"));
+
+        //let since = spec.period().clamp_time(unixtime() as u64 - 400 * spec.period().seconds() as u64);
+
+
+        return box self.0.send(Invoke(|this, ctx| {
+            let conn: &ConnType = &this.0.get().unwrap();
+            Ok(vec![])
+        })).map(|x| x.unwrap()).from_err();
+    }
+}
 
 /*
 

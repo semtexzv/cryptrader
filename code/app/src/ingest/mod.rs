@@ -68,7 +68,7 @@ pub struct Ingest {
     handle: ContextHandle,
     input: Subscriber<IngestEndpoint>,
 
-    db: Addr<db::Database>,
+    db: Database,
     out: Recipient<OhlcUpdate>,
 
     last: BTreeMap<PairId, Ohlc>,
@@ -168,10 +168,7 @@ impl Ingest {
 
         filtered.sort_by_key(|x| x.time);
 
-        self.db.do_send(db::SaveOhlc {
-            id: data.spec.pair_id().clone(),
-            ohlc: data.ohlc.clone(),
-        });
+        let f = self.db.do_save_ohlc(data.spec.pair_id().clone(), data.ohlc.clone());
 
         for tick in filtered {
             let tick = tick.clone();

@@ -12,6 +12,9 @@ use crate::prelude::*;
 use std::env;
 use clap::{App, ArgMatches, SubCommand};
 use common::prelude::future::result;
+use std::ops::Add;
+use actix_arch::balancing::LoadBalancer;
+use crate::eval::EvalService;
 
 
 fn main() {
@@ -28,6 +31,8 @@ fn main() {
         .subcommand(SubCommand::with_name("bitfinex")
             .about("Run Bitfines ohlc source")
         )
+        .subcommand(SubCommand::with_name("eval-balancer"))
+        .subcommand(SubCommand::with_name("eval-worker"))
         .get_matches();
 
     common::actix::System::run(move || {
@@ -55,10 +60,20 @@ fn main() {
                     })
                 );
             }
+
             "eval-balancer" => {
-                //let balancer = actix_arch::balancing::LoadBalancer::<crate::eval::EvalService>::new();
+                let balancer = actix_arch::balancing::LoadBalancer::<EvalService>::new(ctx.clone());
+                arb_spawn(balancer.unwrap_err().drop_item())
             }
-            "eval-worker" => {}
+
+            "eval-worker" => {
+                let db = db::start();
+                let worker = crate::eval::EvalWorker::new(ctx.clone(),db);
+
+                arb_spawn(worker.and_then(move |worker| {
+                    actix_arch::balancing::WorkerProxy::new(ctx.clone(), worker.recipient())
+                }).unwrap_err().drop_item())
+            }
             _ => {
                 panic!("Not a valid subcommannd")
             }

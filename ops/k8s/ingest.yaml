@@ -7,12 +7,17 @@ items:
     name: ingest
     labels: { app: trader}
   spec:
-    selector: { layer: input }
+    selector: { layer: ingest }
     ports:
       - name: ingest
         nodePort: 0
         port: 42042
         targetPort: 42042
+
+      - name: eval
+        port: 42044
+        targetPort: 42044
+
 
 - kind: Deployment
   apiVersion: apps/v1
@@ -21,10 +26,10 @@ items:
     labels: { app: trader }
   spec:
     replicas: 1
-    selector: { matchLabels: { app: trader, layer: input }}
+    selector: { matchLabels: { app: trader, layer: ingest }}
     template:
       metadata:
-        labels: { app: trader, layer: input }
+        labels: { app: trader, layer: ingest }
       spec:
         containers:
         - name: app
@@ -32,6 +37,15 @@ items:
           imagePullPolicy: Always
           command: ["/app", "ingest"]
           env: [{name: "RUST_LOG", value: ${RUST_LOG}}]
+          resources:
+            requests:
+              cpu: 10m
+
+        - name: eval-balancer
+          image: ${APP_IMAGE}
+          imagePullPolicy: Always
+          command: ["/app", "eval-balancer"]
+          env: [{name: "RUST_LOG", value: ${RUST_LOG} }]
           resources:
             requests:
               cpu: 10m

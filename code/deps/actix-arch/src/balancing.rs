@@ -11,8 +11,8 @@ pub trait LoadBalancedService<S: ServiceInfo> {
     type WorkerInfo: ServiceInfo = WorkerServiceInfo<S>;
 }
 
+#[derive(Debug)]
 pub struct WorkerServiceInfo<S: ServiceInfo>(PhantomData<S>);
-
 
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -36,120 +36,168 @@ impl<S: ServiceInfo + 'static> ServiceInfo for WorkerServiceInfo<S> {
 }
 
 
+#[derive(Debug)]
 pub struct BalancedInfo<S: ServiceInfo>(PhantomData<S>);
 
 impl<S: ServiceInfo + 'static> ServiceInfo for BalancedInfo<S> {
-    type RequestType = (S::RequestType,());
-    type ResponseType = (S::ResponseType,());
+    type RequestType = (S::RequestType, ());
+    type ResponseType = (S::ResponseType, ());
     const ENDPOINT: &'static str = S::ENDPOINT;
 }
 
 
+pub struct LoadBalancer<S: ServiceInfo> {
+    _s: PhantomData<S>,
+    handle: ContextHandle,
+    proxy: Addr<ServiceProxy<S>>,
+    worker_handler: ServiceHandler<WorkerServiceInfo<S>>,
 
-pub struct LoadBalancer<S : ServiceInfo> {
-    _s : PhantomData<S>,
-    handle : ContextHandle,
-    handler : ServiceHandler<S>,
-    worker_handler : ServiceHandler<WorkerServiceInfo<S>>,
-
-    workers : Vec<OneSender<WorkerReply<S>>>,
-    requests : BTreeMap<u64, OneSender<S::ResponseType>>
+    workers: Vec<OneSender<WorkerReply<S>>>,
+    requests: BTreeMap<u64, OneSender<S::ResponseType>>,
 }
 
-impl<S :ServiceInfo> Actor for LoadBalancer<S> { type Context = Context<Self>; }
+impl<S: ServiceInfo> Actor for LoadBalancer<S> { type Context = Context<Self>; }
 
 
-impl<S : ServiceInfo> LoadBalancer<S> {
-    pub fn new(handle : ContextHandle) -> BoxFuture<Addr<Self>> {
+impl<S: ServiceInfo> LoadBalancer<S> {
+    pub fn new(handle: ContextHandle) -> BoxFuture<Addr<Self>> {
         let handler = ServiceHandler::new(handle.clone());
 
-        return box handler.map(move |handler : ServiceHandler<S>| {
 
+        return box handler.map(move |handler: ServiceHandler<S>| {
             Actor::create(|ctx| {
-
-                let worker_handler : ServiceHandler<WorkerServiceInfo<S>> = ServiceHandler::from_other(handle.clone(), &handler);
+                let worker_handler: ServiceHandler<WorkerServiceInfo<S>> = ServiceHandler::from_other(handle.clone(), &handler);
+                let proxy = ServiceProxy::new(handle.clone(), handler, ctx.address());
                 worker_handler.register(ctx.address().recipient());
                 LoadBalancer {
-                    _s : PhantomData,
+                    _s: PhantomData,
                     handle,
-                    handler,
+                    proxy,
                     worker_handler,
-                    workers : vec![],
-                    requests : BTreeMap::new(),
+                    workers: vec![],
+                    requests: BTreeMap::new(),
                 }
             })
-        }).map_err(Into::into)
+        }).map_err(Into::into);
     }
 }
 
-impl<S : ServiceInfo> Handler<ServiceRequest<WorkerServiceInfo<S>>> for LoadBalancer<S> {
-    type Result = actix::Response<WorkerReply<S>,RemoteError>;
+impl<S: ServiceInfo> Handler<ServiceRequest<WorkerServiceInfo<S>>> for LoadBalancer<S> {
+    type Result = actix::Response<WorkerReply<S>, RemoteError>;
 
     fn handle(&mut self, msg: ServiceRequest<WorkerServiceInfo<S>>, ctx: &mut Self::Context) -> Self::Result {
-
+        info!("Worker available : {:?}", msg);
         match msg.0 {
             WorkerRequest::Available | WorkerRequest::Hello => {
-                let (tx,rx) = oneshot::<WorkerReply<S>>();
+                let (tx, rx) = oneshot::<WorkerReply<S>>();
                 self.workers.push(tx);
                 return Response::r#async(rx.map_err(|e| RemoteError::MailboxClosed));
             }
-            WorkerRequest::WorkDone(id,resp) => {
+            WorkerRequest::WorkDone(id, resp) => {
                 unimplemented!()
             }
         }
     }
 }
 
-impl<S : ServiceInfo> Handler<ServiceRequest<BalancedInfo<S>>> for LoadBalancer<S> {
-    type Result = actix::Response<(S::ResponseType,()),RemoteError>;
+impl<S: ServiceInfo> Handler<ServiceRequest<BalancedInfo<S>>> for LoadBalancer<S> {
+    type Result = actix::Response<(S::ResponseType, ()), RemoteError>;
 
     fn handle(&mut self, msg: ServiceRequest<BalancedInfo<S>>, ctx: &mut Self::Context) -> Self::Result {
-        let id : u64 = self.requests.iter().last().map(|i| *i.0).unwrap_or(0);
+        let id: u64 = self.requests.iter().last().map(|i| *i.0).unwrap_or(0);
         if let Some(worker) = self.workers.pop() {
-            let res  = worker.send(WorkerReply::Work(id,(msg.0).0));
-            let (tx,rx) = oneshot::<S::ResponseType>();
-            self.requests.insert(id,tx);
-            return Response::r#async(rx.map(|it| (it,())).map_err(|e| RemoteError::MailboxClosed));
+            let res = worker.send(WorkerReply::Work(id, (msg.0).0));
+            let (tx, rx) = oneshot::<S::ResponseType>();
+            self.requests.insert(id, tx);
+            return Response::r#async(rx.map(|it| (it, ())).map_err(|e| RemoteError::MailboxClosed));
         }
         panic!("Not enough workers");
-        // Received work from proxy handler
     }
 }
 
-pub struct ServiceProxy<S : ServiceInfo> {
-    handle : ContextHandle,
-    handler : ServiceHandler<S>,
-    rec : Recipient<ServiceRequest<BalancedInfo<S>>>
+pub struct ServiceProxy<S: ServiceInfo> {
+    handle: ContextHandle,
+    handler: ServiceHandler<S>,
+    rec: Recipient<ServiceRequest<BalancedInfo<S>>>,
 }
-impl<S : ServiceInfo> ServiceProxy<S> {
-    fn new(handle : ContextHandle, handler : ServiceHandler<S>, balancer : Addr<LoadBalancer<S>>) -> Addr<Self> {
-        Actor::create(|ctx| {
 
+impl<S: ServiceInfo> ServiceProxy<S> {
+    fn new(handle: ContextHandle, handler: ServiceHandler<S>, balancer: Addr<LoadBalancer<S>>) -> Addr<Self> {
+        Actor::create(|ctx| {
             handler.register(ctx.address().recipient());
             ServiceProxy {
                 handle,
                 handler,
-                rec : balancer.recipient(),
+                rec: balancer.recipient(),
             }
         })
     }
 }
-impl<S : ServiceInfo> Actor for ServiceProxy<S> { type Context = Context<Self>; }
 
-impl<S : ServiceInfo>  Handler<ServiceRequest<S>> for ServiceProxy<S> {
-    type Result = Response<S::ResponseType,RemoteError>;
+impl<S: ServiceInfo> Actor for ServiceProxy<S> { type Context = Context<Self>; }
+
+impl<S: ServiceInfo> Handler<ServiceRequest<S>> for ServiceProxy<S> {
+    type Result = Response<S::ResponseType, RemoteError>;
 
     fn handle(&mut self, msg: ServiceRequest<S>, ctx: &mut Self::Context) -> Self::Result {
-        Response::r#async(self.rec.send(ServiceRequest((msg.0,()))).map(|x| x.unwrap().0).from_err())
+        Response::r#async(self.rec.send(ServiceRequest((msg.0, ()))).map(|x| x.unwrap().0).from_err())
     }
 }
 
 
-
-pub struct BalancedWorker<S : ServiceInfo> {
-    handle : ContextHandle,
+pub struct WorkerProxy<S: ServiceInfo> {
+    handle: ContextHandle,
+    conn: ServiceConnection<WorkerServiceInfo<S>>,
+    handler: Recipient<ServiceRequest<S>>,
 }
 
-impl<S : ServiceInfo> BalancedWorker<S> {
-    fn new(handle : ContextHandle) -> 
+impl<S: ServiceInfo> Actor for WorkerProxy<S> {
+    type Context = Context<Self>;
+
+    fn started(&mut self, ctx: &mut Self::Context) {
+        self.send(WorkerRequest::Available, ctx);
+    }
+}
+
+impl<S: ServiceInfo> WorkerProxy<S> {
+    pub fn new(handle: ContextHandle, handler: Recipient<ServiceRequest<S>>) -> BoxFuture<Addr<Self>> {
+        let conn = ServiceConnection::new(handle.clone());
+        return box conn.map(|conn| {
+            Actor::create(|ctx| {
+                WorkerProxy {
+                    handle,
+                    conn,
+                    handler,
+                }
+            })
+        }).from_err();
+    }
+
+    fn send(&mut self, req: WorkerRequest<S>, ctx: &mut Context<Self>) {
+        let fut = wrap_future(self.conn.send(WorkerRequest::Available));
+        ctx.spawn(
+            fut.then(|msg, this: &mut Self, ctx| {
+                this.handle_reply(msg.unwrap(), ctx);
+                afut::ok(())
+            })
+        );
+    }
+
+    fn handle_reply(&mut self, reply: WorkerReply<S>, ctx: &mut Context<Self>) {
+        info!("Receivied worker reply {:?}", reply);
+        match reply {
+            WorkerReply::HelloReply => {
+                self.send(WorkerRequest::Available, ctx);
+            }
+            WorkerReply::Work(id, work) => {
+                let work = self.handler.send(ServiceRequest(work));
+                let fut = wrap_future(work);
+
+                ctx.spawn(fut.map(move |v, this: &mut Self, ctx: &mut _| {
+                    this.send(WorkerRequest::WorkDone(id, v.unwrap()), ctx);
+                    ()
+                }).drop_err());
+            }
+        }
+    }
 }
