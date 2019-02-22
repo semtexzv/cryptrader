@@ -4,6 +4,7 @@
 pub mod prelude;
 pub mod exch;
 pub mod ingest;
+pub mod eval;
 
 
 use crate::prelude::*;
@@ -54,10 +55,12 @@ fn main() {
                     })
                 );
             }
-            "eval-balancer" => {}
+            "eval-balancer" => {
+                //let balancer = actix_arch::balancing::LoadBalancer::<crate::eval::EvalService>::new();
+            }
             "eval-worker" => {}
             _ => {
-                panic!("Not a valid subcommansd")
+                panic!("Not a valid subcommannd")
             }
         }
     });

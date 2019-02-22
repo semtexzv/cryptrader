@@ -7,7 +7,7 @@ use actix_comm::ctx::ContextHandle;
 use futures_util::FutureExt;
 
 pub trait ServiceInfo: 'static {
-    type RequestType: RemoteMessage<Result=Self::ResponseType> + Remotable;
+    type RequestType: Remotable;
     type ResponseType: Remotable;
     const ENDPOINT: &'static str;
 }
@@ -99,7 +99,8 @@ impl<S: ServiceInfo> ServiceConnection<S> {
     }
 
     pub fn send(&self, req: S::RequestType) -> BoxFuture<S::ResponseType, RemoteError> {
-        return box self.inner.send(actix_comm::SendRequest(req)).map_err(Into::into).map(|x| x.unwrap());
+        let req = ServiceRequest::<S>(req);
+        return box self.inner.send(actix_comm::SendRequest(req)).map_err(Into::into).map(|x| x.unwrap()).map(|x| x.unwrap());
     }
 }
 
@@ -109,6 +110,10 @@ pub struct ServiceHandler<S: ServiceInfo> {
     inner: Addr<actix_comm::rep::Reply>,
 }
 
+#[derive(Message)]
+#[rtype(result="Result<S::ResponseType,RemoteError>")]
+#[derive(Clone,Debug,Serialize,Deserialize)]
+pub struct ServiceRequest<S :ServiceInfo>(pub S::RequestType);
 
 impl<S: ServiceInfo> ServiceHandler<S> {
     pub fn new(handle: ContextHandle) -> BoxFuture<Self, tzmq::Error> {
@@ -123,7 +128,14 @@ impl<S: ServiceInfo> ServiceHandler<S> {
         });
     }
 
-    pub fn register(&self, rec: Recipient<S::RequestType>) {
+    pub fn from_other <SS : ServiceInfo>(handle : ContextHandle, o : &ServiceHandler<SS>) -> Self {
+        return Self {
+            _s : PhantomData,
+            inner : o.inner.clone()
+        }
+    }
+
+    pub fn register(&self, rec: Recipient<ServiceRequest<S>>) {
         self.inner.do_send(actix_comm::RegisterHandler(rec));
     }
 }

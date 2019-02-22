@@ -1,0 +1,106 @@
+// Static Variables
+
+$admin-header-height: 70px;
+$admin-footer-height: 70px;
+$admin-nav-width: 250px;
+
+// Global CSS
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  height: 100%;
+  overflow-x: hidden;
+}
+
+// Main Layout Grid
+
+.root {
+  --spacing: 1rem;
+
+  // Flexbox Fallback
+  display: flex;
+  flex-wrap: wrap;
+
+  // Grid
+  display: grid;
+  height: 100vh;
+
+  grid-template-rows:     $admin-header-height 1fr $admin-footer-height;
+  grid-template-columns:  $admin-nav-width 1fr;
+  grid-template-areas:    "header header"
+  "nav    main"
+  "footer footer";
+
+  .header {
+    display: flex;
+    flex-basis: 100%;
+    grid-area: header;
+    height: $admin-header-height;
+    background-color: #fff;
+    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.16);
+    position: relative;
+
+    .logo {
+      width: $admin-nav-width;
+    }
+
+    .toolbar {
+      display: flex;
+      flex-direction: column;
+
+      height: 100%;
+      width: 100%;
+    }
+    .item {
+      display: inline-block;
+    }
+  }
+
+
+  .nav {
+    flex: 0 0 $admin-nav-width;
+    grid-area: nav;
+    background-color: #313541;
+  }
+
+  .main {
+    flex: 1;
+    grid-area: main;
+    padding: var(--spacing);
+    overflow-y: auto;
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+
+    background-color: #f4f7fa;
+  }
+
+  .footer {
+    display: flex;
+    grid-area: footer;
+    flex-basis: 100%;
+    justify-content: space-between;
+    align-items: center;
+    height: $admin-footer-height;
+    padding: 0 var(--spacing);
+    color: #4e5561;
+    background-color: #1d2127;
+  }
+
+  @media screen and (min-width: 48rem) {
+    --spacing: 2rem;
+  }
+}
+@import "./bootstrap/scss/functions";
+@import "./bootstrap/scss/variables";
+@import "./bootstrap/scss/mixins";
+// Optional
+@import "./bootstrap/scss/reboot";
+@import "./bootstrap/scss/type";
+@import "./bootstrap/scss/images";
+@import "./bootstrap/scss/code";
+@import "./bootstrap/scss/buttons";

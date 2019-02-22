@@ -8,6 +8,7 @@ pub struct TradingRequestSpec {
     pub ohlc: OhlcSpec,
     pub user_id: String,
     pub strat_id: String,
+
 }
 
 impl TradingRequestSpec {

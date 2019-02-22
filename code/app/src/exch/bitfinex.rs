@@ -3,6 +3,8 @@ use crate::prelude::*;
 use common::actix_web::ws;
 use ::apis::bitfinex as api;
 use crate::ingest;
+use time::PreciseTime;
+use std::time::Duration;
 
 
 pub struct BitfinexOhlcSource {
@@ -12,6 +14,8 @@ pub struct BitfinexOhlcSource {
 
     ohlc_ids: BTreeMap<i32, TradePair>,
     ticker_ids: BTreeMap<i32, TradePair>,
+
+    last : PreciseTime,
 
 }
 
@@ -61,12 +65,21 @@ impl BitfinexOhlcSource {
             Actor::create(|ctx| {
                 BitfinexOhlcSource::add_stream(rx, ctx);
 
+                ctx.run_interval(Duration::from_secs(20),|this,ctx| {
+                    let now = PreciseTime::now();
+
+                    if this.last.to(now).num_seconds() > 20 {
+                        panic!("Timeout")
+                    }
+                });
+
                 BitfinexOhlcSource {
                     handle,
                     ingest : publ,
                     ws: tx,
                     ohlc_ids: BTreeMap::new(),
                     ticker_ids: BTreeMap::new(),
+                    last : PreciseTime::now(),
                 }
             })
         })
@@ -77,6 +90,7 @@ impl BitfinexOhlcSource {
 /// Handle server websocket messages
 impl StreamHandler<ws::Message, ws::ProtocolError> for BitfinexOhlcSource {
     fn handle(&mut self, msg: ws::Message, ctx: &mut Context<Self>) {
+        self.last = PreciseTime::now();
         debug!("Received message");
         if let ws::Message::Text(str) = msg {
             if let Ok(r) = json::from_str::<api::Resp>(&str) {

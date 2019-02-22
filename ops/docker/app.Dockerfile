@@ -1,4 +1,4 @@
-FROM base/archlinux:latest
+FROM archlinux/base:latest
 
 
 RUN pacman -Sy --noconfirm zeromq postgresql-libs dnsutils iproute2; pacman -Scc --noconfirm

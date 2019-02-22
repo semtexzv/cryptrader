@@ -1,20 +1,20 @@
 @use crate::prelude::*;
 @(base : &BaseTemplateInfo)
 
-<ul>
+<ul class="toolbar">
     @if base.auth.signed_in {
-    <div class="head-item">Trader app</div>
-
-    <li class="head-item right">
+    <div class="item">Trader app</div>
+    <li class="item">
         <form method="POST" action="/users/logout/" class="form-inline">
             <input class="nav-link btn btn-primary" type="submit" value="Logout"/>
         </form>
     </li>
-    <li class="head-item right"><a href="/users/me" class="nav-link btn"> @base.auth.email </a></li>
+
+    <li class="item right"><a href="/users/me" class="nav-link btn"> @base.auth.email </a></li>
 
     } else {
 
-    <li class="head-item right">
+    <li class="item right">
         <a class="btn btn-primary" href="/users/login">Login</a>
     </li>
     }

@@ -8,14 +8,11 @@
     <title>Trader app</title>
     <link rel="stylesheet" href="/static/style.css" type="text/css"/>
 
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300italic,700,700italic">
-    <link rel="stylesheet" href="https://cdn.rawgit.com/necolas/normalize.css/master/normalize.css">
-    <link rel="stylesheet" href="https://cdn.rawgit.com/milligram/milligram/master/dist/milligram.min.css">
 
 </head>
 <body>
 <div class="root">
-    <div class="">
+    <div class="header">
         @:auth_block(base)
     </div>
 
@@ -26,7 +23,12 @@
     </div>
     }
     }
-    <div class="nav"></div>
+    <div class="nav">
+        <ul>
+            <li>bla</li>
+            <li>bla</li>
+        </ul>
+    </div>
     <div class="main">
         @:content()
     </div>
