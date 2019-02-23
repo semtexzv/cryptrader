@@ -28,7 +28,7 @@ pub async fn post((request, user): (HttpRequest<State>, Form<NewUser>)) -> Resul
 
     user.password = djangohashers::make_password(&user.password);
 
-    match await_compat!(request.state().db.send(user))? {
+    match await_compat!(request.state().db.new_user(user)) {
         Ok(user) => {
             request.session().set("email", user.email).unwrap();
             request.session().set("uid", user.id).unwrap();

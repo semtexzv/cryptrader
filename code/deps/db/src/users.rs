@@ -25,43 +25,9 @@ pub struct User {
 pub struct NewUser {
     #[validate(email(message = "Hmmm, invalid email provided."))]
     pub email: String,
-
     pub password: String,
 }
 
-impl Message for NewUser {
-    type Result = Result<User, diesel::result::Error>;
-}
-
-impl Handler<NewUser> for DbWorker {
-    type Result = Result<User, diesel::result::Error>;
-
-    fn handle(&mut self, msg: NewUser, _: &mut Self::Context) -> Self::Result {
-        let conn: &ConnType = &self.0.get().unwrap();
-        diesel::insert_into(users::table).values(&msg).get_result::<User>(conn)
-    }
-}
-
-#[derive(Deserialize, Debug)]
-pub struct UserLookup {
-    pub id: i32
-}
-
-impl Message for UserLookup {
-    type Result = Result<User, diesel::result::Error>;
-}
-
-impl Handler<UserLookup> for DbWorker {
-    type Result = Result<User, diesel::result::Error>;
-
-    fn handle(&mut self, msg: UserLookup, _: &mut Self::Context) -> Self::Result {
-        use crate::schema::users::dsl::*;
-
-        let conn: &ConnType = &self.0.get().unwrap();
-
-        users.filter(id.eq(msg.id)).get_result::<User>(conn)
-    }
-}
 
 #[derive(Deserialize, Validate, Serialize, Debug)]
 pub struct UserLogin {
@@ -70,17 +36,31 @@ pub struct UserLogin {
     pub password: String,
 }
 
-impl Message for UserLogin {
-    type Result = Result<User, diesel::result::Error>;
-}
 
-impl Handler<UserLogin> for DbWorker {
-    type Result = Result<User, diesel::result::Error>;
+impl crate::Database {
+    pub fn get_user(&self, uid: i32) -> BoxFuture<User, diesel::result::Error> {
+        self.invoke::<_, _, diesel::result::Error>(move |this, ctx| {
+            use crate::schema::users::dsl::*;
 
-    fn handle(&mut self, msg: UserLogin, _: &mut Self::Context) -> Self::Result {
-        use crate::schema::users::dsl::*;
+            let conn: &ConnType = &this.0.get().unwrap();
 
-        let conn: &ConnType = &self.0.get().unwrap();
-        users.filter(email.eq(msg.email)).get_result::<User>(conn)
+            let res = users.filter(id.eq(uid)).get_result::<User>(conn)?;
+            Ok(res)
+        })
+    }
+    pub fn login(&self, login: UserLogin) -> BoxFuture<User, diesel::result::Error> {
+        self.invoke(move |this, ctx| {
+            use crate::schema::users::dsl::*;
+
+            let conn: &ConnType = &this.0.get().unwrap();
+            users.filter(email.eq(login.email)).get_result::<User>(conn)
+        })
+    }
+    pub fn new_user(&self, user: NewUser) -> BoxFuture<User, diesel::result::Error> {
+        self.invoke(move |this, ctx| {
+            let conn: &ConnType = &this.0.get().unwrap();
+            let r = diesel::insert_into(users::table).values(&user).get_result::<User>(conn)?;
+            Ok(r)
+        })
     }
 }

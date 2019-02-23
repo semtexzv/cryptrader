@@ -33,12 +33,13 @@ pub struct Decider {
 }
 
 impl Decider {
-    pub fn new(handle: ContextHandle, input: Addr<Proxy<OhlcUpdate>>) -> BoxFuture<Addr<Self>, failure::Error> {
+    pub fn new(handle: ContextHandle,db : db::Database, input: Addr<Proxy<OhlcUpdate>>) -> BoxFuture<Addr<Self>, failure::Error> {
         box ServiceConnection::new(handle.clone()).map(|eval_svc| {
-            Actor::create(|ctx| {
+            Arbiter::start(move |ctx : &mut Context<Self>| {
+                input.do_send(Subscribe::forever(ctx.address().recipient()));
                 Decider {
                     handle,
-                    db: db::start(),
+                    db,
                     eval_svc,
                     requests: Trie::new(),
                 }
@@ -47,10 +48,12 @@ impl Decider {
     }
 
     pub fn reload(&mut self, ctx: &mut Context<Self>) {
-        let f = wrap_future(self.db.send(db::AllRequests))
+        let f = wrap_future(self.db.eval_requests())
             .and_then(|req, this: &mut Self, ctx| {
+
+                info!("Eval requests reloaded");
                 this.requests = Trie::new();
-                for r in req.unwrap().iter() {
+                for r in req.iter() {
                     let spec = TradingRequestSpec::from_db(r);
                     this.requests.insert(spec.search_prefix(), spec);
                 }
@@ -67,12 +70,15 @@ impl Handler<OhlcUpdate> for Decider {
     type Result = ();
 
     fn handle(&mut self, msg: OhlcUpdate, ctx: &mut Self::Context) -> Self::Result {
+        info!("Update received : {:?}",msg);
         use radix_trie::TrieCommon;
         let sub = self.requests.subtrie(&msg.search_prefix());
-        for spec in sub.unwrap().values() {
-            let fut = wrap_future(self.eval_svc.send(unimplemented!()));
+        if let Some(sub) = sub {
+            for spec in sub.values() {
+                let fut = wrap_future(self.eval_svc.send(unimplemented!()));
 
-            ctx.spawn(fut.map(|_, _, _| ()).drop_err());
+                ctx.spawn(fut.map(|_, _, _| ()).drop_err());
+            }
         }
     }
 }

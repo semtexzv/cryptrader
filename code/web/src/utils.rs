@@ -23,6 +23,7 @@ pub fn collect_validation_errors(e: ValidationErrors) -> Vec<String> {
 pub struct AuthTemplateInfo {
     pub signed_in: bool,
     pub email: String,
+    pub uid : i32,
 }
 
 #[derive(Debug, Serialize)]
@@ -37,10 +38,16 @@ impl BaseTemplateInfo {
             auth: AuthTemplateInfo {
                 signed_in: req.is_authenticated(),
                 email: req.session().get("email").unwrap().unwrap_or("".into()),
+                uid: req.session().get("uid").unwrap().unwrap_or(0),
             },
             errors : None,
         })
     }
+}
+
+#[inline(always)]
+pub fn see_other(location: &str) -> HttpResponse {
+    HttpResponse::SeeOther().header("Location", location).finish()
 }
 
 

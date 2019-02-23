@@ -1,0 +1,11 @@
+[package]
+name = "strat-eval"
+version = "0.1.0"
+authors = ["Michal Hornický <semtexzv@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+serde = "*"
+ta = { path = "./ta-rs" }
+common = { path = "../../common" }
+rlua = "*"

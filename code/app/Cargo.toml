@@ -14,8 +14,10 @@ serde = "*"
 futures-util = { path ="../deps/futures-util" }
 actix-comm = { path = "../deps/actix-comm" }
 actix-arch = { path = "../deps/actix-arch" }
+strat-eval = { path = "../deps/strat-eval"}
 
 apis = { path = "../deps/apis" }
 db = { path = "../deps/db" }
 
 radix_trie = "*"
+

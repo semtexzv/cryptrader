@@ -1,9 +1,9 @@
 @use crate::prelude::*;
 @(base : &BaseTemplateInfo)
 
-<ul class="toolbar">
+<ul class="toolbar d-inline-block">
     @if base.auth.signed_in {
-    <div class="item">Trader app</div>
+    <div class="item"><a href="/">Trader app</a></div>
     <li class="item">
         <form method="POST" action="/users/logout/" class="form-inline">
             <input class="nav-link btn btn-primary" type="submit" value="Logout"/>

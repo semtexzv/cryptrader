@@ -49,8 +49,6 @@ pub fn init_store() {
 
 
 use self::ohlc::DbOhlc;
-use diesel::sql_types::{Integer, Text, BigInt};
-
 
 pub type ConnType = diesel::PgConnection;
 pub type PoolType = diesel::r2d2::Pool<r2d2_diesel::ConnectionManager<diesel::PgConnection>>;
@@ -68,116 +66,87 @@ pub fn start() -> Database {
         .build(manager)
         .expect("Failed to create connection pool");
 
-    return Database(SyncArbiter::start(6, move || DbWorker(pool.clone())));
+    return Database(SyncArbiter::start(3, move || DbWorker(pool.clone())));
 }
 
 impl Actor for DbWorker {
     type Context = SyncContext<Self>;
 }
 
-pub struct Invoke<F, R> (pub F)
-    where F: FnOnce(&mut DbWorker, &mut <DbWorker as Actor>::Context) -> Result<R> + Send + 'static,
-          R: Send;
+pub struct Invoke<F, R, E> (pub F)
+    where F: FnOnce(&mut DbWorker, &mut <DbWorker as Actor>::Context) -> Result<R, E> + Send + 'static,
+          R: Send + 'static,
+          E: Send + 'static;
 
-impl<F, R> Message for Invoke<F, R>
-    where F: FnOnce(&mut DbWorker, &mut <DbWorker as Actor>::Context) -> Result<R> + Send + 'static,
-          R: Send + 'static {
-    type Result = Result<R>;
+impl<F, R, E> Message for Invoke<F, R, E>
+    where F: FnOnce(&mut DbWorker, &mut <DbWorker as Actor>::Context) -> Result<R, E> + Send + 'static,
+          R: Send + 'static,
+          E: Send + 'static {
+    type Result = Result<R, E>;
 }
 
-impl<F, R> Handler<Invoke<F, R>> for DbWorker
-    where F: FnOnce(&mut DbWorker, &mut <DbWorker as Actor>::Context) -> Result<R> + Send + 'static,
-          R: Send + 'static {
-    type Result = Result<R>;
+impl<F, R, E> Handler<Invoke<F, R, E>> for DbWorker
+    where F: FnOnce(&mut DbWorker, &mut <DbWorker as Actor>::Context) -> Result<R, E> + Send + 'static,
+          R: Send + 'static,
+          E: Send + 'static {
+    type Result = Result<R, E>;
 
-    fn handle(&mut self, msg: Invoke<F, R>, ctx: &mut Self::Context) -> Self::Result {
+    fn handle(&mut self, msg: Invoke<F, R, E>, ctx: &mut Self::Context) -> Self::Result {
         return msg.0(self, ctx);
     }
 }
 
+#[derive(Clone)]
 pub struct Database(Addr<DbWorker>);
 
 impl Database {
-    pub fn invoke<F, R>(&self, f: F) -> BoxFuture<R>
-        where F: FnOnce(&mut DbWorker, &mut <DbWorker as Actor>::Context) -> Result<R> + Send + 'static,
-              R: Send + 'static {
-        box self.0.send(Invoke(f)).map(|x| x.unwrap()).from_err()
+    pub fn invoke<F, R, E>(&self, f: F) -> BoxFuture<R,E>
+        where F: FnOnce(&mut DbWorker, &mut <DbWorker as Actor>::Context) -> Result<R, E> + Send + 'static,
+              R: Send + 'static,
+              E: Send + 'static + Debug
+    {
+        let req = self.0.send(Invoke(f));
+        let req:BoxFuture<R,E> = box req.then(|r| r.unwrap());
+        req
     }
 
-    pub fn do_invoke<F, R>(&self, f: F)
-        where F: FnOnce(&mut DbWorker, &mut <DbWorker as Actor>::Context) -> Result<R> + Send + 'static,
-              R: Send + 'static {
+    pub fn do_invoke<F, R, E>(&self, f: F)
+        where F: FnOnce(&mut DbWorker, &mut <DbWorker as Actor>::Context) -> Result<R, E> + Send + 'static,
+              R: Send + 'static,
+              E: Send + 'static + Debug
+    {
         self.0.do_send(Invoke(f));
     }
 
-    pub fn do_save_ohlc(&self, id: PairId, ohlc: Vec<Ohlc>) {
-        self.do_invoke(move |this, ctx| {
-            use crate::schema::ohlc::{self, *};
 
-            let conn: &ConnType = &this.0.get().unwrap();
-
-            let new_ohlc: Vec<DbOhlc> = ohlc.iter().map(|candle| {
-                DbOhlc {
-                    time: candle.time as i64,
-                    exchange: id.exchange().into(),
-                    pair: id.pair().to_string(),
-                    open: candle.open,
-                    high: candle.high,
-                    low: candle.low,
-                    close: candle.close,
-                    vol: candle.vol,
-                }
-            }).collect();
-
-            for data in new_ohlc.chunks(4096) {
-                use diesel::pg::upsert::*;
-
-                let stmt = ::diesel::insert_into(schema::ohlc::table)
-                    .values(data)
-                    .on_conflict((ohlc::time, ohlc::pair, ohlc::exchange))
-                    .do_update()
-                    .set(
-                        (open.eq(excluded(open)),
-                         high.eq(excluded(high)),
-                         low.eq(excluded(low)),
-                         close.eq(excluded(close)),
-                         vol.eq(excluded(vol))
-                        ));
-
-
-                stmt.execute(conn)
-                    .expect("Error saving candle into the database");
-            }
-            debug!("Saved {} items", new_ohlc.len());
-            Ok(())
-        })
-    }
-
-    pub fn ohlc_history(&self,)
-
-    pub fn strat_data(&self, sid: i32) -> BoxFuture<(crate::Strategy, crate::User)> {
-        return self.invoke(move |this, ctx| {
-            use schema::strategies::dsl::*;
-            use schema::users::dsl::*;
-
-            let conn: &ConnType = &this.0.get().unwrap();
-            let (strat, user) = strategies.find(sid).inner_join(users).get_result(conn)?;
-            return Ok((strat, user));
-        });
-    }
-
-    pub fn resampled_ohlc_values(&self, spec: &OhlcSpec, since: u64) -> BoxFuture<Vec<Ohlc>> {
-        let sql = ::diesel::sql_query(include_str!("../sql/ohlc_resampled_tdb.sql"));
-
-        //let since = spec.period().clamp_time(unixtime() as u64 - 400 * spec.period().seconds() as u64);
-
-
-        return box self.0.send(Invoke(|this, ctx| {
-            let conn: &ConnType = &this.0.get().unwrap();
-            Ok(vec![])
-        })).map(|x| x.unwrap()).from_err();
-    }
 }
+
+
+/*
+pub fn resampled_ohlc_values(conn: &ConnType, spec: &OhlcSpec, since: u64) -> Vec<Ohlc> {
+    let sql = ::diesel::sql_query(include_str!("../../../sql/ohlc_resampled_tdb.sql"));
+
+    //let since = spec.period().clamp_time(unixtime() as u64 - 400 * spec.period().seconds() as u64);
+
+
+    let vals: Vec<Ohlc> = sql
+        .bind::<Text, _>(&spec.exch())
+        .bind::<Text, _>(&spec.pair().to_string())
+        .bind::<BigInt, _>(spec.period().seconds() as i64)
+        .bind::<BigInt, _>(since as i64)
+        .load::<LoadOhlc>(conn).expect("Could not query db")
+        .iter()
+        .map(|c| c.clone().into()).collect();
+
+
+    //println!("Execution time : {}", t1.to(t2).num_milliseconds());
+
+    return vals;
+}
+
+pub struct ResampledOhlc { }
+*/
+
 
 /*
 

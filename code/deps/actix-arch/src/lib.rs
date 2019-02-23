@@ -1,4 +1,4 @@
-#![feature(core_intrinsics,associated_type_defaults,box_syntax,specialization)]
+#![feature(core_intrinsics,associated_type_defaults,box_syntax,specialization,trait_alias)]
 extern crate common;
 extern crate actix_comm;
 extern crate futures_util;

@@ -70,6 +70,8 @@ pub enum RemoteError {
     ActorNotFound,
     #[fail(display = "Remote node not found")]
     NodeNotFound,
+    #[fail(display = "Other error : {}", 0)]
+    Other(String)
 }
 
 

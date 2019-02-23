@@ -28,7 +28,7 @@ impl CandleSpec {
 
 #[derive(Debug, Clone)]
 pub struct BfxCandle {
-    pub timestamp: u64,
+    pub timestamp: i64,
     pub open: f64,
     pub close: f64,
     pub high: f64,
@@ -52,7 +52,7 @@ impl Into<Ohlc> for BfxCandle {
 impl<'de> Deserialize<'de> for BfxCandle {
     fn deserialize<D>(deserializer: D) -> StdResult<Self, D::Error> where
         D: Deserializer<'de> {
-        type Arr = (u64, f64, f64, f64, f64, f64);
+        type Arr = (i64, f64, f64, f64, f64, f64);
 
         return Arr::deserialize(deserializer).map(|(timestamp, open, close, high, low, vol)| {
             BfxCandle {

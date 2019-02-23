@@ -5,6 +5,7 @@ extern crate flate2;
 extern crate regex;
 #[macro_use]
 extern crate quote;
+extern crate glob;
 
 use std::{env, fmt, io};
 use std::borrow::{Borrow, Cow};
@@ -37,7 +38,7 @@ pub fn start(base_path: impl AsRef<Path>) -> IncludeDir {
     IncludeDir {
         files: HashMap::new(),
         name: "".into(),
-        base: base_path.as_ref().to_owned(),
+        base: base_path.as_ref().clone().to_owned(),
         passthrough: false,
         compress: false,
     }
@@ -55,6 +56,15 @@ impl IncludeDir {
     }
     pub fn compress(&mut self, compress: bool) -> &mut IncludeDir {
         self.compress = compress;
+        self
+    }
+
+
+    pub fn add(&mut self, path: &str ) -> &mut IncludeDir {
+        for entry in glob::glob(path).unwrap() {
+
+        }
+
         self
     }
 
@@ -98,16 +108,19 @@ impl IncludeDir {
         let base_tokens = self.base.display().to_string();
         let lines = if self.passthrough {
             quote! {
-                fn read_file_dynamic<P : AsRef<::std::path::Path>>(path: P) -> Vec<u8> {
-                    let path = path.as_ref();
+                fn read_file_dynamic<P : AsRef<::std::path::Path>>(path: P) -> Option<Vec<u8>> {
                     use ::std::io::Read;
                     let mut data = Vec::new();
-                    let mut f = ::std::fs::File::open(path).unwrap().read_to_end(&mut data);
-                    data
+                    if let Ok(mut file) = ::std::fs::File::open(path) {
+                        file.read_to_end(&mut data);
+                        return Some(data);
+                    } else {
+                        return None;
+                    }
                 }
 
                 let base = ::std::path::Path::new(#base_tokens);
-                return Some(read_file_dynamic(base.join(name)));
+                return read_file_dynamic(base.join(name));
             }
         } else {
             let mut lines = quote!();

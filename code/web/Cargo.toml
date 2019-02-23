@@ -12,6 +12,7 @@ path = "../common"
 
 [build-dependencies]
 ructe = "*"
+includedir = { path = "../deps/includedir"}
 
 [dependencies]
 clap = "*"
@@ -28,6 +29,6 @@ db = { path = "../deps/db" }
 
 ructe = { version = "*" , features = ["mime03", "sass"]}
 mime = "0.3"
-
+mime_guess = "2.0.0-alpha"
 
 djangohashers = "^0.3"

@@ -7,7 +7,7 @@ use common::types::PairId;
 pub struct Rescaler {
     handle: ContextHandle,
     db: Database,
-    cache: BTreeMap<PairId, BTreeMap<u64, Ohlc>>,
+    cache: BTreeMap<PairId, BTreeMap<i64, Ohlc>>,
     out: Recipient<OhlcUpdate>,
 }
 
@@ -16,14 +16,14 @@ impl Actor for Rescaler {
 }
 
 impl Rescaler {
-    pub fn new(handle: ContextHandle, input: Addr<Proxy<OhlcUpdate>>, out: Recipient<OhlcUpdate>) -> BoxFuture<Addr<Self>, failure::Error> {
+    pub fn new(handle: ContextHandle, db : Database, input: Addr<Proxy<OhlcUpdate>>, out: Recipient<OhlcUpdate>) -> BoxFuture<Addr<Self>, failure::Error> {
         box future::ok(
-            Actor::create(move |ctx| {
+            Arbiter::start(move |ctx : &mut Context<Self>| {
                 let rec = ctx.address().recipient();
                 input.do_send(Subscribe::forever(rec));
                 Rescaler {
                     handle,
-                    db: db::start(),
+                    db,
                     cache: BTreeMap::new(),
                     out,
                 }
@@ -38,13 +38,12 @@ impl Handler<OhlcUpdate> for Rescaler {
     fn handle(&mut self, msg: OhlcUpdate, ctx: &mut Self::Context) -> Self::Result {
         self.out.do_send(msg.clone()).unwrap();
         if msg.stable {
-            let insert: Box<ActorFuture<Actor=_, Item=_, Error=_>> =
+            let insert: Box<ActorFuture<Actor=_, Item=_, Error=failure::Error>> =
                 if self.cache.get(&msg.spec.pair_id()).is_none() {
                     let msg = msg.clone();
                     let time = unixtime() - 60 * 60 * 6;
-                    box wrap_future(self.db.send(db::OhlcHistory::new(msg.spec.pair_id().clone(), time)))
+                    box wrap_future(self.db.ohlc_history(msg.spec.pair_id().clone(),time as _))
                         .map(move |v, this: &mut Self, ctx| {
-                            let v = v.unwrap();
                             this.cache.insert(msg.spec.pair_id().clone(), v);
                         })
                 } else {
@@ -73,7 +72,7 @@ impl Handler<OhlcUpdate> for Rescaler {
                     }
                 }
                 use common::future::join_all;
-                wrap_future(join_all(items).map(|_| ()))
+                wrap_future(join_all(items).map(|_| ()).from_err())
             });
 
 

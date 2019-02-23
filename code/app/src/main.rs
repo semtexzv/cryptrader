@@ -37,15 +37,16 @@ fn main() {
 
     common::actix::System::run(move || {
         let ctx = actix_comm::new_handle();
+        let db = db::start();
 
         match matches.subcommand().0 {
             "ingest" => {
                 let i2r = actix_arch::proxy::Proxy::new();
                 let r2d = actix_arch::proxy::Proxy::new();
 
-                let decider = ingest::decision::Decider::new(ctx.clone(), r2d.clone());
-                let rescaler = ingest::rescaler::Rescaler::new(ctx.clone(), i2r.clone(), r2d.clone().recipient());
-                let ingest = ingest::Ingest::new(ctx.clone(), i2r.clone().recipient());
+                let decider = ingest::decision::Decider::new(ctx.clone(), db.clone(),r2d.clone());
+                let rescaler = ingest::rescaler::Rescaler::new(ctx.clone(), db.clone(), i2r.clone(), r2d.clone().recipient());
+                let ingest = ingest::Ingest::new(ctx.clone(), db.clone(),i2r.clone().recipient());
 
 
                 arb_spawn(ingest.unwrap_err().drop_item());
@@ -67,12 +68,9 @@ fn main() {
             }
 
             "eval-worker" => {
-                let db = db::start();
-                let worker = crate::eval::EvalWorker::new(ctx.clone(),db);
-
-                arb_spawn(worker.and_then(move |worker| {
-                    actix_arch::balancing::WorkerProxy::new(ctx.clone(), worker.recipient())
-                }).unwrap_err().drop_item())
+                for i in 0 .. 5 {
+                    let _ = crate::eval::EvalWorker::new(actix_comm::new_handle(),db.clone());
+                }
             }
             _ => {
                 panic!("Not a valid subcommannd")

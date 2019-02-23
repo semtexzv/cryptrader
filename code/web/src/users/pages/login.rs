@@ -32,7 +32,7 @@ pub async fn post_async((request, login): (HttpRequest<State>, Form<UserLogin>))
     }
 
     let password = login.password.clone();
-    let res: Result<db::User, _> = await_compat!(request.state().db.send(login))?;
+    let res: Result<db::User, _> = await_compat!(request.state().db.login(login));
 
     return match res {
         Ok(user) => {

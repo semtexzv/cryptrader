@@ -11,22 +11,34 @@ pub mod users;
 use crate::prelude::*;
 use crate::utils::*;
 use actix_web::HttpResponse;
+use db::Database;
+use std::path::Path;
+use actix_web::http::header::ContentType;
 
 include!(concat!(env!("OUT_DIR"), "/templates.rs"));
+pub mod statics {
+    include!(concat!(env!("OUT_DIR"), "/statics.rs"));
+}
 
 pub struct State {
-    db: Addr<db::DbWorker>
+    db: db::Database,
 }
 
 fn check<S>(_: &HttpRequest<S>) -> impl Responder { format!("I'm UP") }
 
-/*
+
 pub fn static_file(req: HttpRequest<State>) -> Result<impl Responder> {
     let name: String = req.match_info().query("tail")?;
-    let file = crate::templates::statics::StaticFile::get(&name).unwrap();
-    Ok(HttpResponse::Ok().content_type(file.mime.to_string()).body(file.content))
+    info!("Retrieving : {:?}", name);
+
+    let mime = mime_guess::guess_mime_type(&Path::new(&name));
+    if let Some(file) = statics::get(&name) {
+        Ok(HttpResponse::Ok().header(http::header::CONTENT_TYPE, ContentType(mime)).body(file))
+    } else {
+        Ok(HttpResponse::NotFound().body(""))
+    }
 }
-*/
+
 pub fn run() {
     server::new(move || {
         let mut app = App::with_state(State {
@@ -42,8 +54,7 @@ pub fn run() {
         app
             .resource("/healthy", |r| r.method(http::Method::GET).f(check))
             .resource("/ready", |r| r.method(http::Method::GET).f(check))
-            //.handler("/static", actix_web::fs::StaticFiles::new("code/web/static").unwrap().show_files_listing())
-            //.resource("/static/{tail:.*}",|r| r.method(http::Method::GET).with(static_file))
+            .resource("/static/{tail:.*}",|r| r.method(http::Method::GET).with(static_file))
             .default_resource(|r| r.h(http::NormalizePath::default()))
     })
 

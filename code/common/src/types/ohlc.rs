@@ -2,7 +2,7 @@ use prelude::*;
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, PartialOrd)]
 pub struct Ohlc {
-    pub time: u64,
+    pub time: i64,
     pub open: f64,
     pub close: f64,
     pub high: f64,
@@ -12,14 +12,14 @@ pub struct Ohlc {
 
 
 impl Ohlc {
-    pub fn combine_with_time<'a>(time: u64, values: impl Iterator<Item=&'a Ohlc>) -> Ohlc {
+    pub fn combine_with_time<'a>(time: i64, values: impl Iterator<Item=&'a Ohlc>) -> Ohlc {
         let mut res = Ohlc::combine(values);
         res.time = time;
         return res;
     }
 
     pub fn combine<'a>(values: impl Iterator<Item=&'a Ohlc>) -> Ohlc {
-        let mut time = 0u64;
+        let mut time = 0;
         let mut open = 0.0;
         let mut high = 0.0;
         let mut low = 0.0;
@@ -182,7 +182,7 @@ impl OhlcPeriod {
         }
     }
 
-    pub fn seconds(&self) -> u64 {
+    pub fn seconds(&self) -> i64 {
         match *self {
             OhlcPeriod::Min1 => 60,
             OhlcPeriod::Min5 => 60 * 5,
@@ -198,7 +198,7 @@ impl OhlcPeriod {
             OhlcPeriod::Week1 => 60 * 60 * 24 * 7,
         }
     }
-    pub fn clamp_time(&self, time: u64) -> u64 {
+    pub fn clamp_time(&self, time: i64) -> i64 {
         let s = self.seconds();
         return (time / s) * s;
     }

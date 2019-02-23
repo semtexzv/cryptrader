@@ -94,16 +94,16 @@ impl Handler<IngestUpdate> for Ingest {
 }
 
 impl Ingest {
-    pub fn new(handle: ContextHandle, out: Recipient<OhlcUpdate>) -> BoxFuture<Addr<Self>, failure::Error> {
+    pub fn new(handle: ContextHandle,db : db::Database, out: Recipient<OhlcUpdate>) -> BoxFuture<Addr<Self>, failure::Error> {
         let input = Subscriber::new(handle.clone());
 
         return box input.map(|input| {
-            Actor::create(move |ctx| {
+            Arbiter::start(move |ctx : &mut Context<Self>| {
                 input.register(ctx.address().recipient());
                 Ingest {
                     handle,
                     input,
-                    db: db::start(),
+                    db,
                     out,
                     last: BTreeMap::new(),
                 }
@@ -157,7 +157,7 @@ impl Ingest {
             0
         };
 
-        let mut now = (::common::unixtime()) as u64;
+        let mut now = (::common::unixtime());
         let mut max_stable_time = now - 60;
 
         let mut filtered: Vec<Ohlc> = data.ohlc

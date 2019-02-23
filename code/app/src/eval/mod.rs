@@ -2,50 +2,97 @@ use crate::prelude::*;
 
 use crate::actix_arch::balancing::*;
 use actix_arch::balancing::WorkerRequest;
+use strat_eval::EvalError;
+use futures_util::FutureExt;
+use actix_arch::balancing::WorkerProxy;
+use actix::msgs::StopArbiter;
 
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct EvalRequest {
-    db: db::EvalRequest,
-    last: u64,
+    strat_id : i32,
+    spec : OhlcSpec,
+    last: i64,
 }
 
-impl Message for EvalRequest { type Result = (); }
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct EvalResponse {
+    decision : TradingDecision,
+    spec : OhlcSpec,
+    user : db::User,
+}
 
 #[derive(Debug)]
 pub struct EvalService;
 
 impl ServiceInfo for EvalService {
     type RequestType = EvalRequest;
-    type ResponseType = ();
+    type ResponseType = Result<EvalResponse,EvalError>;
     const ENDPOINT: &'static str = "actix://ingest:42044/eval";
 }
 
 
 pub struct EvalWorker {
     db: Database,
+    proxy : Option<Addr<WorkerProxy<EvalService>>>,
 }
 
-impl Actor for EvalWorker { type Context = Context<Self>; }
+impl Actor for EvalWorker { type Context = Context<Self>;
+
+    fn stopping(&mut self, ctx: &mut Self::Context) -> Running {
+        if let Some(proxy) = self.proxy.clone() {
+            // TODO: Send stop message
+        }
+        return Running::Stop;
+    }
+}
 
 impl EvalWorker {
-    pub fn new(handle: ContextHandle, db: Database) -> BoxFuture<Addr<Self>> {
-        box future::ok(Actor::create(|ctx|
-            Self {
-                db
-            }))
+    pub fn new(handle: ContextHandle, db: Database) -> Addr<Self> {
+        Actor::create(|ctx| {
+            Self::init(ctx,handle,db)
+        })
     }
+
+    pub fn init(ctx : &mut Context<Self>, handle : ContextHandle, db : Database) -> Self {
+        ctx.spawn(wrap_future(WorkerProxy::new(handle.clone(), ctx.address().recipient()))
+            .then(|res,mut this : &mut Self,ctx| {
+                this.proxy = Some(res.unwrap());
+                afut::ok(())
+            })
+        );
+        Self {
+            db,
+            proxy: None,
+        }
+    }
+
 }
 
 impl Handler<ServiceRequest<EvalService>> for EvalWorker {
-    type Result = Response<(), RemoteError>;
+    type Result = Response<Result<EvalResponse,EvalError>, RemoteError>;
 
     fn handle(&mut self, msg: ServiceRequest<EvalService>, ctx: &mut Self::Context) -> Self::Result {
-        //let strat = wrap_future(self.db.send(db::GetStratData { id: msg.0.db.strategy_id }));
-        //let data = wrap_future(self.db.send(db::OhlcHistory));
+        let req : EvalRequest = msg.0;
 
+        let strat = self.db.strategy_data(req.strat_id);
+        let data = self.db.resampled_ohlc_values(req.spec.clone(),req.last - (60 * 60 * 12));
 
+        let fut = Future::join(strat,data);
+        let fut = Future::map(fut ,             |((strat,user,_),data)| {
+                let data = data.into_iter().map(|x| (x.time,x)).collect();
+                let res = strat_eval::eval(data,strat.body)?;
+                let res = EvalResponse {
+                    spec : req.spec,
+                    decision : res,
+                    user : user
+                };
+                Ok(res)
+            });
 
-        return Response::reply(Ok(()));
+        return Response::r#async(fut.drop_err().set_err(RemoteError::Timeout));
     }
 }
+
+

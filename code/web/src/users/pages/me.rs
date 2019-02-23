@@ -4,7 +4,7 @@ use crate::users::middleware::UserAuthentication;
 
 pub async fn get(request: HttpRequest<State>) -> Result<HttpResponse> {
     let base = await_compat!(BaseTemplateInfo::from_request(&request))?;
-    let user = await_compat!(request.state().db.send(db::UserLookup { id: 2 }))??;
+    let user = await_compat!(request.state().db.get_user(base.auth.uid))?;
 
     Ok(render(|o| crate::templates::users::me(o, &base, &user)))
 }

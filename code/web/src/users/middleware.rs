@@ -1,6 +1,6 @@
 use crate::prelude::*;
 use db::{
-    User, UserLogin, UserLookup,
+    User, UserLogin,
 };
 
 pub type UserAuthenticationResult = Box<Future<Item=User, Error=actix_web::Error>>;
@@ -34,9 +34,7 @@ impl UserAuthentication for HttpRequest<State> {
             Ok(session) => {
                 match session {
                     Some(session_id) => {
-                        Box::new(self.state().db.send(UserLookup {
-                            id: session_id
-                        }).from_err().and_then(|res| match res {
+                        Box::new(self.state().db.get_user(session_id).then(|res| match res {
                             Ok(user) => Ok(user),
                             Err(err) => {
                                 let e = IoError::new(ErrorKind::NotFound, format!("{}", err));
