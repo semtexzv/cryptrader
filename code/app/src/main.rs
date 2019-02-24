@@ -68,7 +68,7 @@ fn main() {
             }
 
             "eval-worker" => {
-                for i in 0 .. 5 {
+                for i in 0 .. 2 {
                     let _ = crate::eval::EvalWorker::new(actix_comm::new_handle(),db.clone());
                 }
             }

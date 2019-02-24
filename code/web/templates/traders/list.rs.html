@@ -1,0 +1,40 @@
+@use crate::prelude::*;
+@use crate::templates::*;
+@use db::Trader;
+
+@(base : &BaseTemplateInfo, exchanges : Vec<String>, traders : Vec<Trader>)
+
+    @:layout(base, {
+    <h2>Traders</h2>
+    <table id="traders">
+        <thead>
+        <tr>
+            <th>Name</th>
+            <th>Exchange</th>
+            <th>Key</th>
+        </tr>
+        </thead>
+        <tbody>
+        @for t in traders {
+            <tr>
+                <td>@t.name</td>
+                <td>@t.exchange</td>
+                <td>@t.api_key</td>
+            </tr>
+        }
+        </tbody>
+    </table>
+
+    <form action="/traders" method="POST">
+        <input name="user_id" value="0" hidden/>
+        <input name="name">
+        <select name="exchange">
+            @for e in exchanges {
+                <option name="@e">@e</option>
+            }
+        </select>
+        <input name="api_key">
+        <input name="api_secret">
+        <input type="submit"  value="Create">
+    </form>
+})

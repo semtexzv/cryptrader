@@ -3,6 +3,7 @@ use crate::msg::*;
 use crate::ctx::ContextHandle;
 use futures_util::FutureExt;
 use futures::sync::mpsc::UnboundedSender;
+use crate::util::*;
 
 pub struct Reply {
     handle: crate::ctx::ContextHandle,
@@ -45,13 +46,16 @@ impl StreamHandler<Multipart, tzmq::Error> for Reply {
 impl Reply {
     pub fn new(handle: ContextHandle, addr: &str) -> impl Future<Item=Addr<Self>, Error=tzmq::Error> {
         let router = tzmq::Router::builder(handle.zmq_ctx.clone())
+            .customize(|sock : &zmq::Socket| {
+                set_keepalives(sock);
+            })
             .identity(handle.uuid.as_bytes())
             .bind(addr)
             .build();
 
 
-        future::result(router.map(|router| {
-            let (sink, stream) = router.sink_stream().split();
+        router.map(|router| {
+            let (sink, stream) = router.sink_stream(25).split();
             let (tx, rx) = futures::sync::mpsc::unbounded();
 
             let forward = sink.send_all(rx.map_err(|_| tzmq::Error::Sink));
@@ -65,7 +69,7 @@ impl Reply {
                     sender: tx,
                 }
             })
-        }))
+        })
     }
 
     fn handle_message(&mut self, ctx: &mut Context<Self>, identity: Identity, msg: MessageWrapper) {

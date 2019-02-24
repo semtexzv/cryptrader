@@ -112,7 +112,7 @@ impl IncludeDir {
                     use ::std::io::Read;
                     let mut data = Vec::new();
                     if let Ok(mut file) = ::std::fs::File::open(path) {
-                        file.read_to_end(&mut data);
+                        let _ = file.read_to_end(&mut data);
                         return Some(data);
                     } else {
                         return None;
@@ -171,6 +171,7 @@ impl IncludeDir {
             };
 
             quote! {
+                #![allow(unused_must_use)]
                 #prefix
                 match name {
                     #lines

@@ -104,4 +104,21 @@ pub fn clone<T: Clone>(x: &T) -> T { x.clone() }
 
 pub fn deref<T: Copy>(x: &T) -> T { *x }
 
-pub type BoxFuture<I, E=failure::Error> = Box<dyn Future<Item=I, Error=E> + Send>;
+pub type BoxFuture<I, E = failure::Error> = Box<dyn Future<Item=I, Error=E> + Send>;
+
+pub trait BTreeMapExt<K, V> {
+    fn pop_first(&mut self) -> Option<(K, V)>;
+    fn pop_last(&mut self) -> Option<(K, V)>;
+}
+
+impl<K: Ord + Clone, V> BTreeMapExt<K, V> for BTreeMap<K, V> {
+    fn pop_first(&mut self) -> Option<(K, V)> {
+        let k = { self.range(..).next().map(|(k, _v)| k.clone()) };
+        k.and_then(|k| self.remove(&k).map(|v| (k, v)))
+    }
+
+    fn pop_last(&mut self) -> Option<(K, V)> {
+        let k = { self.range(..).last().map(|(k, _v)| k.clone()) };
+        k.and_then(|k| self.remove(&k).map(|v| (k, v)))
+    }
+}

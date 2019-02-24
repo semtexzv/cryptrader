@@ -19,7 +19,7 @@ pub struct StrategyInput {
 pub trait TradingStrategy {
     // Perform decision making.
     // return -100 - 100 meaning short - long
-    fn decide(&self, data: &StrategyInput) -> TradingDecision;
+    fn decide(&self, data: &StrategyInput) -> Result<TradingDecision, EvalError>;
 }
 
 
@@ -28,6 +28,5 @@ pub fn eval(ohlc : BTreeMap<i64,Ohlc>, strat : String) -> Result<TradingDecision
     let input = StrategyInput {
         ohlc
     };
-    let res = strat.decide(&input);
-    Ok(res)
+    strat.decide(&input)
 }

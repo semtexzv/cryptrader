@@ -1,5 +1,5 @@
 use ::prelude::*;
-use super::ohlc::{Ohlc, OhlcPeriod};
+use super::ohlc::{ OhlcPeriod};
 
 
 #[derive(Debug, Clone, PartialOrd, PartialEq, Ord, Eq, Serialize, Deserialize)]
@@ -156,7 +156,7 @@ impl OhlcSpec {
 
 impl fmt::Display for OhlcSpec {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}/{}", self.pair, self.period.to_path_str())
+        write!(f, "{}/{}", self.pair, self.period.to_string())
     }
 }
 

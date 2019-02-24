@@ -1,0 +1,16 @@
+[package]
+name = "async-zmq-derive"
+description = "Provides derivation for Async ZMQ Socket wrapper types"
+version = "0.1.0"
+license = "GPL-3.0"
+authors = ["asonix <asonix@asonix.dog>"]
+repository = "https://git.asonix.dog/asonix/async-zmq"
+edition = "2018"
+keywords = ["zmq", "zeromq", "futures", "tokio", "async"]
+
+[dependencies]
+quote = "0.6.8"
+syn = "0.15.4"
+
+[lib]
+proc-macro = true

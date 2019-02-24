@@ -1,5 +1,28 @@
 use crate::prelude::*;
 use crate::msg::*;
+use tzmq::prelude::*;
+
+/*
+pub(crate) fn set_keepalive_opts<S>(s: S) -> S
+    where S: From<(zmq::Socket, tzmq::async_types::EventedFile)> + IntoInnerSocket<Socket=tzmq::Socket> {
+    let socket = s.socket();
+    let (socket, file): (zmq::Socket, tzmq::async_types::EventedFile) = socket.inner();
+    socket.set_tcp_keepalive(1).unwrap();
+    socket.set_tcp_keepalive_cnt(2).unwrap();
+    socket.set_tcp_keepalive_idle(4).unwrap();
+    socket.set_tcp_keepalive_intvl(4).unwrap();
+
+    S::from((socket, file))
+}
+*/
+
+pub(crate) fn set_keepalives(socket : &zmq::Socket) {
+
+    socket.set_tcp_keepalive(1).unwrap();
+    socket.set_tcp_keepalive_cnt(2).unwrap();
+    socket.set_tcp_keepalive_idle(5).unwrap();
+    socket.set_tcp_keepalive_intvl(5).unwrap();
+}
 
 
 #[derive(Message)]

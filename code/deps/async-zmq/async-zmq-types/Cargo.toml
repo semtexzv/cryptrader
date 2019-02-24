@@ -1,0 +1,17 @@
+[package]
+name = "async-zmq-types"
+description = "Types and traits to create a generic interface over asynchronous zmq implementations"
+version = "0.3.1"
+license = "GPL-3.0"
+authors = ["asonix <asonix@asonix.dog>"]
+repository = "https://git.asonix.dog/asonix/async-zmq"
+edition = "2018"
+keywords = ["zmq", "zeromq", "futures", "tokio", "async"]
+
+[dependencies]
+failure = "0.1"
+futures = "0.1"
+zmq = "0.9"
+
+[dev-dependencies]
+tokio = "0.1"

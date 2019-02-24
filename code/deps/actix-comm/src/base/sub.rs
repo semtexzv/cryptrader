@@ -2,6 +2,8 @@ use crate::prelude::*;
 use crate::msg::*;
 use crate::ctx::ContextHandle;
 use futures_util::FutureExt;
+use crate::util::*;
+
 
 
 pub struct Subscribe {
@@ -44,25 +46,31 @@ impl Subscribe {
     pub fn bind(handle: ContextHandle, addr: &str) -> impl Future<Item=Addr<Self>, Error=tzmq::Error> {
         let socket = tzmq::Sub::builder(handle.zmq_ctx.clone())
             .identity(handle.uuid.as_bytes())
+            .customize(|sock : &zmq::Socket| {
+                set_keepalives(sock);
+            })
             .bind(addr)
             .filter(b"")
             .build();
 
-        return Self::create(handle, socket);
+        return Self::create(handle, box socket);
     }
 
     pub fn connect(handle: ContextHandle, addr: &str) -> impl Future<Item=Addr<Self>, Error=tzmq::Error> {
         let socket = tzmq::Sub::builder(handle.zmq_ctx.clone())
             .identity(handle.uuid.as_bytes())
+            .customize(|sock : &zmq::Socket| {
+                set_keepalives(sock);
+            })
             .connect(addr)
             .filter(b"")
             .build();
-        return Self::create(handle, socket);
+        return Self::create(handle, box socket);
     }
 
 
-    fn create(handle: ContextHandle, socket: Result<Sub, tzmq::Error>) -> impl Future<Item=Addr<Self>, Error=tzmq::Error> {
-        future::result(socket.map(|socket: Sub| {
+    fn create(handle: ContextHandle, socket: BoxFuture<Sub, tzmq::Error>) -> impl Future<Item=Addr<Self>, Error=tzmq::Error> {
+        socket.map(|socket: Sub| {
             Actor::create(|ctx| {
                 let stream = socket.stream();
 
@@ -72,7 +80,7 @@ impl Subscribe {
                     registry: Default::default(),
                 }
             })
-        }))
+        })
     }
 
     fn handle_message(&mut self, ctx: &mut Context<Self>, identity: Identity, msg: MessageWrapper) {

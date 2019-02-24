@@ -1,5 +1,5 @@
 #![feature(box_syntax)]
-#![allow(unused_imports, proc_macro_derive_resolution_fallback)]
+#![allow(unused_imports, unused_variables)]
 
 #[macro_use]
 extern crate common;
@@ -11,25 +11,16 @@ pub extern crate diesel_migrations;
 pub extern crate r2d2;
 pub extern crate r2d2_diesel;
 
-use time::PreciseTime;
-
-use std::env;
-use common::{
-    prelude::*,
-    types::{
-        TradePair, PairId, OhlcSpec, OhlcPeriod, Ohlc,
-    },
-};
-
-use diesel::prelude::*;
 use diesel_migrations::*;
-
 embed_migrations!("./migrations");
 
+mod prelude;
 mod schema;
 mod ohlc;
 mod users;
 mod strategies;
+
+use crate::prelude::*;
 
 pub use crate::schema::*;
 pub use crate::ohlc::*;
@@ -47,8 +38,6 @@ pub fn init_store() {
     info!("Migrations performed");
 }
 
-
-use self::ohlc::DbOhlc;
 
 pub type ConnType = diesel::PgConnection;
 pub type PoolType = diesel::r2d2::Pool<r2d2_diesel::ConnectionManager<diesel::PgConnection>>;
@@ -100,13 +89,13 @@ impl<F, R, E> Handler<Invoke<F, R, E>> for DbWorker
 pub struct Database(Addr<DbWorker>);
 
 impl Database {
-    pub fn invoke<F, R, E>(&self, f: F) -> BoxFuture<R,E>
+    pub fn invoke<F, R, E>(&self, f: F) -> BoxFuture<R, E>
         where F: FnOnce(&mut DbWorker, &mut <DbWorker as Actor>::Context) -> Result<R, E> + Send + 'static,
               R: Send + 'static,
               E: Send + 'static + Debug
     {
         let req = self.0.send(Invoke(f));
-        let req:BoxFuture<R,E> = box req.then(|r| r.unwrap());
+        let req: BoxFuture<R, E> = box req.then(|r| r.unwrap());
         req
     }
 
@@ -117,8 +106,6 @@ impl Database {
     {
         self.0.do_send(Invoke(f));
     }
-
-
 }
 
 

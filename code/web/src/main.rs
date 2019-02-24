@@ -3,10 +3,16 @@
 
 
 pub mod prelude;
-pub mod pages;
-pub mod strategies;
+
+#[macro_use]
 pub mod utils;
+
+pub mod pages;
 pub mod users;
+pub mod traders;
+pub mod strategies;
+pub mod assignments;
+pub mod evaluations;
 
 use crate::prelude::*;
 use crate::utils::*;
@@ -40,6 +46,7 @@ pub fn static_file(req: HttpRequest<State>) -> Result<impl Responder> {
 }
 
 pub fn run() {
+    env::set_var("RUST_LOG","debug");
     server::new(move || {
         let mut app = App::with_state(State {
             db: db::start(),
@@ -48,8 +55,12 @@ pub fn run() {
         // app = app.middleware(sentry_actix::SentryMiddleware::new());
 
         app = pages::configure(app);
-        app = strategies::configure(app);
         app = users::configure(app);
+
+        app = strategies::configure(app);
+        app = assignments::configure(app);
+        app = evaluations::configure(app);
+        app = traders::configure(app);
 
         app
             .resource("/healthy", |r| r.method(http::Method::GET).f(check))

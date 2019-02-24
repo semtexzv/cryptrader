@@ -3,11 +3,12 @@ use crate::prelude::*;
 use std::mem;
 use ta::{
     indicators::*,
-    *
+    *,
 };
 
 use rlua::{self, Lua, LightUserData, FromLua, ToLua, UserData, UserDataMethods};
-use crate::{StrategyInput,TradingStrategy};
+use crate::{StrategyInput, TradingStrategy};
+use crate::EvalError;
 
 pub struct LuaStrategy {
     lua: Box<Lua>,
@@ -21,10 +22,10 @@ impl LuaStrategy {
     pub fn new(src: &str) -> Result<LuaStrategy> {
         let mut lua = Box::new(Lua::new());
 
-        let x : Result<(),rlua::Error> = lua.context(| mut ctx| {
+        let x: Result<(), rlua::Error> = lua.context(|mut ctx| {
             register_ta(ctx);
             disable_io(ctx).unwrap();
-            let fun : rlua::Function = ctx.load(src).into_function()?;
+            let fun: rlua::Function = ctx.load(src).into_function()?;
             ctx.globals().set("__strategy", fun)?;
             Ok(())
         });
@@ -38,30 +39,36 @@ impl LuaStrategy {
 }
 
 impl TradingStrategy for LuaStrategy {
-    fn decide(&self, data: &StrategyInput) -> TradingDecision {
-        let res = self.lua.context(|ctx| {
+    fn decide(&self, data: &StrategyInput) -> Result<TradingDecision, EvalError> {
+        return self.lua.context(|ctx| {
             ctx.globals()
                 .set("__ohlc",
-                              data.ohlc
-                                  .iter()
-                                  .map(|(k, v)| { LuaOhlc(v.clone()) })
-                                  .collect::<Vec<LuaOhlc>>()).unwrap();
+                     data.ohlc
+                         .iter()
+                         .map(|(k, v)| { LuaOhlc(v.clone()) })
+                         .collect::<Vec<LuaOhlc>>()).unwrap();
 
             let strat: rlua::Function = ctx.globals().get("__strategy").unwrap();
 
-            let res = strat.call::<_, f64>(()).unwrap();
-            res
+            let res = strat.call::<_, rlua::Value>(());
+
+            match res {
+                Ok(rlua::Value::Number(n)) => {
+                    Ok(if n < 0.0 { TradingDecision::Short } else { TradingDecision::Long })
+                }
+                Ok(rlua::Value::String(ref s)) if s.to_str().is_ok() => {
+                    let v = TradingDecision::from_str(&s.to_str().unwrap())
+                        .map_err(|e| EvalError::InvalidStrategy(format!("Expected `short` `long` or `neutral`, {} was provided", s.to_str().unwrap())));
+                    v
+                }
+                Ok(e) => {
+                    Err(EvalError::InvalidStrategy(format!("Invalid strategy output : {:?}", e)))
+                }
+                Err(e) => {
+                    Err(EvalError::InvalidStrategy(format!("Could not launch strategy: {:?}", e)))
+                }
+            }
         });
-
-
-        // error!("Eval Res : {:?}", res);
-        if res < 0.0 {
-            return TradingDecision::Short;
-        } else if res > 0.0 {
-            return TradingDecision::Long;
-        } else {
-            return TradingDecision::Indeterminate;
-        }
     }
 }
 
@@ -77,7 +84,6 @@ impl UserData for LuaOhlc {
         _methods.add_method("low", |_, ohlc, ()| Ok(ohlc.0.low));
         _methods.add_method("close", |_, ohlc, ()| Ok(ohlc.0.close));
     }
-
 }
 
 pub struct LuaIndicator<T: ta::Next<f64> + 'static + ta::Reset> {
@@ -103,18 +109,15 @@ impl<T> UserData for LuaIndicator<T>
             }
         });
     }
-
 }
 
 pub struct LuaPairData {}
 
 impl rlua::UserData for LuaPairData {
-    fn add_methods<'lua, T: UserDataMethods<'lua, Self>>(_methods: &mut T) {
-    }
-
+    fn add_methods<'lua, T: UserDataMethods<'lua, Self>>(_methods: &mut T) {}
 }
 
-fn disable_io(lua: rlua::Context) -> Result<(),rlua::Error> {
+fn disable_io(lua: rlua::Context) -> Result<(), rlua::Error> {
     let src = r#"
 local oldprint = print
 print = function(...)

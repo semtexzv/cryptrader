@@ -2,7 +2,7 @@ use crate::prelude::*;
 
 use crate::actix_arch::balancing::*;
 use actix_arch::balancing::WorkerRequest;
-use strat_eval::EvalError;
+pub use strat_eval::EvalError;
 use futures_util::FutureExt;
 use actix_arch::balancing::WorkerProxy;
 use actix::msgs::StopArbiter;
@@ -20,7 +20,6 @@ pub struct EvalRequest {
 pub struct EvalResponse {
     pub decision : TradingDecision,
     pub spec : OhlcSpec,
-    pub user : db::User,
 }
 
 #[derive(Debug)]
@@ -80,13 +79,12 @@ impl Handler<ServiceRequest<EvalService>> for EvalWorker {
         let data = self.db.resampled_ohlc_values(req.spec.clone(),req.last - (60 * 60 * 12));
 
         let fut = Future::join(strat,data);
-        let fut = Future::map(fut ,             |((strat,user,_),data)| {
+        let fut = Future::map(fut ,             |((strat,user),data)| {
                 let data = data.into_iter().map(|x| (x.time,x)).collect();
                 let res = strat_eval::eval(data,strat.body)?;
                 let res = EvalResponse {
                     spec : req.spec,
-                    decision : res,
-                    user : user
+                    decision : res
                 };
                 Ok(res)
             });

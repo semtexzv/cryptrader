@@ -76,3 +76,16 @@ pub fn render<F>(tpl: F) -> HttpResponse
     return HttpResponse::Ok().content_type("text/html").body(out);
 
 }
+
+#[macro_export]
+macro_rules! require_login {
+    ($base: expr) => {
+        if !$base.auth.signed_in {
+            return Ok(redirect("/"));
+        }
+    };
+}
+
+pub fn exchanges() -> Vec<String> {
+    vec!["bitfinex".to_string()]
+}

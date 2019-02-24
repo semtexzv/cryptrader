@@ -4,6 +4,8 @@ use crate::ingest::OhlcUpdate;
 use radix_trie::Trie;
 use crate::eval::EvalRequest;
 use std::time::Duration;
+use futures_util::FutureExt;
+use chrono::NaiveDateTime;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct TradingRequestSpec {
@@ -14,9 +16,9 @@ pub struct TradingRequestSpec {
 }
 
 impl TradingRequestSpec {
-    pub fn from_db(d: &db::EvalRequest) -> Self {
+    pub fn from_db(d: &db::Assignment) -> Self {
         TradingRequestSpec {
-            ohlc: OhlcSpec::new(d.exchange.clone(), TradePair::from_str(&d.pair).unwrap(), OhlcPeriod::from_bfx(&d.period).unwrap()),
+            ohlc: OhlcSpec::new(d.exchange.clone(), TradePair::from_str(&d.pair).unwrap(), OhlcPeriod::from_str(&d.period).unwrap()),
             user_id: "".into(),
             strat_id: d.strategy_id,
         }
@@ -52,7 +54,7 @@ impl Decider {
     }
 
     pub fn reload(&mut self, ctx: &mut Context<Self>) {
-        let f = wrap_future(self.db.eval_requests())
+        let f = wrap_future(self.db.assignments())
             .and_then(|req, this: &mut Self, ctx| {
                 info!("Eval requests reloaded");
                 this.requests = Trie::new();
@@ -76,7 +78,7 @@ impl Handler<OhlcUpdate> for Decider {
         if !msg.stable {
             return ();
         }
-        trace!("Update received : {:?}", msg);
+        //trace!("Update received : {:?}", msg);
         use radix_trie::TrieCommon;
         let sub = self.requests.subtrie(&msg.search_prefix());
         if let Some(sub) = sub {
@@ -88,22 +90,40 @@ impl Handler<OhlcUpdate> for Decider {
                     spec: spec.ohlc.clone(),
                     last: msg.ohlc.time,
                 };
+                let strategy_id = spec.strat_id;
+                let exchange = spec.ohlc.exchange().to_string();
+
+                let pair = spec.ohlc.pair().clone().to_string();
+                let period = spec.ohlc.period().to_string();
                 let fut = wrap_future(self.eval_svc.send(req));
 
-                let fut = fut.and_then(|res,this,ctx| {
-                    let res = res.unwrap();
-
+                let fut = fut.and_then(move |res, this: &mut Self, ctx| {
                     info!("Evaluated to {:?}", res);
-                    afut::ok(())
 
+                    let (ok, error) = match res {
+                        Ok(ref i) => {
+                            (Some(i.decision.to_string()), None)
+                        }
+                        Err(ref e) => {
+                            (None, Some(e.to_string()))
+                        }
+                    };
+
+                    let evaluation = db::Evaluation {
+                        strategy_id,
+                        exchange,
+                        pair,
+                        period,
+                        status: res.is_ok(),
+                        time : common::chrono::Utc::now().naive_utc(),
+                        ok,
+                        error,
+                    };
+
+                    wrap_future(this.db.log_eval(evaluation).drop_item().set_err(RemoteError::MailboxClosed))
                 });
 
                 ctx.spawn(fut.drop_err());
-                /*
-                let fut = wrap_future(self.eval_svc.send(unimplemented!()));
-
-                ctx.spawn(fut.map(|_, _, _| ()).drop_err());
-                */
             }
         }
     }

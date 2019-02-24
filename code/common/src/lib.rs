@@ -1,4 +1,4 @@
-#![feature(slice_patterns)]
+#![feature(slice_patterns,box_syntax)]
 
 pub extern crate serde;
 pub extern crate serde_json as json;
@@ -22,6 +22,7 @@ pub extern crate chrono;
 pub extern crate time;
 pub extern crate base64;
 
+pub extern crate diesel;
 
 pub extern crate validator;
 pub extern crate validator_derive;

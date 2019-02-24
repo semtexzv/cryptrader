@@ -1,0 +1,27 @@
+[package]
+name = "futures-zmq"
+description = "Provides Futures abstractions for ZeroMQ on any futures executor"
+version = "0.4.0"
+license = "GPL-3.0"
+authors = ["asonix <asonix@asonix.dog>"]
+repository = "https://git.asonix.dog/asonix/async-zmq"
+readme = "README.md"
+keywords = ["zmq", "zeromq", "futures"]
+edition = "2018"
+
+[dependencies]
+async-zmq-derive = { path = "../async-zmq-derive", version = "0.1" }
+async-zmq-types = { path = "../async-zmq-types", version = "0.3" }
+failure = "0.1"
+futures = "0.1"
+lazy_static = "1.2"
+log = "0.4"
+zmq = "0.9"
+zmq-sys = "0.9"
+
+[dev-dependencies]
+env_logger = "0.6"
+tokio = "0.1"
+tokio-executor = "0.1.4"
+tokio-timer = "0.2.6"
+rand = "0.6"

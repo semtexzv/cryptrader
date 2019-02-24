@@ -56,7 +56,7 @@ impl Handler<OhlcUpdate> for Rescaler {
 
                 let mut items = Vec::new();
 
-                for p in &OhlcPeriod::values()[1..] {
+                for p in OhlcPeriod::VALUES[1..].iter() {
                     if msg.ohlc.time % p.seconds() == (p.seconds() - 60) {
                         let min_time = (msg.ohlc.time + 60) - p.seconds();
                         let max_time = min_time + p.seconds();

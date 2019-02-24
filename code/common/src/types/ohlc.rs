@@ -130,7 +130,53 @@ pub enum OhlcPeriod {
     Week1,
 }
 
+impl ToString for OhlcPeriod {
+    fn to_string(&self) -> String {
+        let idx = Self::VALUES.iter().position(|ss| ss == self).unwrap();
+        Self::NAMES[idx].to_string()
+    }
+}
+
+impl FromStr for OhlcPeriod {
+    type Err = ();
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let idx = Self::NAMES.iter().position(|&ss| ss == s);
+        idx.map(|i| Self::VALUES[i]).ok_or(())
+    }
+}
+
 impl OhlcPeriod {
+    pub const VALUES: &'static [OhlcPeriod] = &[
+        OhlcPeriod::Min1,
+        OhlcPeriod::Min5,
+        OhlcPeriod::Min10,
+        OhlcPeriod::Min15,
+        OhlcPeriod::Min30,
+        OhlcPeriod::Hour1,
+        OhlcPeriod::Hour2,
+        OhlcPeriod::Hour3,
+        OhlcPeriod::Hour6,
+        OhlcPeriod::Hour12,
+        OhlcPeriod::Day1,
+        OhlcPeriod::Week1
+    ];
+
+    pub const NAMES: &'static [&'static str] = &[
+        "1m",
+        "5m",
+        "10m",
+        "15m",
+        "30m",
+        "1h",
+        "2h",
+        "3h",
+        "6h",
+        "12h",
+        "1d",
+        "7d"
+    ];
+
     pub fn bfx_str(&self) -> String {
         match *self {
             OhlcPeriod::Min1 => "1m",
@@ -148,22 +194,7 @@ impl OhlcPeriod {
             }
         }.to_string()
     }
-    pub fn to_path_str(&self) -> &'static str {
-        match *self {
-            OhlcPeriod::Min1 => "1m",
-            OhlcPeriod::Min5 => "5m",
-            OhlcPeriod::Min10 => "10m",
-            OhlcPeriod::Min15 => "15m",
-            OhlcPeriod::Min30 => "30m",
-            OhlcPeriod::Hour1 => "1h",
-            OhlcPeriod::Hour2 => "2h",
-            OhlcPeriod::Hour3 => "3h",
-            OhlcPeriod::Hour6 => "6h",
-            OhlcPeriod::Hour12 => "12h",
-            OhlcPeriod::Day1 => "1d",
-            OhlcPeriod::Week1 => "7d",
-        }
-    }
+
     pub fn from_bfx(str: &str) -> Option<Self> {
         match str {
             "1m" => Some(OhlcPeriod::Min1),
@@ -198,25 +229,10 @@ impl OhlcPeriod {
             OhlcPeriod::Week1 => 60 * 60 * 24 * 7,
         }
     }
+
     pub fn clamp_time(&self, time: i64) -> i64 {
         let s = self.seconds();
         return (time / s) * s;
-    }
-    pub fn values() -> &'static [OhlcPeriod] {
-        return &[
-            OhlcPeriod::Min1,
-            OhlcPeriod::Min5,
-            OhlcPeriod::Min10,
-            OhlcPeriod::Min15,
-            OhlcPeriod::Min30,
-            OhlcPeriod::Hour1,
-            OhlcPeriod::Hour2,
-            OhlcPeriod::Hour3,
-            OhlcPeriod::Hour6,
-            OhlcPeriod::Hour12,
-            OhlcPeriod::Day1,
-            OhlcPeriod::Week1
-        ];
     }
 }
 

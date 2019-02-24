@@ -1,0 +1,15 @@
+[package]
+name = "async-zmq"
+version = "0.1.0"
+authors = ["asonix <asonix@asonix.dog>"]
+edition = "2018"
+
+#[workspace]
+#members = [
+#    "async-zmq-types",
+#    "async-zmq-derive",
+#    "futures-zmq",
+#    "tokio-zmq"
+#]
+
+[dependencies]

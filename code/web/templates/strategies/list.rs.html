@@ -8,7 +8,7 @@
     <table>
         <thead>
         <tr>
-            <th>owner</th>
+            <th>Name</th>
             <th>Created</th>
             <th>Actions</th>
         </tr>
@@ -16,13 +16,15 @@
         <tbody>
         @for s in strats {
         <tr>
-            <td>@s.owner</td>
+            <td>@s.name</td>
             <td>@s.created</td>
             <td><a href="/strategies/@s.id">Edit</a></td>
         </tr>
         }
         </tbody>
         <form method="POST" action="/strategies">
+            <input name="name" type="text" value="Name">
+            <input name="body" type="text" hidden>
             <input class="form-control btn btn-primary" type="submit" value="Create new">
         </form>
     </table>

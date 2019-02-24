@@ -40,9 +40,9 @@ impl<A: Announcement + Clone + 'static> Actor for Proxy<A> {
 impl<A: Announcement + Clone + 'static> Handler<A> for Proxy<A> {
     type Result = ();
 
-    fn handle(&mut self, msg: A, ctx: &mut Self::Context) -> Self::Result {
+    fn handle(&mut self, msg: A, _ctx: &mut Self::Context) -> Self::Result {
         for (_id, a) in self.registry.iter_mut() {
-            if let Err(e) = a.do_send(msg.clone()) {
+            if let Err(_e) = a.do_send(msg.clone()) {
                 // TODO: Remove from registry
             }
         }
@@ -52,7 +52,7 @@ impl<A: Announcement + Clone + 'static> Handler<A> for Proxy<A> {
 impl<A: Announcement + Clone + 'static> Handler<Subscribe<A>> for Proxy<A> {
     type Result = ();
 
-    fn handle(&mut self, msg: Subscribe<A>, ctx: &mut Self::Context) -> Self::Result {
+    fn handle(&mut self, msg: Subscribe<A>, _ctx: &mut Self::Context) -> Self::Result {
         self.registry.insert(msg.id, msg.rec);
     }
 }
@@ -60,7 +60,7 @@ impl<A: Announcement + Clone + 'static> Handler<Subscribe<A>> for Proxy<A> {
 impl<A: Announcement + Clone + 'static> Handler<Unsubscribe> for Proxy<A> {
     type Result = ();
 
-    fn handle(&mut self, msg: Unsubscribe, ctx: &mut Self::Context) -> Self::Result {
+    fn handle(&mut self, msg: Unsubscribe, _ctx: &mut Self::Context) -> Self::Result {
         self.registry.remove(&msg.id);
     }
 }

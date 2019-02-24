@@ -1,9 +1,9 @@
 @use crate::prelude::*;
 @use crate::templates::*;
 @use db::Strategy;
-@use db::EvalRequest;
+@use db::Evaluation;
 
-@(base : &BaseTemplateInfo, exchanges : Vec<String>, pairs : Vec<String>, periods : Vec<String>, evals : Vec<EvalRequest>, strat : Strategy)
+@(base : &BaseTemplateInfo, strat : Strategy, evals : Vec<Evaluation>)
 
 @:layout(base, {
 
@@ -12,57 +12,33 @@
         <label for="editor">Strategy body</label>
         <div id="editor" style="min-height: 200px">@strat.body</div>
         <input type="hidden" name="body" id="editor-dest" value="" >
+        <input type="text" name="name" hidden value="@strat.name">
         <input type="submit" id="editor-submit" value="Save">
     </form>
 
     <script src="/static/init-editor.js" type="text/javascript" charset="utf-8"></script>
 </div>
-    <h2>Evaluations</h2>
-<table>
-    <thead>
-    <tr>
-        <th>Exchange</th>
-        <th>Pair</th>
-        <th>Period</th>
-        <th>Actions</th>
-    </tr>
-    </thead>
-    <tbody>
-    @for e in evals {
+
+    <table>
+        <thead>
         <tr>
-            <td>@e.exchange</td>
-            <td>@e.pair</td>
-            <td>@e.period</td>
-            <td>
-            <form method="post" action="/strategies/@strat.id/delete-eval">
-                <input name="strategy_id" type="hidden" value="@strat.id" >
-                <input name="exchange" type="hidden" value="@e.exchange">
-                <input name="pair" type="hidden" value="@e.pair">
-                <input name="period" type="hidden" value="@e.period">
-                <input type="submit" value="Remove"/>
-            </form>
-            </td>
+            <th>Time</th>
+            <th>Type</th>
+            <th>Status</th>
+            <th>Output</th>
         </tr>
-    }
-    </tbody>
-</table>
-    <form method="POST" action="/strategies/@strat.id/evals">
-        <input name="strategy_id" type="hidden" value="@strat.id" >
-        <select name="exchange">
-            @for e in exchanges {
-                <option value="@e">@e</option>
-            }
-        </select>
-        <select name="pair">
-            @for p in pairs {
-                <option value="@p">@p</option>
-            }
-        </select>
-        <select name="period">
-            @for p in periods {
-                <option value="@p">@p</option>
-            }
-        </select>
-        <input type="submit" value="Add"/>
-    </form>
+        </thead>
+        <tbody>
+        @for e in evals {
+        <tr>
+            <td>@e.time</td>
+            <td>@e.exchange @e.pair @e.period</td>
+            <td>@e.status</td>
+            <td>@(e.ok.or(e.error).unwrap())</td>
+        </tr>
+        }
+        </tbody>
+    </table>
+
+
 })

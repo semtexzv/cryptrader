@@ -3,6 +3,7 @@ use crate::msg::*;
 use crate::ctx::ContextHandle;
 use futures_util::FutureExt as FExt;
 use tokio::util::FutureExt;
+use crate::util::*;
 
 pub type ResponeSender = OneSender<Result<WrappedType, RemoteError>>;
 
@@ -37,25 +38,31 @@ impl<M> Handler<SendRequest<M>> for Publish
 impl Publish {
     pub fn bind(handle: ContextHandle, addr: &str) -> impl Future<Item=Addr<Self>, Error=tzmq::Error> {
         let socket = tzmq::Pub::builder(handle.zmq_ctx.clone())
+            .customize(|sock : &zmq::Socket| {
+                set_keepalives(sock);
+            })
             .identity(handle.uuid.as_bytes())
             .bind(addr)
             .build();
 
-        Self::create(handle, socket)
+        Self::create(handle, box socket)
     }
 
     pub fn connect(handle: ContextHandle, addr: &str) -> impl Future<Item=Addr<Self>, Error=tzmq::Error> {
         let socket = tzmq::Pub::builder(handle.zmq_ctx.clone())
+            .customize(|sock : &zmq::Socket| {
+                set_keepalives(sock);
+            })
             .identity(handle.uuid.as_bytes())
             .connect(addr)
             .build();
 
-        Self::create(handle, socket)
+        Self::create(handle, box socket)
     }
 
-    fn create(handle: ContextHandle, socket: Result<Pub, tzmq::Error>) -> impl Future<Item=Addr<Self>, Error=tzmq::Error> {
-        future::result(socket.map(|socket| {
-            let sink = socket.sink();
+    fn create(handle: ContextHandle, socket: BoxFuture<Pub, tzmq::Error>) -> impl Future<Item=Addr<Self>, Error=tzmq::Error> {
+        socket.map(|socket| {
+            let sink = socket.sink(25);
             let (tx, rx) = futures::sync::mpsc::channel(25);
 
             let forward = sink.send_all(rx.map_err(|_| tzmq::Error::Sink));
@@ -71,6 +78,6 @@ impl Publish {
                     sender: tx,
                 }
             })
-        }))
+        })
     }
 }

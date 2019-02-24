@@ -1,0 +1,38 @@
+@use crate::prelude::*;
+@use crate::templates::*;
+@use db::Evaluation;
+@use db::Strategy;
+@use crate::evaluations::EvalTuple;
+
+@(base : &BaseTemplateInfo, items : Vec<EvalTuple>)
+
+    @:layout(base, {
+    <h2>Strategies</h2>
+    <table id="evaluations">
+        <thead>
+        <tr>
+            <th>Strat</th>
+            <th>Pair</th>
+            <th>Period</th>
+            <th>Time</th>
+            <th>Status</th>
+        </tr>
+        </thead>
+        <tbody>
+        @for (s,evals) in items {
+            @if let size = evals.len() {
+            @for (i,e) in evals.into_iter().enumerate() {
+            <tr>
+                @if i == 0 {
+                    <td rowspan="@size">@s.name</td>
+                }
+                <td>@e.pair</td>
+                <td>@e.period</td>
+                <td>@e.time</td>
+                <td>@(e.ok.or(e.error).unwrap())</td>
+            </tr>
+            }}
+        }
+        </tbody>
+    </table>
+})

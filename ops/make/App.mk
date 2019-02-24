@@ -9,6 +9,7 @@ $(call require,DOCKER_REGISTRY_PATH)
 include $(wildcard ./target/$(BUILD_TYPE)/*.d)
 include $(wildcard ./target/$(BUILD_TYPE)/deps/*.d)
 
+
 DOCKER_IMAGE_VAR = $(shell echo "$(APP_NAME)_IMAGE" | tr '-' '_' | tr '[:lower:]' '[:upper:]')
 
 CODE_FILES  = $(wildcard code/$(APP_NAME)/*) $(wildcard code/$(APP_NAME)/**/*)
@@ -28,7 +29,7 @@ DOCKER_IMAGE_DOMAIN     = $(DOCKER_REGISTRY_DOMAIN)/$(DOCKER_IMAGE)
 build: $(APP_FILE)
 
 
-$(APP_FILE) : $(CODE_FILES)
+$(APP_FILE) : $(CODE_FILES) Cargo.lock Cargo.toml
 ifeq ($(BUILD_TYPE),debug)
 	cargo build --package $(APP_NAME)
 else

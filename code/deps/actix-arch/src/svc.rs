@@ -1,6 +1,6 @@
 use crate::prelude::*;
 
-use actix_comm::msg::{Remotable, RemoteMessage, RemoteError, Announcement};
+use actix_comm::msg::{Remotable, RemoteMessage, RemoteError};
 use actix_comm::ctx::ContextHandle;
 
 
@@ -101,11 +101,30 @@ impl<S: ServiceInfo> ServiceConnection<S> {
 
     pub fn send(&self, req: S::RequestType) -> BoxFuture<S::ResponseType, RemoteError> {
         let req = ServiceRequest::<S>(req);
-        let sent = self.inner.send(SendRequest(req));
-        let sent : BoxFuture<S::ResponseType,RemoteError> = box sent.map_err(RemoteError::from).and_then(|r|r).and_then(|r|r);
+        let sent = self.inner.send(SendRequest(req)).map_err(RemoteError::from);
+        let sent = sent.and_then(|r| {
+            if let Err(ref e) = r {
+                info!("Error with SendRequest : layer 1 : {:?}", e)
+            }
+            r
+        });
+        let sent = sent.and_then(|r| {
+            if let Err(ref e) = r {
+                info!("Error with SendRequest : layer 1 : {:?}", e)
+            }
+            r
+        });
+
+        let sent : BoxFuture<S::ResponseType,RemoteError> = box sent;
         return sent;
     }
 }
+
+
+#[derive(Message)]
+#[rtype(result = "Result<S::ResponseType,RemoteError>")]
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct ServiceRequest<S: ServiceInfo>(pub S::RequestType);
 
 pub struct ServiceHandler<S: ServiceInfo> {
     _s: PhantomData<S>,
@@ -121,11 +140,6 @@ impl<S: ServiceInfo> Clone for ServiceHandler<S> {
     }
 }
 
-#[derive(Message)]
-#[rtype(result = "Result<S::ResponseType,RemoteError>")]
-#[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct ServiceRequest<S: ServiceInfo>(pub S::RequestType);
-
 impl<S: ServiceInfo> ServiceHandler<S> {
     pub fn new(handle: ContextHandle) -> BoxFuture<Self, tzmq::Error> {
         let addr = addr_to_zmq_local(S::ENDPOINT);
@@ -139,7 +153,7 @@ impl<S: ServiceInfo> ServiceHandler<S> {
         });
     }
 
-    pub fn from_other<SS: ServiceInfo>(handle: ContextHandle, o: &ServiceHandler<SS>) -> Self {
+    pub fn from_other<SS: ServiceInfo>(_handle: ContextHandle, o: &ServiceHandler<SS>) -> Self {
         return Self {
             _s: PhantomData,
             inner: o.inner.clone(),

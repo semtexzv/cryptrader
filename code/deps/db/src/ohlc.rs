@@ -1,35 +1,6 @@
-use common::prelude::*;
-use diesel::prelude::*;
-use diesel::sql_types::{Integer, Text, BigInt};
 
-use crate::{
-    DbWorker,
-    ConnType,
-    schema::{
-        self,
-        ohlc,
-        users,
-    },
-};
-
-use common::{
-    types::{
-        TradePair, PairId, OhlcSpec, OhlcPeriod, Ohlc,
-    },
-};
-
-#[table_name = "ohlc"]
-#[derive(PartialEq, Debug, Clone, Queryable, Insertable, AsChangeset, Associations, QueryableByName)]
-pub struct DbOhlc {
-    pub time: i64,
-    pub exchange: String,
-    pub pair: String,
-    pub open: f64,
-    pub high: f64,
-    pub low: f64,
-    pub close: f64,
-    pub vol: f64,
-}
+use crate::prelude::*;
+use crate::schema::{self, ohlc};
 
 #[table_name = "ohlc"]
 #[derive(PartialEq, Debug, Clone, Queryable, QueryableByName)]
@@ -72,8 +43,8 @@ impl crate::Database {
 
             let conn: &ConnType = &this.0.get().unwrap();
 
-            let new_ohlc: Vec<DbOhlc> = ohlc.iter().map(|candle| {
-                DbOhlc {
+            let new_ohlc: Vec<schema::Ohlc> = ohlc.iter().map(|candle| {
+                schema::Ohlc {
                     time: candle.time as i64,
                     exchange: id.exchange().into(),
                     pair: id.pair().to_string(),
@@ -111,7 +82,7 @@ impl crate::Database {
 
     pub fn ohlc_history(&self, pair_id: PairId, since: i64) -> BoxFuture<BTreeMap<i64, Ohlc>> {
         return box self.invoke::<_, _, Error>(move |this, ctx| {
-            use self::schema::ohlc::*;
+            use crate::schema::ohlc::*;
 
             let conn: &ConnType = &this.0.get().unwrap();
 
@@ -123,7 +94,7 @@ impl crate::Database {
                 .filter(schema::ohlc::pair.eq(pair_id.pair().to_string()))
                 .order(schema::ohlc::time.asc());
 
-            let vals: BTreeMap<i64, Ohlc> = q.load::<DbOhlc>(conn).expect("Could not query DB")
+            let vals: BTreeMap<i64, Ohlc> = q.load::<schema::Ohlc>(conn).expect("Could not query DB")
                 .iter()
                 .map(|c| (c.time as _, Ohlc {
                     time: (c.time) as _,
