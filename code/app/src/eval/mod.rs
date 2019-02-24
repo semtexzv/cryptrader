@@ -10,17 +10,17 @@ use actix::msgs::StopArbiter;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct EvalRequest {
-    strat_id : i32,
-    spec : OhlcSpec,
-    last: i64,
+    pub strat_id : i32,
+    pub spec : OhlcSpec,
+    pub last: i64,
 }
 
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct EvalResponse {
-    decision : TradingDecision,
-    spec : OhlcSpec,
-    user : db::User,
+    pub decision : TradingDecision,
+    pub spec : OhlcSpec,
+    pub user : db::User,
 }
 
 #[derive(Debug)]

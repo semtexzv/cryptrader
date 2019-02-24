@@ -37,20 +37,12 @@ impl<M> Handler<SendRequest<M>> for Request
 
         let sent = wrap_future(self.sender.clone().send(multipart));
         let resolved = sent.then(move |res: Result<_, _>, this: &mut Self, _ctx: &mut Self::Context| {
-            res.unwrap();/*
-            match res {
-                Ok(_) => (),
-                Err(_) => {
-                    this.resolve_request(msgid, Err(RemoteError::MailboxClosed));
-                }
-            }*/
+            res.unwrap();
             afut::ok(())
         });
         ctx.spawn(resolved);
         let flat = rx
-            .map_err(|_| RemoteError::MailboxClosed)
-            //.timeout(Duration::from_secs(30))
-           // .map_err(|e| e.into_inner().unwrap_or(RemoteError::Timeout))
+            .map_err(|_| RemoteError::Other(format!("Receving end dropped")))
             .flatten();
 
         let flat = flat.map(|v| M::res_from_wrapped(&v).unwrap());
@@ -61,10 +53,9 @@ impl<M> Handler<SendRequest<M>> for Request
 
 impl StreamHandler<Multipart, tzmq::Error> for Request {
     fn handle(&mut self, mut item: Multipart, ctx: &mut Self::Context) {
-        let identity = item.pop_front().unwrap().to_vec();
         let data: MessageWrapper = json::from_slice(&item.pop_front().unwrap()).unwrap();
 
-        self.handle_message(ctx, identity, data);
+        self.handle_message(ctx,  data);
     }
 }
 
@@ -106,7 +97,7 @@ impl Request {
         }
     }
 
-    fn handle_message(&mut self, ctx: &mut Context<Self>, identity: Identity, msg: MessageWrapper) {
+    fn handle_message(&mut self, ctx: &mut Context<Self>, msg: MessageWrapper) {
         match msg {
             MessageWrapper::Response(id, data) => {
                 self.resolve_request(id, data);

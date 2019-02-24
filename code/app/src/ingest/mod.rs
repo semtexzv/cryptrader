@@ -88,7 +88,7 @@ impl Handler<IngestUpdate> for Ingest {
     type Result = ();
 
     fn handle(&mut self, msg: IngestUpdate, ctx: &mut Context<Self>) {
-        debug!("Received ingest update : {:?}", msg);
+        trace!("Received ingest update : {:?}", msg);
         self.apply_update(msg);
     }
 }
@@ -175,13 +175,13 @@ impl Ingest {
             let mut exch = data.spec.exch().clone();
             let mut pair = data.spec.pair().clone();
             if tick.time > last_time && tick.time <= max_stable_time {
-                debug!("{}/{} NEW STABLE  @ {:?} off: {:?}", exch, pair, tick.time, now - tick.time);
+                trace!("{}/{} NEW STABLE  @ {:?} off: {:?}", exch, pair, tick.time, now - tick.time);
                 self.new_stable(id, tick)?;
             } else if tick.time > last_time && tick.time > max_stable_time {
-                debug!("{}/{} NEW LIVE    @ {:?} off: {:?}", exch, pair, tick.time, now - tick.time);
+                trace!("{}/{} NEW LIVE    @ {:?} off: {:?}", exch, pair, tick.time, now - tick.time);
                 self.new_live(id, tick)?;
             } else if tick.time == last_time && tick.time > max_stable_time {
-                debug!("{}/{}  UPDATE LIVE @ {:?} off: {:?}", exch, pair, tick.time, now - tick.time);
+                trace!("{}/{}  UPDATE LIVE @ {:?} off: {:?}", exch, pair, tick.time, now - tick.time);
                 self.update_live(id, tick)?;
             }
         }

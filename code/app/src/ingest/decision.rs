@@ -3,6 +3,7 @@ use crate::ingest::OhlcUpdate;
 
 use radix_trie::Trie;
 use crate::eval::EvalRequest;
+use std::time::Duration;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct TradingRequestSpec {
@@ -33,10 +34,13 @@ pub struct Decider {
 }
 
 impl Decider {
-    pub fn new(handle: ContextHandle,db : db::Database, input: Addr<Proxy<OhlcUpdate>>) -> BoxFuture<Addr<Self>, failure::Error> {
+    pub fn new(handle: ContextHandle, db: db::Database, input: Addr<Proxy<OhlcUpdate>>) -> BoxFuture<Addr<Self>, failure::Error> {
         box ServiceConnection::new(handle.clone()).map(|eval_svc| {
-            Arbiter::start(move |ctx : &mut Context<Self>| {
+            Arbiter::start(move |ctx: &mut Context<Self>| {
                 input.do_send(Subscribe::forever(ctx.address().recipient()));
+                ctx.run_interval(Duration::from_secs(5), |this, ctx| {
+                    this.reload(ctx);
+                });
                 Decider {
                     handle,
                     db,
@@ -50,7 +54,6 @@ impl Decider {
     pub fn reload(&mut self, ctx: &mut Context<Self>) {
         let f = wrap_future(self.db.eval_requests())
             .and_then(|req, this: &mut Self, ctx| {
-
                 info!("Eval requests reloaded");
                 this.requests = Trie::new();
                 for r in req.iter() {
@@ -70,14 +73,37 @@ impl Handler<OhlcUpdate> for Decider {
     type Result = ();
 
     fn handle(&mut self, msg: OhlcUpdate, ctx: &mut Self::Context) -> Self::Result {
-        info!("Update received : {:?}",msg);
+        if !msg.stable {
+            return ();
+        }
+        trace!("Update received : {:?}", msg);
         use radix_trie::TrieCommon;
         let sub = self.requests.subtrie(&msg.search_prefix());
         if let Some(sub) = sub {
             for spec in sub.values() {
+                let spec: &TradingRequestSpec = spec;
+                info!("Should eval {:?} on {:?}", spec, msg.spec);
+                let req = EvalRequest {
+                    strat_id: spec.strat_id,
+                    spec: spec.ohlc.clone(),
+                    last: msg.ohlc.time,
+                };
+                let fut = wrap_future(self.eval_svc.send(req));
+
+                let fut = fut.and_then(|res,this,ctx| {
+                    let res = res.unwrap();
+
+                    info!("Evaluated to {:?}", res);
+                    afut::ok(())
+
+                });
+
+                ctx.spawn(fut.drop_err());
+                /*
                 let fut = wrap_future(self.eval_svc.send(unimplemented!()));
 
                 ctx.spawn(fut.map(|_, _, _| ()).drop_err());
+                */
             }
         }
     }

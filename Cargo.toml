@@ -2,4 +2,5 @@
 members = ["code/app","code/web/", "code/common","code/deps/*"]
 
 [profile.dev]
+panic = 'abort'
 debug-assertions = false

@@ -47,9 +47,9 @@ impl<S: ServiceInfo + 'static> ServiceInfo for BalancedInfo<S> {
 
 
 pub struct LoadBalancer<S: ServiceInfo> {
-    _s: PhantomData<S>,
     handle: ContextHandle,
-    proxy: Addr<ServiceProxy<S>>,
+
+    handler: ServiceHandler<S>,
     worker_handler: ServiceHandler<WorkerServiceInfo<S>>,
 
     workers: Vec<OneSender<WorkerReply<S>>>,
@@ -58,22 +58,24 @@ pub struct LoadBalancer<S: ServiceInfo> {
 
 impl<S: ServiceInfo> Actor for LoadBalancer<S> { type Context = Context<Self>; }
 
-
 impl<S: ServiceInfo> LoadBalancer<S> {
     pub fn new(handle: ContextHandle) -> BoxFuture<Addr<Self>> {
         let handler = ServiceHandler::new(handle.clone());
 
 
         return box handler.map(move |handler: ServiceHandler<S>| {
-            Actor::create(|ctx| {
-                let worker_handler: ServiceHandler<WorkerServiceInfo<S>> = ServiceHandler::from_other(handle.clone(), &handler);
-                let proxy = ServiceProxy::new(handle.clone(), handler, ctx.address());
+            let worker_handler: ServiceHandler<WorkerServiceInfo<S>> = ServiceHandler::from_other(handle.clone(), &handler.clone());
+
+            Actor::create(move |ctx| {
+                handler.register(ctx.address().recipient());
                 worker_handler.register(ctx.address().recipient());
+
                 LoadBalancer {
-                    _s: PhantomData,
                     handle,
-                    proxy,
+
+                    handler,
                     worker_handler,
+
                     workers: vec![],
                     requests: BTreeMap::new(),
                 }
@@ -100,50 +102,20 @@ impl<S: ServiceInfo> Handler<ServiceRequest<WorkerServiceInfo<S>>> for LoadBalan
     }
 }
 
-impl<S: ServiceInfo> Handler<ServiceRequest<BalancedInfo<S>>> for LoadBalancer<S> {
-    type Result = actix::Response<(S::ResponseType, ()), RemoteError>;
+impl<S: ServiceInfo> Handler<ServiceRequest<S>> for LoadBalancer<S> {
+    type Result = actix::Response<S::ResponseType, RemoteError>;
 
-    fn handle(&mut self, msg: ServiceRequest<BalancedInfo<S>>, ctx: &mut Self::Context) -> Self::Result {
+    fn handle(&mut self, msg: ServiceRequest<S>, ctx: &mut Self::Context) -> Self::Result {
         let id: u64 = self.requests.iter().last().map(|i| *i.0).unwrap_or(0);
         if let Some(worker) = self.workers.pop() {
-            let res = worker.send(WorkerReply::Work(id, (msg.0).0));
+            let res = worker.send(WorkerReply::Work(id, msg.0));
             let (tx, rx) = oneshot::<S::ResponseType>();
             self.requests.insert(id, tx);
-            return Response::r#async(rx.map(|it| (it, ())).map_err(|e| RemoteError::MailboxClosed));
+            return Response::r#async(rx.map_err(|e| RemoteError::MailboxClosed));
         }
         panic!("Not enough workers");
     }
 }
-
-pub struct ServiceProxy<S: ServiceInfo> {
-    handle: ContextHandle,
-    handler: ServiceHandler<S>,
-    rec: Recipient<ServiceRequest<BalancedInfo<S>>>,
-}
-
-impl<S: ServiceInfo> ServiceProxy<S> {
-    fn new(handle: ContextHandle, handler: ServiceHandler<S>, balancer: Addr<LoadBalancer<S>>) -> Addr<Self> {
-        Actor::create(|ctx| {
-            handler.register(ctx.address().recipient());
-            ServiceProxy {
-                handle,
-                handler,
-                rec: balancer.recipient(),
-            }
-        })
-    }
-}
-
-impl<S: ServiceInfo> Actor for ServiceProxy<S> { type Context = Context<Self>; }
-
-impl<S: ServiceInfo> Handler<ServiceRequest<S>> for ServiceProxy<S> {
-    type Result = Response<S::ResponseType, RemoteError>;
-
-    fn handle(&mut self, msg: ServiceRequest<S>, ctx: &mut Self::Context) -> Self::Result {
-        Response::r#async(self.rec.send(ServiceRequest((msg.0, ()))).map(|x| x.unwrap().0).from_err())
-    }
-}
-
 
 pub struct WorkerProxy<S: ServiceInfo> {
     handle: ContextHandle,

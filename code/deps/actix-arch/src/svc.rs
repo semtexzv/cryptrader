@@ -5,6 +5,7 @@ use actix_comm::ctx::ContextHandle;
 
 
 use futures_util::FutureExt;
+use actix_comm::msg::SendRequest;
 
 pub trait ServiceInfo: 'static + Debug {
     type RequestType: Remotable + Debug;
@@ -100,14 +101,24 @@ impl<S: ServiceInfo> ServiceConnection<S> {
 
     pub fn send(&self, req: S::RequestType) -> BoxFuture<S::ResponseType, RemoteError> {
         let req = ServiceRequest::<S>(req);
-        return box self.inner.send(actix_comm::SendRequest(req)).map_err(Into::into).map(|x| x.unwrap()).map(|x| x.unwrap());
+        let sent = self.inner.send(SendRequest(req));
+        let sent : BoxFuture<S::ResponseType,RemoteError> = box sent.map_err(RemoteError::from).and_then(|r|r).and_then(|r|r);
+        return sent;
     }
 }
 
-#[derive(Clone)]
 pub struct ServiceHandler<S: ServiceInfo> {
     _s: PhantomData<S>,
     inner: Addr<actix_comm::rep::Reply>,
+}
+
+impl<S: ServiceInfo> Clone for ServiceHandler<S> {
+    fn clone(&self) -> Self {
+        ServiceHandler {
+            _s: PhantomData,
+            inner : self.inner.clone()
+        }
+    }
 }
 
 #[derive(Message)]
