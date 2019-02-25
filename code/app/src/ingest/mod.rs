@@ -94,22 +94,26 @@ impl Handler<IngestUpdate> for Ingest {
 }
 
 impl Ingest {
-    pub fn new(handle: ContextHandle,db : db::Database, out: Recipient<OhlcUpdate>) -> BoxFuture<Addr<Self>, failure::Error> {
+    pub fn new(handle: ContextHandle, db: db::Database, out: Recipient<OhlcUpdate>) -> BoxFuture<Addr<Self>, failure::Error> {
         let input = Subscriber::new(handle.clone());
+        let values = db.last_ohlc_values();
 
-        return box input.map(|input| {
-            Arbiter::start(move |ctx : &mut Context<Self>| {
+        let res = Future::join(input.from_err(), values);
+
+        return box res.map(|(input, last)| {
+            Arbiter::start(move |ctx: &mut Context<Self>| {
                 input.register(ctx.address().recipient());
                 Ingest {
                     handle,
                     input,
                     db,
                     out,
-                    last: BTreeMap::new(),
+                    last,
                 }
             })
         }).map_err(Into::into);
     }
+
     fn get_last(&mut self, id: &PairId) -> Option<Ohlc> {
         let mut cached = self.last.entry(id.clone());
         match cached {

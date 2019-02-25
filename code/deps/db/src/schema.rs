@@ -2,9 +2,10 @@ use super::*;
 use ::std::result::Result as Result;
 
 table! {
-    assignments (exchange, pair) {
+    assignments (exchange, pair, owner_id) {
         exchange -> Text,
         pair -> Text,
+        owner_id -> Int4,
         period -> Text,
         strategy_id -> Int4,
         trader_id -> Nullable<Int4>,
@@ -26,11 +27,12 @@ table! {
 }
 
 table! {
-    evaluations (strategy_id, exchange, pair, period, time) {
+    evaluations (strategy_id, exchange, pair, owner_id, period, time) {
         strategy_id -> Int4,
         exchange -> Text,
         pair -> Text,
         period -> Text,
+        owner_id -> Int4,
         time -> Timestamptz,
         status -> Bool,
         ok -> Nullable<Text>,
@@ -89,6 +91,7 @@ table! {
 
 joinable!(assignments -> strategies (strategy_id));
 joinable!(assignments -> traders (trader_id));
+joinable!(assignments -> users (owner_id));
 joinable!(evaluations -> strategies (strategy_id));
 joinable!(strategies -> users (owner_id));
 joinable!(traders -> users (user_id));
@@ -102,6 +105,7 @@ allow_tables_to_appear_in_same_query!(
     traders,
     users,
 );
+
 
 #[derive(PartialEq, Deserialize, Serialize, Debug, Clone)]
 #[derive(Queryable, Insertable, AsChangeset, Associations, QueryableByName)]
@@ -145,6 +149,19 @@ pub struct Ohlc {
     pub vol: f64,
 }
 
+impl Into<common::types::Ohlc> for Ohlc {
+    fn into(self) -> common::types::Ohlc {
+        return common::types::Ohlc {
+            time: self.time as _,
+            open: self.open,
+            high: self.high,
+            low: self.low,
+            close: self.close,
+            vol: self.vol,
+        };
+    }
+}
+
 
 #[derive(PartialEq, Deserialize, Serialize, Debug, Clone)]
 #[derive(Queryable, Insertable, AsChangeset, Associations, QueryableByName)]
@@ -165,7 +182,7 @@ pub struct Strategy {
 pub struct Assignment {
     pub exchange: String,
     pub pair: String,
-
+    pub owner_id : i32,
     pub period: String,
     pub strategy_id: i32,
 
@@ -181,8 +198,30 @@ pub struct Evaluation {
     pub exchange: String,
     pub pair: String,
     pub period: String,
+    pub owner_id : i32,
+
     pub time: chrono::NaiveDateTime,
     pub status: bool,
     pub ok: Option<String>,
     pub error: Option<String>,
 }
+
+
+
+// This is a table resulting from materialized view
+table!{
+    pairs(exchange, pair) {
+        exchange -> Text,
+        pair -> Text,
+    }
+}
+
+#[derive(PartialEq, Deserialize, Serialize, Debug, Clone)]
+#[derive(Queryable, Associations, QueryableByName)]
+#[table_name = "pairs"]
+pub struct Pair {
+    pub exchange: String,
+    pub pair: String,
+}
+
+

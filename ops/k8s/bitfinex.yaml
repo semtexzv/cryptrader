@@ -35,4 +35,4 @@ items:
               env: [{name: "RUST_LOG", value: ${RUST_LOG}}]
               resources:
                 requests:
-                  cpu: 10m
+                  cpu: 50m

@@ -82,10 +82,23 @@ impl crate::Database {
         });
     }
 
-    pub fn assignments(&self) -> BoxFuture<Vec<Assignment>> {
+    pub fn all_assignments(&self) -> BoxFuture<Vec<Assignment>> {
         return self.invoke(move |this, ctx| {
+            use crate::schema::assignments::dsl::*;
+
             let conn: &ConnType = &this.0.get().unwrap();
-            let res = schema::assignments::table.load::<Assignment>(conn)?;
+            let res = assignments.load::<Assignment>(conn)?;
+            Ok(res)
+        });
+    }
+
+    pub fn assignments(&self, uid: i32) -> BoxFuture<Vec<Assignment>> {
+        return self.invoke(move |this, ctx| {
+            use crate::schema::assignments::dsl::*;
+
+            let conn: &ConnType = &this.0.get().unwrap();
+            let res = assignments.filter(owner_id.eq(uid))
+                .load::<Assignment>(conn)?;
             Ok(res)
         });
     }
@@ -96,7 +109,7 @@ impl crate::Database {
             let conn: &ConnType = &this.0.get().unwrap();
             let s = diesel::insert_into(assignments)
                 .values(&req)
-                .on_conflict((exchange, pair))
+                .on_conflict((exchange, pair, owner_id))
                 .do_update()
                 .set((strategy_id.eq(&req.strategy_id), period.eq(&req.period)));
 
@@ -115,7 +128,8 @@ impl crate::Database {
 
             let s = diesel::delete(assignments)
                 .filter(exchange.eq(req.exchange))
-                .filter(pair.eq(req.pair));
+                .filter(pair.eq(req.pair))
+                .filter(owner_id.eq(req.owner_id));
 
             s.execute(conn)?;
 

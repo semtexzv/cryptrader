@@ -37,7 +37,7 @@ items:
               env: [{name: "RUST_LOG", value: ${RUST_LOG}}]
               resources:
                 requests:
-                  cpu: 10m
+                  cpu: 20m
               ports:
               - containerPort: 8000
               - containerPort: 443

@@ -1,6 +1,5 @@
-
 use crate::prelude::*;
-use crate::schema::{self, ohlc};
+use crate::schema::{self, ohlc, Pair};
 
 #[table_name = "ohlc"]
 #[derive(PartialEq, Debug, Clone, Queryable, QueryableByName)]
@@ -37,6 +36,33 @@ pub struct OhlcTime {
 }
 
 impl crate::Database {
+    pub fn pairs(&self) -> BoxFuture<Vec<Pair>> {
+        return box self.invoke::<_, _, Error>(move |this, ctx| {
+            let conn: &ConnType = &this.0.get().unwrap();
+            use crate::schema::pairs::dsl::*;
+
+            let p = pairs.get_results::<Pair>(conn)?;
+            Ok(p)
+        });
+    }
+
+    pub fn last_ohlc_values(&self) -> BoxFuture<BTreeMap<PairId, common::types::Ohlc>> {
+        self.invoke(move |this, ctx| {
+            let conn: &ConnType = &this.0.get().unwrap();
+            use crate::schema::ohlc::{self, *};
+
+            let sql = ::diesel::sql_query(include_str!("../sql/ohlc_last_values.sql"));
+
+            let vals: Vec<schema::Ohlc> = sql.get_results::<schema::Ohlc>(conn)?;
+
+            Ok(vals.into_iter().map(|it| {
+                let tp = TradePair::from_str(it.pair.as_str()).unwrap();
+                let id = PairId::new(it.exchange.clone(), tp);
+                (id, it.into())
+            }).collect())
+        })
+    }
+
     pub fn do_save_ohlc(&self, id: PairId, ohlc: Vec<Ohlc>) {
         self.do_invoke::<_, _, ()>(move |this, ctx| {
             use crate::schema::ohlc::{self, *};
@@ -118,15 +144,16 @@ impl crate::Database {
         return box self.invoke::<_, _, Error>(move |this, ctx| {
             let conn: &ConnType = &this.0.get().unwrap();
 
-            let vals: Vec<Ohlc> = sql
-                .bind::<Text, _>(&spec.exch())
-                .bind::<Text, _>(&spec.pair().to_string())
-                .bind::<BigInt, _>(spec.period().seconds() as i64)
-                .bind::<BigInt, _>(since as i64)
-                .load::<LoadOhlc>(conn).expect("Could not query db")
-                .iter()
-                .map(|c| c.clone().into()).collect();
-
+            let (vals, t): (Vec<Ohlc>, _) = measure_time(|| {
+                sql.bind::<Text, _>(&spec.exch())
+                    .bind::<Text, _>(&spec.pair().to_string())
+                    .bind::<BigInt, _>(spec.period().seconds() as i64)
+                    .bind::<BigInt, _>(since as i64)
+                    .load::<LoadOhlc>(conn).expect("Could not query db")
+                    .iter()
+                    .map(|c| c.clone().into()).collect()
+            });
+            warn!("Loading ohlc data took {:?} ms, retrieved {:?} items", t, vals.len());
             Ok(vals)
         });
     }

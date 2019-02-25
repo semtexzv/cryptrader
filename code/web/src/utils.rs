@@ -81,11 +81,24 @@ pub fn render<F>(tpl: F) -> HttpResponse
 macro_rules! require_login {
     ($base: expr) => {
         if !$base.auth.signed_in {
-            return Ok(redirect("/"));
+            return Ok(actix_web::error::ErrorUnauthorized("Not logged in").into());
+
         }
     };
 }
 
+
 pub fn exchanges() -> Vec<String> {
     vec!["bitfinex".to_string()]
 }
+
+#[macro_export]
+macro_rules! require_cond {
+    ($cond: expr) => {
+        if !$cond {
+            return Ok(actix_web::error::ErrorUnauthorized("").into());
+        }
+    };
+}
+
+

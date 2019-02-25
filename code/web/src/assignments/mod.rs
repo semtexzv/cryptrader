@@ -26,35 +26,34 @@ pub async fn list(req: HttpRequest<State>) -> Result<impl Responder> {
     let base = await_compat!(BaseTemplateInfo::from_request(&req))?;
     require_login!(base);
 
-    let assignments: Vec<db::Assignment> = await_compat!(db.assignments())?;
+    let pairs: Vec<db::Pair> = await_compat!(db.pairs())?;
+    let assignments: Vec<db::Assignment> = await_compat!(db.assignments(base.auth.uid))?;
     let strategies: Vec<db::Strategy> = await_compat!(db.user_strategies(base.auth.uid))?;
 
-    let exchanges = exchanges();
-    let pairs: Vec<String> = vec!["BTC:USD", "ETH:USD", "ETH:BTC"].into_iter().map(ToString::to_string).collect();
     let periods: Vec<String> = OhlcPeriod::VALUES.iter().map(ToString::to_string).collect();
 
     let mut items = vec![];
-    for e in exchanges.iter() {
-        for p in pairs.iter() {
-            if let Some(ass) = assignments.iter().find(|a| &a.exchange == e && &a.pair == p) {
-                let pi = periods.iter().position(|ee| ee == &ass.period).map(|i| i + 1).unwrap_or(0) as isize;
-                let si = strategies.iter().position(|ee| ee.id == ass.strategy_id).map(|i| i + 1).unwrap_or(0) as isize;
-                items.push(AssignmentItem {
-                    exchange: e.clone(),
-                    pair: p.clone(),
+    for db::Pair { exchange, pair } in pairs.iter() {
+        let e = exchange;
+        let p = pair;
+        if let Some(ass) = assignments.iter().find(|a| &a.exchange == e && &a.pair == p) {
+            let pi = periods.iter().position(|ee| ee == &ass.period).map(|i| i + 1).unwrap_or(0) as isize;
+            let si = strategies.iter().position(|ee| ee.id == ass.strategy_id).map(|i| i + 1).unwrap_or(0) as isize;
+            items.push(AssignmentItem {
+                exchange: e.clone(),
+                pair: p.clone(),
 
-                    period: Some(ass.period.clone()),
-                    strategy_id: Some(ass.strategy_id),
-                    pi,
-                    si,
-                })
-            } else {
-                items.push(AssignmentItem {
-                    exchange: e.clone(),
-                    pair: p.clone(),
-                    ..Default::default()
-                })
-            }
+                period: Some(ass.period.clone()),
+                strategy_id: Some(ass.strategy_id),
+                pi,
+                si,
+            })
+        } else {
+            items.push(AssignmentItem {
+                exchange: e.clone(),
+                pair: p.clone(),
+                ..Default::default()
+            })
         }
     }
     let strategies = strategies.into_iter().map(|s| (s.name, s.id)).collect();
@@ -63,10 +62,13 @@ pub async fn list(req: HttpRequest<State>) -> Result<impl Responder> {
 }
 
 
-pub async fn post((req, form) : (HttpRequest<State>, Form<db::Assignment>)) -> Result<impl Responder> {
+pub async fn post((req, mut form): (HttpRequest<State>, Form<db::Assignment>)) -> Result<impl Responder> {
     let db: Database = req.state().db.clone();
     let base = await_compat!(BaseTemplateInfo::from_request(&req))?;
+    require_login!(base);
 
+
+    form.owner_id = base.auth.uid;
     if form.strategy_id == 0 || form.period.to_lowercase() == "none" {
         await_compat!(db.delete_assignment(form.into_inner()))?;
     } else {

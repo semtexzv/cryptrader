@@ -42,9 +42,11 @@
 
         </td>
         <td>
-            <form method="post" action="/assignments/@i.exchange/@i.pair" id="save">
+            <form method="post" action="/assignments" id="save">
                 <input name="exchange" type="hidden" value="@i.exchange">
                 <input name="pair" type="hidden" value="@i.pair">
+                <input name="owner_id" type="hidden" value="0">
+
                 <input name="period" type="hidden" value="@i.period.unwrap_or("none".into())">
                 <input name="strategy_id" type="hidden" value="@i.si">
 

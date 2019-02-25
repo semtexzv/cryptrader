@@ -34,8 +34,8 @@ use common::types::OhlcPeriod;
 pub async fn save_strat(req: HttpRequest<State>, id: Option<i32>, info: Option<StrategyInfo>) -> Result<db::Strategy> {
     info!("Save strat: {:?}, {:?}", id, info);
     let db: Database = req.state().db.clone();
-    let base = await_compat!(BaseTemplateInfo::from_request(&req))?;
 
+    let base = await_compat!(BaseTemplateInfo::from_request(&req))?;
     let name: String = info.as_ref().map(|x| x.name.clone()).unwrap_or(String::new());
     let body: String = info.as_ref().map(|x| x.body.clone()).unwrap_or(String::new());
     let strat = await_compat!(db.save_strategy(base.auth.uid, id, name,body))?;
@@ -44,6 +44,12 @@ pub async fn save_strat(req: HttpRequest<State>, id: Option<i32>, info: Option<S
 }
 
 async fn post((req, id, form): (HttpRequest<State>, Option<Path<i32>>, Option<Form<StrategyInfo>>)) -> Result<impl Responder> {
+
+
+    let base = await_compat!(BaseTemplateInfo::from_request(&req))?;
+    require_login!(base);
+    //TODO: Verify strategy belongs to user
+
     let strat: db::Strategy = if let Some(id) = id {
         let id = id.into_inner();
         await_compat!(save_strat(req,Some(id),form.map(Form::into_inner)))?
@@ -60,6 +66,9 @@ async fn detail((req, id): (HttpRequest<State>, Path<i32>)) -> Result<impl Respo
 
     let (strat, user) = await_compat!(db.strategy_data(id.into_inner()))?;
     let evals = await_compat!(db.get_evals(strat.id))?;
+
+
+    require_cond!(strat.owner_id == base.auth.uid);
 
 
     Ok(render(|o| crate::templates::strategies::detail(o, &base, strat, evals)))

@@ -1,7 +1,7 @@
 
 var editor = ace.edit('editor');
 ace.require("ace/ext/lanugage_tools");
-editor.session.setMode("ace/mode/javascript");
+editor.session.setMode("ace/mode/lua");
 editor.setTheme("ace/theme/dreamweaver");
 editor.setOptions({
     enableBasicAutocompletion: true,

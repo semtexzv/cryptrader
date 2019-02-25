@@ -4,23 +4,26 @@ extern crate ructe;
 use ructe::{compile_templates, StaticFiles};
 use std::env;
 use std::path::PathBuf;
-
+use std::fs::File;
+use std::io::Write;
 
 fn main() {
+    let is_k8s = env::var("K8S_BUILD").is_ok();
+
     let out_dir = PathBuf::from(env::var("OUT_DIR").unwrap());
     let cargo_dir = PathBuf::from(env::var("CARGO_MANIFEST_DIR").unwrap());
-    let mut file_path = PathBuf::from(file!());
-    file_path.pop();
+    let work_dir = PathBuf::from(env::var("PWD").unwrap());
 
-    let workdir_rel = file_path;
-    //panic!("Workdir relative : {:?}", workdir_rel);
-
+    let mut dump = File::create("/tmp/dump").expect("unable to open");
+    for (k, v) in std::env::vars() {
+        writeln!(&mut dump, "{} -> {}", k, v).expect("unable to write")
+    }
 
     compile_templates(&cargo_dir.join("templates"), &out_dir).expect("compile templates");
 
-    includedir::start( workdir_rel.join("static"))
+    includedir::start(work_dir.join("code/web/static"))
         .dir(".")
-        .passthrough(true)
+        .passthrough(!is_k8s)
         .name("STATICS")
         .build("statics.rs")
         .unwrap();

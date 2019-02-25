@@ -39,7 +39,7 @@ items:
           env: [{name: "RUST_LOG", value: ${RUST_LOG}}]
           resources:
             requests:
-              cpu: 10m
+              cpu: 20m
 
         - name: eval-balancer
           image: ${APP_IMAGE}

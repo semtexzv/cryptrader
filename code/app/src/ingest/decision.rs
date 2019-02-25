@@ -10,7 +10,7 @@ use chrono::NaiveDateTime;
 #[derive(Debug, Serialize, Deserialize)]
 pub struct TradingRequestSpec {
     pub ohlc: OhlcSpec,
-    pub user_id: String,
+    pub user_id: i32,
     pub strat_id: i32,
 
 }
@@ -19,7 +19,7 @@ impl TradingRequestSpec {
     pub fn from_db(d: &db::Assignment) -> Self {
         TradingRequestSpec {
             ohlc: OhlcSpec::new(d.exchange.clone(), TradePair::from_str(&d.pair).unwrap(), OhlcPeriod::from_str(&d.period).unwrap()),
-            user_id: "".into(),
+            user_id: d.owner_id,
             strat_id: d.strategy_id,
         }
     }
@@ -54,7 +54,7 @@ impl Decider {
     }
 
     pub fn reload(&mut self, ctx: &mut Context<Self>) {
-        let f = wrap_future(self.db.assignments())
+        let f = wrap_future(self.db.all_assignments())
             .and_then(|req, this: &mut Self, ctx| {
                 info!("Eval requests reloaded");
                 this.requests = Trie::new();
@@ -91,6 +91,7 @@ impl Handler<OhlcUpdate> for Decider {
                     last: msg.ohlc.time,
                 };
                 let strategy_id = spec.strat_id;
+                let owner_id = spec.user_id;
                 let exchange = spec.ohlc.exchange().to_string();
 
                 let pair = spec.ohlc.pair().clone().to_string();
@@ -114,6 +115,7 @@ impl Handler<OhlcUpdate> for Decider {
                         exchange,
                         pair,
                         period,
+                        owner_id,
                         status: res.is_ok(),
                         time : common::chrono::Utc::now().naive_utc(),
                         ok,

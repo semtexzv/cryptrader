@@ -31,9 +31,9 @@ build: $(APP_FILE)
 
 $(APP_FILE) : $(CODE_FILES) Cargo.lock Cargo.toml
 ifeq ($(BUILD_TYPE),debug)
-	cargo build --package $(APP_NAME)
+	K8S_BUILD=1 cargo build --package $(APP_NAME)
 else
-	cargo build --release --package $(APP_NAME)
+	K8S_BUILD=1 cargo build --release --package $(APP_NAME)
 endif
 
 .PHONY: image

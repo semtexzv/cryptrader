@@ -17,8 +17,6 @@ pub struct StrategyInput {
 }
 
 pub trait TradingStrategy {
-    // Perform decision making.
-    // return -100 - 100 meaning short - long
     fn decide(&self, data: &StrategyInput) -> Result<TradingDecision, EvalError>;
 }
 
