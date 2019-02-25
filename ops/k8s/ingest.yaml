@@ -10,13 +10,16 @@ items:
     selector: { layer: ingest }
     ports:
       - name: ingest
-        nodePort: 0
         port: 42042
         targetPort: 42042
 
       - name: eval
         port: 42044
         targetPort: 42044
+
+      - name: trade
+        port: 42045
+        targetPort: 42045
 
 
 - kind: Deployment
@@ -39,12 +42,21 @@ items:
           env: [{name: "RUST_LOG", value: ${RUST_LOG}}]
           resources:
             requests:
-              cpu: 20m
+              cpu: 50m
 
         - name: eval-balancer
           image: ${APP_IMAGE}
           imagePullPolicy: Always
           command: ["/app", "eval-balancer"]
+          env: [{name: "RUST_LOG", value: ${RUST_LOG} }]
+          resources:
+            requests:
+              cpu: 10m
+
+        - name: trader
+          image: ${APP_IMAGE}
+          imagePullPolicy: Always
+          command: ["/app", "trader"]
           env: [{name: "RUST_LOG", value: ${RUST_LOG} }]
           resources:
             requests:

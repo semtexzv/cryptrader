@@ -12,7 +12,7 @@ pub use db;
 pub use db::Database;
 
 pub use common::types::{
-    Ohlc, OhlcSpec, OhlcPeriod, TradePair, PairId, TradingDecision
+    Ohlc, OhlcSpec, OhlcPeriod, TradePair, PairId, TradingPosition
 };
 
 

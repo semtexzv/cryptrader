@@ -72,10 +72,18 @@ pub trait EndpointInfo {
     const ENDPOINT: &'static str;
 }
 
-#[derive(Clone)]
 pub struct ServiceConnection<S: ServiceInfo> {
     _s: PhantomData<S>,
     inner: Addr<actix_comm::req::Request>,
+}
+
+impl<S: ServiceInfo> Clone for ServiceConnection<S> {
+    fn clone(&self) -> Self {
+        ServiceConnection {
+            _s: PhantomData,
+            inner: self.inner.clone(),
+        }
+    }
 }
 
 
@@ -92,6 +100,15 @@ impl<S: ServiceInfo> ServiceConnection<S> {
             }
         });
     }
+
+
+    pub fn from_other<SS: ServiceInfo>(_handle: ContextHandle, o: &ServiceConnection<SS>) -> Self {
+        return Self {
+            _s: PhantomData,
+            inner: o.inner.clone(),
+        };
+    }
+
     pub fn from_req(req: Addr<actix_comm::req::Request>) -> Self {
         return ServiceConnection {
             _s: PhantomData,
@@ -115,7 +132,7 @@ impl<S: ServiceInfo> ServiceConnection<S> {
             r
         });
 
-        let sent : BoxFuture<S::ResponseType,RemoteError> = box sent;
+        let sent: BoxFuture<S::ResponseType, RemoteError> = box sent;
         return sent;
     }
 }
@@ -135,7 +152,7 @@ impl<S: ServiceInfo> Clone for ServiceHandler<S> {
     fn clone(&self) -> Self {
         ServiceHandler {
             _s: PhantomData,
-            inner : self.inner.clone()
+            inner: self.inner.clone(),
         }
     }
 }

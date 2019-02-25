@@ -154,14 +154,14 @@ impl Ingest {
 
     fn apply_update(&mut self, data: IngestUpdate) -> Result<()> {
         let id = data.spec.pair_id();
-        let mut last_value = self.get_last(&data.spec.pair_id());
-        let mut last_time = if let Some(ref s) = last_value {
+        let last_value = self.get_last(&data.spec.pair_id());
+        let last_time = if let Some(ref s) = last_value {
             s.time
         } else {
             0
         };
 
-        let mut now = (::common::unixtime());
+        let now = (::common::unixtime());
         let mut max_stable_time = now - 60;
 
         let mut filtered: Vec<Ohlc> = data.ohlc
@@ -176,8 +176,8 @@ impl Ingest {
 
         for tick in filtered {
             let tick = tick.clone();
-            let mut exch = data.spec.exch().clone();
-            let mut pair = data.spec.pair().clone();
+            let exch = data.spec.exch().clone();
+            let pair = data.spec.pair().clone();
             if tick.time > last_time && tick.time <= max_stable_time {
                 //trace!("{}/{} NEW STABLE  @ {:?} off: {:?}", exch, pair, tick.time, now - tick.time);
                 self.new_stable(id, tick)?;

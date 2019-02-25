@@ -20,4 +20,4 @@ apis = { path = "../deps/apis" }
 db = { path = "../deps/db" }
 
 radix_trie = "*"
-
+anymap = "*"

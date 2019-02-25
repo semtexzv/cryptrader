@@ -18,7 +18,7 @@ pub struct EvalRequest {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct EvalResponse {
-    pub decision: TradingDecision,
+    pub decision: TradingPosition,
     pub spec: OhlcSpec,
 }
 

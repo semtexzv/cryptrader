@@ -8,7 +8,6 @@ items:
       selector: { layer: eval, type: worker }
       ports:
         - name: eval
-          nodePort: 0
           port: 42042
           targetPort: 42042
 

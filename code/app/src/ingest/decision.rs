@@ -33,11 +33,17 @@ pub struct Decider {
     db: Database,
     requests: Trie<String, TradingRequestSpec>,
     eval_svc: ServiceConnection<crate::eval::EvalService>,
+    pos_svc: ServiceConnection<crate::trader::PositionService>,
 }
 
 impl Decider {
     pub fn new(handle: ContextHandle, db: db::Database, input: Addr<Proxy<OhlcUpdate>>) -> BoxFuture<Addr<Self>, failure::Error> {
-        box ServiceConnection::new(handle.clone()).map(|eval_svc| {
+        let eval = ServiceConnection::new(handle.clone());
+        let pos = ServiceConnection::new(handle.clone());
+
+        let fut = Future::join(eval, pos);
+
+        box fut.map(|(eval_svc, pos_svc)| {
             Arbiter::start(move |ctx: &mut Context<Self>| {
                 input.do_send(Subscribe::forever(ctx.address().recipient()));
                 ctx.run_interval(Duration::from_secs(5), |this, ctx| {
@@ -47,6 +53,7 @@ impl Decider {
                     handle,
                     db,
                     eval_svc,
+                    pos_svc,
                     requests: Trie::new(),
                 }
             })
@@ -117,7 +124,7 @@ impl Handler<OhlcUpdate> for Decider {
                         period,
                         owner_id,
                         status: res.is_ok(),
-                        time : common::chrono::Utc::now().naive_utc(),
+                        time: common::chrono::Utc::now().naive_utc(),
                         ok,
                         error,
                     };

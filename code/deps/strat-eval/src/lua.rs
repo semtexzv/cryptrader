@@ -20,10 +20,10 @@ impl LuaStrategy {
         return Self::new(&::std::fs::read_to_string(::std::path::Path::new(path))?);
     }
     pub fn new(src: &str) -> Result<LuaStrategy> {
-        let mut lua = Box::new(Lua::new());
+        let lua = Box::new(Lua::new());
 
-        let x: Result<(), rlua::Error> = lua.context(|mut ctx| {
-            register_ta(ctx);
+        let x: Result<(), rlua::Error> = lua.context(|ctx| {
+            register_ta(ctx).unwrap();
             disable_io(ctx).unwrap();
             let fun: rlua::Function = ctx.load(src).into_function()?;
             ctx.globals().set("__strategy", fun)?;
@@ -39,7 +39,7 @@ impl LuaStrategy {
 }
 
 impl TradingStrategy for LuaStrategy {
-    fn decide(&self, data: &StrategyInput) -> Result<TradingDecision, EvalError> {
+    fn decide(&self, data: &StrategyInput) -> Result<TradingPosition, EvalError> {
         return self.lua.context(|ctx| {
             ctx.globals()
                 .set("__ohlc",
@@ -54,10 +54,10 @@ impl TradingStrategy for LuaStrategy {
 
             match res {
                 Ok(rlua::Value::Number(n)) => {
-                    Ok(if n < 0.0 { TradingDecision::Short } else { TradingDecision::Long })
+                    Ok(if n < 0.0 { TradingPosition::Short } else { TradingPosition::Long })
                 }
                 Ok(rlua::Value::String(ref s)) if s.to_str().is_ok() => {
-                    let v = TradingDecision::from_str(&s.to_str().unwrap())
+                    let v = TradingPosition::from_str(&s.to_str().unwrap())
                         .map_err(|e| EvalError::InvalidStrategy(format!("Expected `short` `long` or `neutral`, {} was provided", s.to_str().unwrap())));
                     v
                 }
@@ -131,7 +131,7 @@ end"#;
 }
 
 fn register_ta<'lua>(lua: rlua::Context<'lua>) -> Result<()> {
-    let mut ta = lua.create_table()?;
+    let ta = lua.create_table()?;
     ta.set("ema", lua.create_function(|lua, (period, ): (u32, )| {
         Ok(LuaIndicator {
             indicator: ExponentialMovingAverage::new(period).unwrap()

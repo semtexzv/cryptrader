@@ -9,9 +9,8 @@ items:
     spec:
       selector: { layer: sources, exch: bitfinex }
       ports:
-        - name: ingest
+        - name: def
           port: 42042
-          protocol: TCP
           targetPort: 42042
 
 

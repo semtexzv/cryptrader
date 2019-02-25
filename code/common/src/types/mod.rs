@@ -9,31 +9,31 @@ pub mod wallet;
 
 
 #[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize)]
-pub enum TradingDecision {
+pub enum TradingPosition {
     Long,
     Indeterminate,
     Short,
 }
 
 
-impl ToString for TradingDecision {
+impl ToString for TradingPosition {
     fn to_string(&self) -> String {
         match self {
-            TradingDecision::Long => "long",
-            TradingDecision::Indeterminate => "neutral",
-            TradingDecision::Short => "short",
+            TradingPosition::Long => "long",
+            TradingPosition::Indeterminate => "neutral",
+            TradingPosition::Short => "short",
         }.to_string()
     }
 }
 
-impl FromStr for TradingDecision {
+impl FromStr for TradingPosition {
     type Err = ();
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         Ok(match s {
-            "long" => TradingDecision::Long,
-            "neutral" => TradingDecision::Indeterminate,
-            "short" => TradingDecision::Short,
+            "long" => TradingPosition::Long,
+            "neutral" => TradingPosition::Indeterminate,
+            "short" => TradingPosition::Short,
             _ => return Err(())
         })
     }

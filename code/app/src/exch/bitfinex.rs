@@ -7,6 +7,14 @@ use time::PreciseTime;
 use std::time::Duration;
 
 
+#[derive(Debug)]
+pub struct Bitfinex;
+
+impl crate::exch::Exchange for Bitfinex {
+    const NAME: &'static str = "bitfinex";
+    const ENDPOINT: &'static str = "actix://bitfinex:42042";
+}
+
 pub struct BitfinexOhlcSource {
     handle : ContextHandle,
     ingest : Publisher<ingest::IngestEndpoint>,

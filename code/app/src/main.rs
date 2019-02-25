@@ -5,6 +5,7 @@
 pub mod prelude;
 pub mod exch;
 pub mod ingest;
+pub mod trader;
 pub mod eval;
 
 
@@ -26,12 +27,9 @@ fn main() {
     env_logger::Builder::from_default_env().init();
 
     let matches = App::new("Trader")
-        .subcommand(SubCommand::with_name("ingest")
-            .about("Run test ingest actor")
-        )
-        .subcommand(SubCommand::with_name("bitfinex")
-            .about("Run Bitfines ohlc source")
-        )
+        .subcommand(SubCommand::with_name("ingest"))
+        .subcommand(SubCommand::with_name("bitfinex"))
+        .subcommand(SubCommand::with_name("trader"))
         .subcommand(SubCommand::with_name("eval-balancer"))
         .subcommand(SubCommand::with_name("eval-worker"))
         .get_matches();
@@ -45,9 +43,9 @@ fn main() {
                 let i2r = actix_arch::proxy::Proxy::new();
                 let r2d = actix_arch::proxy::Proxy::new();
 
-                let decider = ingest::decision::Decider::new(ctx.clone(), db.clone(),r2d.clone());
+                let decider = ingest::decision::Decider::new(ctx.clone(), db.clone(), r2d.clone());
                 let rescaler = ingest::rescaler::Rescaler::new(ctx.clone(), db.clone(), i2r.clone(), r2d.clone().recipient());
-                let ingest = ingest::Ingest::new(ctx.clone(), db.clone(),i2r.clone().recipient());
+                let ingest = ingest::Ingest::new(ctx.clone(), db.clone(), i2r.clone().recipient());
 
 
                 arb_spawn(ingest.unwrap_err().drop_item());
@@ -62,6 +60,10 @@ fn main() {
                     })
                 );
             }
+            "trader" => {
+                let trader = crate::trader::Trader::new(ctx.clone(), db.clone());
+                arb_spawn(trader.unwrap_err().drop_item())
+            }
 
             "eval-balancer" => {
                 let balancer = actix_arch::balancing::LoadBalancer::<EvalService>::new(ctx.clone());
@@ -69,8 +71,8 @@ fn main() {
             }
 
             "eval-worker" => {
-                for i in 0 .. 2 {
-                    let _ = crate::eval::EvalWorker::new(actix_comm::new_handle(),db.clone());
+                for i in 0..2 {
+                    let _ = crate::eval::EvalWorker::new(actix_comm::new_handle(), db.clone());
                 }
             }
             _ => {

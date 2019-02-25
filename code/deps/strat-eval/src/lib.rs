@@ -17,11 +17,11 @@ pub struct StrategyInput {
 }
 
 pub trait TradingStrategy {
-    fn decide(&self, data: &StrategyInput) -> Result<TradingDecision, EvalError>;
+    fn decide(&self, data: &StrategyInput) -> Result<TradingPosition, EvalError>;
 }
 
 
-pub fn eval(ohlc : BTreeMap<i64,Ohlc>, strat : String) -> Result<TradingDecision, EvalError> {
+pub fn eval(ohlc : BTreeMap<i64,Ohlc>, strat : String) -> Result<TradingPosition, EvalError> {
     let strat = lua::LuaStrategy::new(&strat).map_err(|e| EvalError::InvalidStrategy(e.to_string()))?;
     let input = StrategyInput {
         ohlc
