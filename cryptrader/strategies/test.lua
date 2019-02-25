@@ -4,9 +4,9 @@ local macd = ta.macd(1,2,3);
 local rsi = ta.rsi(10);
 
 if fast() > slow() then
-    return "buy", 100
+    return "buy"
 elseif slow() > fast() then
-    return "sell", 100
+    return "sell"
 else
-    return 'none', 0
+    return 'none'
 end

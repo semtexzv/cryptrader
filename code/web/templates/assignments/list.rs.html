@@ -45,7 +45,7 @@
             <form method="post" action="/assignments/@i.exchange/@i.pair" id="save">
                 <input name="exchange" type="hidden" value="@i.exchange">
                 <input name="pair" type="hidden" value="@i.pair">
-                <input name="period" type="hidden" value="@i.pi">
+                <input name="period" type="hidden" value="@i.period.unwrap_or("none".into())">
                 <input name="strategy_id" type="hidden" value="@i.si">
 
                 <input type="submit" value="Save"/>

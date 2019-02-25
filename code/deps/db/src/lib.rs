@@ -27,10 +27,13 @@ pub use crate::ohlc::*;
 pub use crate::users::*;
 pub use crate::strategies::*;
 
+fn db_url() -> String {
+    format!("postgres://{}:{}@postgres.default.svc:5432/{}", "trader", "trader", "trader")
+}
 
 pub fn init_store() {
     info!("Initializing database");
-    let url = format!("postgres://{}:{}@storage.default.svc:5432/{}", "postgresadmin", "admin123", "postgresdb");
+    let url = db_url();
     let connection = ConnType::establish(&url)
         .expect("Error connecting to DB");
 
@@ -47,8 +50,7 @@ pub struct DbWorker(pub PoolType);
 
 pub fn start() -> Database {
     init_store();
-
-    let url = format!("postgres://{}:{}@storage.default.svc:5432/{}", "postgresadmin", "admin123", "postgresdb");
+    let url = db_url();
 
     let manager = r2d2_diesel::ConnectionManager::new(url);
     let pool = diesel::r2d2::Pool::builder()

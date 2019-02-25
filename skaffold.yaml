@@ -1,0 +1,12 @@
+apiVersion: skaffold/v1beta5
+kind: Config
+build:
+  artifacts:
+  - image: semtexzv/trader-app
+    context: ops/docker
+    docker:
+      dockerfile: app.Dockerfile
+deploy:
+  kubectl:
+    manifests:
+    - ops/k8s/*.yaml

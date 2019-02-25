@@ -27,7 +27,7 @@ $(K8S_BUILD_DIR):
 build-k8s: $(K8S_BUILD_DIR) $(DOCKER_FILES)
 	@for file in $(K8S_FILES); do \
 		mkdir -p `dirname "$(K8S_BUILD_DIR)/$$file"` ; \
-		$(LOAD_VARS) envsubst <$(K8S_DIR)/$$file >$(K8S_BUILD_DIR)/$$file ;\
+		$(LOAD_VARS) VERSION= envsubst <$(K8S_DIR)/$$file >$(K8S_BUILD_DIR)/$$file ;\
 	done
 
 ARCHIVE=xhorni14.zip
