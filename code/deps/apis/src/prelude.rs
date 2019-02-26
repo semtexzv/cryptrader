@@ -43,3 +43,11 @@ pub fn f64_from_str<'de, D>(deserializer: D) -> StdResult<f64, D::Error>
     let s = <String>::deserialize(deserializer)?;
     f64::from_str(&s).map_err(::serde::de::Error::custom)
 }
+
+
+pub fn f64_from_str_opt<'de, D>(deserializer: D) -> StdResult<Option<f64>, D::Error>
+    where D: Deserializer<'de>
+{
+    let s = <Option<String>>::deserialize(deserializer)?;
+    s.map(|s| f64::from_str(&s).map_err(::serde::de::Error::custom)).transpose()
+}

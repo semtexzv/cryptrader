@@ -92,6 +92,19 @@ impl crate::Database {
         });
     }
 
+    pub fn all_assignments_with_traders(&self) -> BoxFuture<Vec<(Assignment, Option<Trader>)>> {
+        return self.invoke(move |this, ctx| {
+            use crate::schema::*;
+
+            let conn: &ConnType = &this.0.get().unwrap();
+
+            let res = assignments::table
+                .left_outer_join(traders::table.on(assignments::trader_id.eq(traders::id.nullable())))
+                .load(conn)?;
+
+            Ok(res)
+        });
+    }
     pub fn assignments(&self, uid: i32) -> BoxFuture<Vec<Assignment>> {
         return self.invoke(move |this, ctx| {
             use crate::schema::assignments::dsl::*;

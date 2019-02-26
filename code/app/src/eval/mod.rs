@@ -16,19 +16,14 @@ pub struct EvalRequest {
 }
 
 
-#[derive(Debug, Serialize, Deserialize)]
-pub struct EvalResponse {
-    pub decision: TradingPosition,
-    pub spec: OhlcSpec,
-}
 
 #[derive(Debug)]
 pub struct EvalService;
 
 impl ServiceInfo for EvalService {
     type RequestType = EvalRequest;
-    type ResponseType = Result<EvalResponse, EvalError>;
-    const ENDPOINT: &'static str = "actix://ingest:42044/eval";
+    type ResponseType = Result<TradingPosition, EvalError>;
+    const ENDPOINT: &'static str = "actix://eval:42042/";
 }
 
 
@@ -70,7 +65,7 @@ impl EvalWorker {
 }
 
 impl Handler<ServiceRequest<EvalService>> for EvalWorker {
-    type Result = Response<Result<EvalResponse, EvalError>, RemoteError>;
+    type Result = Response<Result<TradingPosition, EvalError>, RemoteError>;
 
     fn handle(&mut self, msg: ServiceRequest<EvalService>, ctx: &mut Self::Context) -> Self::Result {
         let req: EvalRequest = msg.0;
@@ -84,10 +79,6 @@ impl Handler<ServiceRequest<EvalService>> for EvalWorker {
         let fut = Future::map(fut, |((strat, user), data)| {
             let data = data.into_iter().map(|x| (x.time, x)).collect();
             let res = strat_eval::eval(data, strat.body)?;
-            let res = EvalResponse {
-                spec: req.spec,
-                decision: res,
-            };
             Ok(res)
         });
 

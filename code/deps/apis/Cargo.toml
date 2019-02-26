@@ -5,6 +5,7 @@ authors = ["Michal Hornický <semtexzv@gmail.com>"]
 
 [dependencies]
 common = {path = "../../common"}
+actix-web = "*"
 
 serde = "*"
 serde_derive = "*"

@@ -34,6 +34,14 @@ pub struct NewTrader {
     pub api_secret: String,
 }
 
+impl Into<common::types::auth::AuthInfo> for Trader {
+    fn into(self) -> common::types::auth::AuthInfo {
+        common::types::auth::AuthInfo {
+            key: self.api_key,
+            secret: self.api_secret,
+        }
+    }
+}
 
 impl crate::Database {
     pub fn get_user(&self, uid: i32) -> BoxFuture<User, diesel::result::Error> {

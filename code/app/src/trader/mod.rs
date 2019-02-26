@@ -7,15 +7,14 @@ pub struct PositionService;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PositionRequest {
-    // TODO: Remove trader, load id locally
-    trader_id: db::Trader,
-    pair: PairId,
-    position: TradingPosition,
+    pub trader_id: db::Trader,
+    pub pair: PairId,
+    pub position: TradingPosition,
 }
 
 impl ServiceInfo for PositionService {
     type RequestType = PositionRequest;
-    type ResponseType = ();
+    type ResponseType = Result<(), ExchangeError>;
     const ENDPOINT: &'static str = "actix://ingest:42045/trader";
 }
 
@@ -33,7 +32,7 @@ impl Trader {
     pub fn new(handle: ContextHandle, db: db::Database) -> BoxFuture<Addr<Self>> {
         let handler = ServiceHandler::new(handle.clone());
 
-        box handler.map(|(handler)| {
+        box handler.map(|handler| {
             Actor::create(|ctx| {
                 handler.register(ctx.address().recipient());
                 let mut res = Self {
@@ -42,6 +41,7 @@ impl Trader {
 
                     conns: AnyMap::new(),
                 };
+
                 res.connect_handlers::<Bitfinex>(ctx);
                 res
             })
@@ -53,9 +53,13 @@ impl Trader {
         let balance = wrap_future(balance);
         let bfx = balance.map(move |balance, this: &mut Self, ctx| {
             let trade = ServiceConnection::<TradeService<E>>::from_other(this.handle.clone(), &balance);
+            let trade: ServiceConnection<TradeService<E>> = trade;
+            let balance: ServiceConnection<BalanceService<E>> = balance;
             this.conns.insert(balance);
             this.conns.insert(trade);
         });
+
+        ctx.spawn(bfx.drop_err());
     }
     pub fn balance_handler<E: Exchange>(&mut self) -> ServiceConnection<BalanceService<E>> {
         (*self.conns.get::<ServiceConnection<BalanceService<E>>>().unwrap()).clone()
@@ -63,52 +67,57 @@ impl Trader {
     pub fn trade_handler<E: Exchange>(&mut self) -> ServiceConnection<TradeService<E>> {
         (*self.conns.get::<ServiceConnection<TradeService<E>>>().unwrap()).clone()
     }
-    pub fn new_position<E: Exchange>(&mut self, ctx: &mut Context<Self>, pos: PositionRequest) {
+    pub fn new_position<E: Exchange>(&mut self, ctx: &mut Context<Self>, pos: PositionRequest) -> ResponseActFuture<Self, (), ExchangeError> {
         let balancer = self.balance_handler::<E>();
         let trader = self.trade_handler::<E>();
 
-        let balance = balancer.send(BalanceRequest(pos.pair.pair().clone(), pos.trader_id.clone()));
-        let balance = wrap_future(balance);
+        let balance = balancer.send(BalanceRequest {
+            pair: pos.pair.pair().clone(),
+            trader: pos.trader_id.clone(),
+        });
 
-        let mut res = balance.and_then(move |bal: Result<BalanceResponse, _>, this: &mut Self, ctx| {
+        let balance = wrap_future(balance).map_err(|_, _, _| ExchangeError::Internal);
+
+        let res = balance.and_then(move |bal: Result<BalanceResponse, _>, this: &mut Self, ctx| {
             if let Err(e) = bal {
-                panic!("Balance error : {:?}, {:?}", pos, e);
+                return (box afut::err(e)) as ResponseActFuture<_, _, _>;
             }
             let bal = bal.unwrap();
+
             let fut = if bal.target > bal.min_buy && pos.position == TradingPosition::Long {
-                let req = TradeRequest {
+                Some(trader.send(TradeRequest {
+                    trader: pos.trader_id.clone(),
                     pair: pos.pair.pair().clone(),
                     amount: bal.target,
                     buy: true,
-                };
-                Some(trader.send(req))
+                }))
             } else if bal.source > bal.min_sell && pos.position == TradingPosition::Short {
-                let req = TradeRequest {
+                Some(trader.send(TradeRequest {
+                    trader: pos.trader_id.clone(),
                     pair: pos.pair.pair().clone(),
                     amount: bal.source,
                     buy: true,
-                };
-                Some(trader.send(req))
+                }))
             } else {
                 None
             };
 
-            let res: ResponseActFuture<Self, (), RemoteError> = if let Some(fut) = fut {
+            let res: ResponseActFuture<Self, (), ExchangeError> = if let Some(fut) = fut {
                 let fut = wrap_future(fut);
-                box fut.map(move |r: Result<(), ExchangeError>, this: &mut Self, ctx| {
+                box fut.then(move |r: Result<Result<(), ExchangeError>, RemoteError>, this: &mut Self, ctx| {
                     if let Err(e) = r {
-                        panic!("Trade error : {:?}, {:?}", pos, e);
+                        return box afut::err(ExchangeError::Internal);
                     }
-                    ()
+                    return box afut::result(r.unwrap());
                 })
             } else {
                 box afut::ok(())
             };
 
-            res
+            box res as ResponseActFuture<_, _, _>
         });
 
-        ctx.spawn(res.drop_err());
+        box res
     }
 }
 
@@ -116,14 +125,23 @@ impl Trader {
 impl Actor for Trader { type Context = Context<Self>; }
 
 impl Handler<ServiceRequest<PositionService>> for Trader {
-    type Result = Result<(), RemoteError>;
+    type Result = ResponseActFuture<Self, Result<(), ExchangeError>, RemoteError>;
 
     fn handle(&mut self, msg: ServiceRequest<PositionService>, ctx: &mut Self::Context) -> Self::Result {
-        match msg.0.pair.exchange() {
-            "bitfinex" => self.new_position::<Bitfinex>(ctx, msg.0),
-            _ => {}
-        }
-        Ok(())
+        info!("Trade request : {:?}", msg);
+        box match msg.0.pair.exchange() {
+            "bitfinex" => {
+                let r: ResponseActFuture<Self, (), ExchangeError> = box self.new_position::<Bitfinex>(ctx, msg.0);
+                r
+            }
+            _ => {
+                let r: ResponseActFuture<Self, (), ExchangeError> = box afut::ok(());
+                r
+            }
+        }.then(|r, this, ctx| {
+            info!("position future resulted in : {:?}", r);
+            afut::ok(r)
+        })
     }
 }
 
@@ -132,14 +150,17 @@ impl Handler<ServiceRequest<PositionService>> for Trader {
 pub struct BalanceService<E: Exchange>(PhantomData<E>);
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct BalanceRequest(TradePair, db::Trader);
+pub struct BalanceRequest {
+    pub pair: TradePair,
+    pub trader: db::Trader,
+}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct BalanceResponse {
-    target: f64,
-    source: f64,
-    min_buy: f64,
-    min_sell: f64,
+    pub target: f64,
+    pub source: f64,
+    pub min_buy: f64,
+    pub min_sell: f64,
 }
 
 #[derive(Debug, Clone, Fail, Deserialize, Serialize)]
@@ -148,6 +169,8 @@ pub enum ExchangeError {
     InvalidInfo(String),
     #[fail(display = "invalid trader funds : {}", 0)]
     InvalidFunds(String),
+    #[fail(display = "Internal err")]
+    Internal,
 }
 
 
@@ -170,8 +193,9 @@ impl<E: Exchange> ServiceInfo for TradeService<E> {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TradeRequest {
-    pair: TradePair,
-    amount: f64,
-    buy: bool,
+    pub trader: db::Trader,
+    pub pair: TradePair,
+    pub amount: f64,
+    pub buy: bool,
 }
 

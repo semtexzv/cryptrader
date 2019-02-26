@@ -12,15 +12,16 @@ pub struct TradingRequestSpec {
     pub ohlc: OhlcSpec,
     pub user_id: i32,
     pub strat_id: i32,
-
+    pub trader: Option<db::Trader>,
 }
 
 impl TradingRequestSpec {
-    pub fn from_db(d: &db::Assignment) -> Self {
+    pub fn from_db(d: &db::Assignment, t: Option<db::Trader>) -> Self {
         TradingRequestSpec {
             ohlc: OhlcSpec::new(d.exchange.clone(), TradePair::from_str(&d.pair).unwrap(), OhlcPeriod::from_str(&d.period).unwrap()),
             user_id: d.owner_id,
             strat_id: d.strategy_id,
+            trader: t,
         }
     }
     pub fn search_prefix(&self) -> String {
@@ -61,12 +62,12 @@ impl Decider {
     }
 
     pub fn reload(&mut self, ctx: &mut Context<Self>) {
-        let f = wrap_future(self.db.all_assignments())
+        let f = wrap_future(self.db.all_assignments_with_traders())
             .and_then(|req, this: &mut Self, ctx| {
                 info!("Eval requests reloaded");
                 this.requests = Trie::new();
-                for r in req.iter() {
-                    let spec = TradingRequestSpec::from_db(r);
+                for (r, t) in req.iter() {
+                    let spec = TradingRequestSpec::from_db(r, t.clone());
                     this.requests.insert(spec.search_prefix(), spec);
                 }
                 afut::ok(())
@@ -85,7 +86,6 @@ impl Handler<OhlcUpdate> for Decider {
         if !msg.stable {
             return ();
         }
-        //trace!("Update received : {:?}", msg);
         use radix_trie::TrieCommon;
         let sub = self.requests.subtrie(&msg.search_prefix());
         if let Some(sub) = sub {
@@ -99,7 +99,10 @@ impl Handler<OhlcUpdate> for Decider {
                 };
                 let strategy_id = spec.strat_id;
                 let owner_id = spec.user_id;
+                let pair_id = spec.ohlc.pair_id().clone();
+
                 let exchange = spec.ohlc.exchange().to_string();
+                let trader = spec.trader.clone();
 
                 let pair = spec.ohlc.pair().clone().to_string();
                 let period = spec.ohlc.period().to_string();
@@ -109,8 +112,23 @@ impl Handler<OhlcUpdate> for Decider {
                     info!("Evaluated to {:?}", res);
 
                     let (ok, error) = match res {
-                        Ok(ref i) => {
-                            (Some(i.decision.to_string()), None)
+                        Ok(ref decision) => {
+                            if let Some(trader) = trader {
+                                let pos = crate::trader::PositionRequest {
+                                    trader_id: trader,
+                                    pair: pair_id,
+                                    position: *decision,
+                                };
+                                let sent = this.pos_svc.send(pos);
+                                let sent = sent.map(|r| {
+                                    warn!("Trade resulted in : {:?}", r);
+                                    ()
+                                });
+
+                                ctx.spawn(wrap_future(sent).drop_err());
+                            }
+
+                            (Some(decision.to_string()), None)
                         }
                         Err(ref e) => {
                             (None, Some(e.to_string()))
@@ -129,7 +147,10 @@ impl Handler<OhlcUpdate> for Decider {
                         error,
                     };
 
-                    wrap_future(this.db.log_eval(evaluation).drop_item().set_err(RemoteError::MailboxClosed))
+                    let f = wrap_future(this.db.log_eval(evaluation).drop_item().set_err(RemoteError::MailboxClosed));
+
+
+                    f
                 });
 
                 ctx.spawn(fut.drop_err());

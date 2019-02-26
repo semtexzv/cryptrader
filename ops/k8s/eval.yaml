@@ -1,15 +1,37 @@
 apiVersion: v1
 kind: List
+_: &env [{name: "RUST_LOG", value: ${RUST_LOG}}]
+
 items:
+  ## Eval workers
   - apiVersion: v1
     kind: Service
-    metadata: { name: eval, labels: { app: trader, layer: eval, type: worker } }
+    metadata: { name: eval, labels: { app: trader, layer: eval, type: balancer } }
     spec:
-      selector: { layer: eval, type: worker }
+      selector: { layer: eval, type: balancer }
       ports:
         - name: eval
           port: 42042
           targetPort: 42042
+
+  - apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      name: eval-balancer
+      labels: { app: trader, layer: eval, type: balancer }
+    spec:
+      replicas: 1
+      selector: { matchLabels: { app: trader, layer: eval, type: balancer }}
+      template:
+        metadata: { labels: { app: trader, layer: eval, type: balancer } }
+        spec:
+          containers:
+            - name: app
+              image: ${APP_IMAGE}
+              imagePullPolicy: Always
+              command: ["/app", "eval-balancer"]
+              env: *env
+              resources: { requests: { cpu: 100m } }
 
   - kind: Deployment
     apiVersion: apps/v1
@@ -27,7 +49,5 @@ items:
               image: ${APP_IMAGE}
               imagePullPolicy: Always
               command: ["/app", "eval-worker"]
-              env: [{name: "RUST_LOG", value: ${RUST_LOG}}]
-              resources:
-                requests:
-                  cpu: 100m
+              env: *env
+              resources: { requests: { cpu: 100m } }

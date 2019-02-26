@@ -5,10 +5,9 @@ pub mod auth;
 mod ohlc;
 mod spec;
 pub mod ticker;
-pub mod wallet;
 
 
-#[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Deserialize, Serialize)]
 pub enum TradingPosition {
     Long,
     Indeterminate,

@@ -53,7 +53,7 @@ fn main() {
                 arb_spawn(decider.unwrap_err().drop_item());
             }
             "bitfinex" => {
-                common::actix::Arbiter::spawn(exch::bitfinex::BitfinexOhlcSource::new(ctx.clone())
+                common::actix::Arbiter::spawn(exch::bitfinex::BitfinexClient::new(ctx.clone())
                     .then(|v| {
                         v.unwrap();
                         result(Ok(()))

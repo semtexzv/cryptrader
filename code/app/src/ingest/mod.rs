@@ -89,7 +89,7 @@ impl Handler<IngestUpdate> for Ingest {
 
     fn handle(&mut self, msg: IngestUpdate, ctx: &mut Context<Self>) {
         trace!("Received ingest update : {:?}", msg);
-        self.apply_update(msg);
+        self.apply_update(msg).unwrap();
     }
 }
 
@@ -115,7 +115,7 @@ impl Ingest {
     }
 
     fn get_last(&mut self, id: &PairId) -> Option<Ohlc> {
-        let mut cached = self.last.entry(id.clone());
+        let cached = self.last.entry(id.clone());
         match cached {
             Entry::Occupied(oc) => {
                 return Some(oc.get().clone());
@@ -131,23 +131,23 @@ impl Ingest {
     }
 
     fn new_stable(&mut self, id: &PairId, tick: Ohlc) -> Result<()> {
-        self.out.do_send(OhlcUpdate::new(OhlcSpec::from_pair_1m(id.clone()), tick.clone()));
+        self.out.do_send(OhlcUpdate::new(OhlcSpec::from_pair_1m(id.clone()), tick.clone())).unwrap();
         self.set_last(id, tick);
         Ok(())
     }
 
     fn new_live(&mut self, id: &PairId, tick: Ohlc) -> Result<()> {
         if let Some(l) = self.get_last(id) {
-            let mut update = OhlcUpdate::new(OhlcSpec::from_pair_1m(id.clone()), l.clone());
-            self.out.do_send(update);
+            let update = OhlcUpdate::new(OhlcSpec::from_pair_1m(id.clone()), l.clone());
+            self.out.do_send(update).unwrap();
         }
         self.update_live(id, tick)?;
         Ok(())
     }
 
     fn update_live(&mut self, id: &PairId, tick: Ohlc) -> Result<()> {
-        let mut update = OhlcUpdate::new_live(OhlcSpec::from_pair_1m(id.clone()), tick.clone());
-        self.out.do_send(update);
+        let update = OhlcUpdate::new_live(OhlcSpec::from_pair_1m(id.clone()), tick.clone());
+        self.out.do_send(update).unwrap();
         self.set_last(id, tick);
         Ok(())
     }
@@ -161,8 +161,8 @@ impl Ingest {
             0
         };
 
-        let now = (::common::unixtime());
-        let mut max_stable_time = now - 60;
+        let now = ::common::unixtime();
+        let max_stable_time = now - 60;
 
         let mut filtered: Vec<Ohlc> = data.ohlc
             .iter()

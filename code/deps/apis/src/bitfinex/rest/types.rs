@@ -11,15 +11,11 @@ pub struct WalletInfo {
     pub available: f64,
 }
 
-#[derive(Serialize, Debug, Clone, Deserialize)]
-#[serde(rename = "bitfinex")]
-pub struct BitfinexMark;
-
 #[derive(Debug, Clone, )]
 pub struct NewOrderPayload {
     pub symbol: TradePair,
     pub amount: f64,
-    pub price: f64,
+    pub buy : bool,
 }
 
 impl Serialize for NewOrderPayload {
@@ -41,9 +37,18 @@ impl Serialize for NewOrderPayload {
             amount: f64::abs(self.amount).to_string(),
             price: self.amount.to_string(),
             exchange: "bitfinex".into(),
-            side: (if self.amount > 0.0 { "buy" } else { "sell" }).to_string(),
+            side: (if self.buy { "buy" } else { "sell" }).to_string(),
             typ: "exchange market".into(),
         };
-        Serialize::serialize(&p,serializer)
+        Serialize::serialize(&p, serializer)
     }
+}
+
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SymbolDetail {
+    pub pair: String,
+    pub price_precision: usize,
+    #[serde(deserialize_with = "f64_from_str")]
+    pub minimum_order_size : f64
 }

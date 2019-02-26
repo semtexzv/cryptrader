@@ -14,4 +14,4 @@ pub(crate) use diesel::sql_types::{Text, BigInt};
 
 pub(crate) use crate::{DbWorker, ConnType, schema};
 
-pub use schema::{User, Strategy, Assignment, Evaluation};
+pub use schema::{User, Strategy, Assignment, Evaluation, Trader};

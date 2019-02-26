@@ -1,3 +1,4 @@
+#![feature(box_syntax)]
 #![allow(unused_mut, unused_variables, unused_parens, unused_imports, non_snake_case, dead_code)]
 #[macro_use]
 extern crate common;
@@ -13,6 +14,7 @@ extern crate serde_derive;
 extern crate serde_json as json;
 
 extern crate futures;
+extern crate actix_web;
 
 mod prelude;
 
