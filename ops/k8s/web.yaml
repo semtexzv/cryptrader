@@ -9,12 +9,18 @@ items:
     spec:
       selector: { layer: web }
       type: NodePort
+      externalIPs: ["67.207.76.239"]
       ports:
         - name: http
           port: 8000
+          nodePort: 30000
+          targetPort: 8000
 
         - name: https
           port: 443
+          nodePort: 30001
+          targetPort: 443
+
 
 
   - kind: Deployment
