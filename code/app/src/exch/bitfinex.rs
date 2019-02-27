@@ -167,7 +167,7 @@ impl Handler<ServiceRequest<BalanceService<Bitfinex>>> for BitfinexClient {
                     }))
                 }
                 Err(e) => {
-                    return afut::ok(Err(ExchangeError::InvalidInfo("".into())));
+                    return afut::ok(Err(ExchangeError::InvalidInfo(e.to_string())));
                 }
             }
         });

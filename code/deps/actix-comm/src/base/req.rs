@@ -8,10 +8,14 @@ use crate::util::*;
 
 pub type ResponeSender = OneSender<Result<WrappedType, RemoteError>>;
 
+
 pub struct Request {
     handle: crate::ctx::ContextHandle,
+    streams: [SpawnHandle; 2],
     sender: UnboundedSender<Multipart>,
     requests: HashMap<u64, ResponeSender>,
+    last_req: Instant,
+    last_resp: Instant,
     msgid: u64,
 }
 
@@ -24,6 +28,7 @@ impl<M> Handler<SendRequest<M>> for Request
     type Result = Response<M::Result, RemoteError>;
 
     fn handle(&mut self, msg: SendRequest<M>, ctx: &mut Self::Context) -> Self::Result {
+        self.last_req = Instant::now();
         self.msgid += 1;
         let msgid = self.msgid;
 
@@ -61,6 +66,7 @@ impl<M> Handler<SendRequest<M>> for Request
 
 impl StreamHandler<Multipart, tzmq::Error> for Request {
     fn handle(&mut self, mut item: Multipart, ctx: &mut Self::Context) {
+        self.last_resp = Instant::now();
         let data: MessageWrapper = json::from_slice(&item.pop_front().unwrap()).unwrap();
 
         self.handle_message(ctx, data);
@@ -69,35 +75,69 @@ impl StreamHandler<Multipart, tzmq::Error> for Request {
 
 impl Request {
     pub fn new(handle: ContextHandle, addr: &str) -> impl Future<Item=Addr<Self>, Error=tzmq::Error> {
-        let router = tzmq::Dealer::builder(handle.zmq_ctx.clone())
+        let socket = Self::create_socket(handle.clone(), addr);
+        let addr = addr.to_string();
+
+        socket.map(|socket| {
+            Actor::create(|ctx| {
+                let (tx, streams) = Self::init_streams(ctx, socket);
+
+                let hello = MessageWrapper::Hello.to_multipart().unwrap();
+                tx.unbounded_send(hello).unwrap();
+
+                ctx.run_interval(Duration::from_secs(10), move |this, ctx| {
+                    // Rust panics on negativbe durations
+                    if this.last_req > this.last_resp &&  this.last_req.duration_since(this.last_resp) > Duration::from_secs(15) {
+                        this.reconnect(ctx, &addr)
+                    }
+                });
+
+                Request {
+                    handle,
+                    streams,
+                    requests: Default::default(),
+                    sender: tx,
+                    last_resp: Instant::now(),
+                    last_req: Instant::now(),
+                    msgid: 0,
+                }
+            })
+        })
+    }
+
+    pub(crate) fn create_socket(handle: ContextHandle, addr: &str) -> impl Future<Item=Dealer, Error=tzmq::Error> {
+        tzmq::Dealer::builder(handle.zmq_ctx.clone())
             .identity(handle.uuid.as_bytes())
             .customize(|sock: &zmq::Socket| {
                 set_keepalives(sock);
             })
             .connect(addr)
-            .build();
+            .build()
+    }
 
-        router.map(|router| {
-            let (sink, stream) = router.sink_stream(25).split();
-            let (tx, rx) = futures::sync::mpsc::unbounded();
+    pub(crate) fn reconnect(&mut self, ctx: &mut Context<Self>, addr: &str) {
+        info!("Reconnecting");
+        let socket = wrap_future(Self::create_socket(self.handle.clone(), addr));
+        let reconn = socket.map(|socket, this: &mut Self, ctx| {
+            let (tx, handles) = Self::init_streams(ctx, socket);
+            let old = std::mem::replace(&mut this.streams, handles);
+            this.sender = tx;
+            ctx.cancel_future(old[0]);
+            ctx.cancel_future(old[1]);
+            ()
+        }).drop_err();
+        ctx.spawn(reconn);
+    }
 
-            let forward = sink.send_all(rx.map_err(|_| tzmq::Error::Sink));
+    pub(crate) fn init_streams(ctx: &mut Context<Self>, dealer: tzmq::Dealer) -> (UnboundedSender<Multipart>, [SpawnHandle; 2]) {
+        let (sink, stream) = dealer.sink_stream(25).split();
+        let (tx, rx) = futures::sync::mpsc::unbounded();
+        let forward = sink.send_all(rx.map_err(|_| tzmq::Error::Sink));
 
-            Actor::create(|ctx| {
-                ctx.spawn(wrap_future(forward.drop_item().drop_err()));
-                Self::add_stream(stream, ctx);
+        let a = ctx.spawn(wrap_future(forward.drop_item().drop_err()));
+        let b = Self::add_stream(stream, ctx);
 
-                let hello = MessageWrapper::Hello.to_multipart().unwrap();
-                tx.unbounded_send(hello).unwrap();
-
-                Request {
-                    handle,
-                    requests: Default::default(),
-                    sender: tx,
-                    msgid: 0,
-                }
-            })
-        })
+        (tx, [a, b])
     }
 
     pub(crate) fn resolve_request(&mut self, rid: u64, res: Result<WrappedType, RemoteError>) {

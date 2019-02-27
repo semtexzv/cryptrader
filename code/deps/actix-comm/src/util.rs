@@ -20,7 +20,7 @@ pub(crate) fn set_keepalives(socket : &zmq::Socket) {
 
     socket.set_tcp_keepalive(1).unwrap();
     socket.set_tcp_keepalive_cnt(2).unwrap();
-    socket.set_tcp_keepalive_idle(5).unwrap();
+    socket.set_tcp_keepalive_idle(2).unwrap();
     socket.set_tcp_keepalive_intvl(5).unwrap();
 }
 
