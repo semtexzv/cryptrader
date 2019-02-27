@@ -17,6 +17,11 @@ pub struct TradingRequestSpec {
 
 impl TradingRequestSpec {
     pub fn from_db(d: &db::Assignment, t: Option<db::Trader>) -> Self {
+        /*
+        if t.is_some() {
+            info!("Trading spec for : {:?} has trader : {:?}", d, t);
+        }
+        */
         TradingRequestSpec {
             ohlc: OhlcSpec::new(d.exchange.clone(), TradePair::from_str(&d.pair).unwrap(), OhlcPeriod::from_str(&d.period).unwrap()),
             user_id: d.owner_id,
@@ -70,6 +75,8 @@ impl Decider {
                     let spec = TradingRequestSpec::from_db(r, t.clone());
                     this.requests.insert(spec.search_prefix(), spec);
                 }
+
+
                 afut::ok(())
             });
 
@@ -114,6 +121,7 @@ impl Handler<OhlcUpdate> for Decider {
                     let (ok, error) = match res {
                         Ok(ref decision) => {
                             if let Some(trader) = trader {
+                                info!("Trader available, sending trade request");
                                 let pos = crate::trader::PositionRequest {
                                     trader_id: trader,
                                     pair: pair_id,

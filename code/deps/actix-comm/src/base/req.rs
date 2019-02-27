@@ -43,7 +43,7 @@ impl<M> Handler<SendRequest<M>> for Request
 
         let sent = wrap_future(self.sender.clone().send(multipart));
         let resolved = sent.then(move |res: Result<_, _>, this: &mut Self, _ctx: &mut Self::Context| {
-            res.unwrap();
+
             afut::ok(())
         });
         ctx.spawn(resolved);

@@ -136,6 +136,7 @@ impl Handler<ServiceRequest<BalanceService<Bitfinex>>> for BitfinexClient {
     type Result = ResponseActFuture<Self, Result<BalanceResponse, ExchangeError>, RemoteError>;
 
     fn handle(&mut self, msg: ServiceRequest<BalanceService<Bitfinex>>, ctx: &mut Self::Context) -> Self::Result {
+        info!("Serving BalanceRequest");
         let req: BalanceRequest = msg.0;
         let fut = api::rest::wallet_info(req.trader.clone().into());
         let fut = wrap_future(fut);
@@ -180,6 +181,7 @@ impl Handler<ServiceRequest<TradeService<Bitfinex>>> for BitfinexClient {
     type Result = ResponseActFuture<Self, Result<(), ExchangeError>, RemoteError>;
 
     fn handle(&mut self, msg: ServiceRequest<TradeService<Bitfinex>>, ctx: &mut Self::Context) -> Self::Result {
+        info!("Serving TradeRequest");
         let req: TradeRequest = msg.0;
         let fut = api::rest::new_order(req.trader.clone().into(), req.amount, req.pair, req.buy);
         let fut = wrap_future(fut);
