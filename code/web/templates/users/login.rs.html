@@ -4,14 +4,5 @@
 @(base : &BaseTemplateInfo)
 
 @:layout(base, {
-
-
-<div class="login-form">
-    <form method="POST" action="/users/login/">
-        <h2 class="text-center">Log in</h2>
-        <input class="form-control" type="text" name="email">
-        <input class="form-control" type="password" name="password">
-        <input class="form-control btn btn-primary" type="submit" value="Log in">
-    </form>
-</div>
+<login-form></login-form>
 })

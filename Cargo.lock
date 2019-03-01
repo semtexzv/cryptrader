@@ -149,6 +149,7 @@ dependencies = [
 name = "actix-web-async-await"
 version = "0.2.0"
 dependencies = [
+ "actix 0.7.9 (registry+https://github.com/rust-lang/crates.io-index)",
  "actix-web 0.7.18 (registry+https://github.com/rust-lang/crates.io-index)",
  "failure 0.1.5 (registry+https://github.com/rust-lang/crates.io-index)",
  "futures 0.1.25 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -217,6 +218,7 @@ version = "0.0.0"
 dependencies = [
  "actix-arch 0.0.0",
  "actix-comm 0.1.0",
+ "actix-web-async-await 0.2.0",
  "anymap 0.12.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "apis 0.1.0",
  "clap 2.32.0 (registry+https://github.com/rust-lang/crates.io-index)",

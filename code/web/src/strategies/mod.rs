@@ -1,7 +1,7 @@
 use crate::prelude::*;
 
 use common::futures::Future;
-use actix_web::{http::Method, App};
+use actix_web::{http::Method, App, Json};
 use actix_web::{AsyncResponder, HttpRequest};
 
 use super::State;
@@ -83,6 +83,16 @@ async fn detail_post(req: HttpRequest<State>) -> Result<impl Responder> {
     Ok(render(|o| crate::templates::strategies::list(o, &base, strats)))
 }
 
+async fn api_list(req : HttpRequest<State>) -> Result<impl Responder> {
+    let db: Database = req.state().db.clone();
+    let base = await_compat!(BaseTemplateInfo::from_request(&req))?;
+    require_login!(base);
+
+    let strats = await_compat!(db.user_strategies(base.auth.uid))?;
+    Ok(Json(strats).respond_to(&req)?)
+
+}
+
 pub fn configure(application: App<State>) -> App<State> {
     application
         .resource("/strategies", |r| {
@@ -92,6 +102,12 @@ pub fn configure(application: App<State>) -> App<State> {
         .resource("/strategies/{id}", |r| {
             r.method(Method::GET).with(compat(detail));
             r.method(Method::POST).with(compat(post));
+        })
+        .resource("/api/strategies", |r| {
+            r.method(Method::GET).with(compat(api_list))
+        })
+        .resource("/api/strategies/{id}", |r| {
+            r.method(Method::GET).with(compat(api_list))
         })
 }
 

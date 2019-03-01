@@ -12,6 +12,10 @@ clap = "*"
 serde = "*"
 
 futures-util = { path ="../deps/futures-util" }
+
+actix-web-async-await = { path = "../deps/actix-web-async-await"}
+
+
 actix-comm = { path = "../deps/actix-comm" }
 actix-arch = { path = "../deps/actix-arch" }
 strat-eval = { path = "../deps/strat-eval"}

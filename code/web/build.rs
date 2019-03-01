@@ -14,11 +14,10 @@ fn main() {
     let out_dir = PathBuf::from(env::var("OUT_DIR").unwrap());
     let cargo_dir = PathBuf::from(env::var("CARGO_MANIFEST_DIR").unwrap());
 
-    let path = PathBuf::from("../../code/web/static");
 
     compile_templates(&cargo_dir.join("templates"), &out_dir).expect("compile templates");
 
-    includedir::start(cargo_dir.join(path))
+    includedir::start(cargo_dir.join(PathBuf::from("../../code/web/static")))
         .dir(".")
         .passthrough(!is_k8s)
         .name("STATICS")
