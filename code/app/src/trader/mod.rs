@@ -12,6 +12,13 @@ pub struct PositionRequest {
     pub position: TradingPosition,
 }
 
+pub enum PositionResponse {
+    Adjusted {
+        amout : f64,
+    },
+    Unchanged,
+}
+
 impl ServiceInfo for PositionService {
     type RequestType = PositionRequest;
     type ResponseType = Result<(), ExchangeError>;
@@ -85,6 +92,7 @@ impl Trader {
             let bal = bal.unwrap();
 
             let fut = if bal.target > bal.min_buy && pos.position == TradingPosition::Long {
+                info!("Can go longer");
                 Some(trader.send(TradeRequest {
                     trader: pos.trader_id.clone(),
                     pair: pos.pair.pair().clone(),
@@ -92,6 +100,7 @@ impl Trader {
                     buy: true,
                 }))
             } else if bal.source > bal.min_sell && pos.position == TradingPosition::Short {
+                info!("Can go shorter");
                 Some(trader.send(TradeRequest {
                     trader: pos.trader_id.clone(),
                     pair: pos.pair.pair().clone(),
@@ -99,6 +108,7 @@ impl Trader {
                     buy: true,
                 }))
             } else {
+                info!("Not enough funds for position adjustement");
                 None
             };
 
@@ -128,7 +138,7 @@ impl Handler<ServiceRequest<PositionService>> for Trader {
     type Result = ResponseActFuture<Self, Result<(), ExchangeError>, RemoteError>;
 
     fn handle(&mut self, msg: ServiceRequest<PositionService>, ctx: &mut Self::Context) -> Self::Result {
-        info!("Trade request : {:?}", msg);
+        info!("Position request : {:?}", msg);
         box match msg.0.pair.exchange() {
             "bitfinex" => {
                 let r: ResponseActFuture<Self, (), ExchangeError> = box self.new_position::<Bitfinex>(ctx, msg.0);
