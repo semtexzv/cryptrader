@@ -22,6 +22,7 @@ pub struct SaveStrategy {
 
 
 impl crate::Database {
+
     pub fn strategy_data(&self, sid: i32) -> BoxFuture<(crate::Strategy, crate::User)> {
         return self.invoke(move |this, ctx| {
             use schema::strategies::dsl::*;

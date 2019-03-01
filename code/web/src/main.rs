@@ -27,9 +27,6 @@ pub mod statics {
 }
 
 
-pub mod web_app {
-    include!(concat!(env!("OUT_DIR"), "/web_app.rs"));
-}
 
 pub struct State {
     db: db::Database,

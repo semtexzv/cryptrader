@@ -1,4 +1,4 @@
-import {LitElement, html, property, customElement, TemplateResult} from "lit-element";
+import {LitElement, html, property, customElement, TemplateResult} from 'lit-element';
 
 
 @customElement("signup-form")

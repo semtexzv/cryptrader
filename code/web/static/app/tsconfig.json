@@ -1,13 +1,13 @@
+
 {
   "compilerOptions": {
     "baseUrl": ".",
     "paths": { "*": ["types/*"] },
     "target": "es2015",
-    "experimentalDecorators": true,
-    "jsx": "preserve"
-  },
-  "parcel-plugin-typescript": {
-    // If true type-checking is disabled
-    "transpileOnly": false
+    "module": "es2015",
+    "lib": ["dom", "es2015", "es2015.collection"],
+    "importHelpers": true,
+    "moduleResolution": "node",
+    "experimentalDecorators": true
   }
 }

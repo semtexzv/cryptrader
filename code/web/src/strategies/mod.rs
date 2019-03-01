@@ -89,8 +89,35 @@ async fn api_list(req : HttpRequest<State>) -> Result<impl Responder> {
     require_login!(base);
 
     let strats = await_compat!(db.user_strategies(base.auth.uid))?;
-    Ok(Json(strats).respond_to(&req)?)
+    Ok(Json(strats).respond_to(&req).unwrap())
+}
 
+
+async fn api_detail((req, id): (HttpRequest<State>, Path<i32>)) -> Result<impl Responder> {
+    let db: Database = req.state().db.clone();
+    let base = await_compat!(BaseTemplateInfo::from_request(&req))?;
+    require_login!(base);
+
+    let (strat, user) = await_compat!(db.strategy_data(id.into_inner()))?;
+    let evals = await_compat!(db.get_evals(strat.id))?;
+    require_cond!(strat.owner_id == base.auth.uid);
+
+    Ok(Json(strat).respond_to(&req).unwrap())
+}
+
+async fn api_post((req, id, form): (HttpRequest<State>, Option<Path<i32>>, Option<Json<StrategyInfo>>)) -> Result<impl Responder> {
+
+
+    let base = await_compat!(BaseTemplateInfo::from_request(&req))?;
+    require_login!(base);
+
+    let strat: db::Strategy = if let Some(id) = id {
+        let id = id.into_inner();
+        await_compat!(save_strat(req.clone(),Some(id),form.map(Json::into_inner)))?
+    } else {
+        await_compat!(save_strat(req.clone(),None,form.map(Json::into_inner)))?
+    };
+    Ok(Json(strat).respond_to(&req).unwrap())
 }
 
 pub fn configure(application: App<State>) -> App<State> {
@@ -104,10 +131,11 @@ pub fn configure(application: App<State>) -> App<State> {
             r.method(Method::POST).with(compat(post));
         })
         .resource("/api/strategies", |r| {
-            r.method(Method::GET).with(compat(api_list))
+            r.method(Method::GET).with(compat(api_list));
         })
         .resource("/api/strategies/{id}", |r| {
-            r.method(Method::GET).with(compat(api_list))
+            r.method(Method::GET).with(compat(api_detail));
+            r.method(Method::POST).with(compat(api_post));
         })
 }
 
