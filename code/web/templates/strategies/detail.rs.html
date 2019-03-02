@@ -3,33 +3,8 @@
 @use db::Strategy;
 @use db::Evaluation;
 
-@(base : &BaseTemplateInfo, strat : Strategy, evals : Vec<Evaluation>)
+@(base : &BaseTemplateInfo, id : i32)
 
 @:layout(base, {
-
-<strategy-form strat-id="@strat.id"></strategy-form>
-
-
-    <table>
-        <thead>
-        <tr>
-            <th>Time</th>
-            <th>Type</th>
-            <th>Status</th>
-            <th>Output</th>
-        </tr>
-        </thead>
-        <tbody>
-        @for e in evals {
-        <tr>
-            <td>@e.time</td>
-            <td>@e.exchange @e.pair @e.period</td>
-            <td>@e.status</td>
-            <td>@(e.ok.or(e.error).unwrap())</td>
-        </tr>
-        }
-        </tbody>
-    </table>
-
-
+<strategy-detail strategy-id="@id"></strategy-detail>
 })

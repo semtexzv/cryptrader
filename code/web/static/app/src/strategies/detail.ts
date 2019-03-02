@@ -1,12 +1,13 @@
 import {LitElement, html, property, customElement, TemplateResult, PropertyValues} from 'lit-element';
-import * as lit from 'lit-html';
-import * as api from './api'
-import LitNotify from "./notify";
 
-@customElement("strategy-form")
-export class StratDetail extends LitNotify {
+import * as api from '../util/api';
+import LitNotify from "../util/notify";
 
-    @property({type: Number, attribute: "strat-id"}) id = null;
+
+@customElement("strategy-detail")
+export class Detail extends LitNotify {
+
+    @property({type: Number, attribute: "strategy-id"}) id = null;
     @property({type: Object}) strat = null;
 
 

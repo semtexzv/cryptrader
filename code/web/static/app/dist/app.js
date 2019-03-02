@@ -515,7 +515,7 @@ function __importDefault(mod) {
     default: mod
   };
 }
-},{}],"api.ts":[function(require,module,exports) {
+},{}],"util/api.ts":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -543,7 +543,10 @@ class Api {}
 function getAll(base) {
   return tslib_1.__awaiter(this, void 0, void 0, function* () {
     let data = yield fetch(`/api/${base}`, {
-      credentials: "include"
+      credentials: "include",
+      headers: {
+        'Accept': 'application/json'
+      }
     });
     return yield data.json();
   });
@@ -552,7 +555,10 @@ function getAll(base) {
 function getOne(base, id) {
   return tslib_1.__awaiter(this, void 0, void 0, function* () {
     let data = yield fetch(`/api/${base}/${id}`, {
-      credentials: "include"
+      credentials: "include",
+      headers: {
+        'Accept': 'application/json'
+      }
     });
     return yield data.json();
   });
@@ -560,9 +566,14 @@ function getOne(base, id) {
 
 function postOne(base, v) {
   return tslib_1.__awaiter(this, void 0, void 0, function* () {
-    let data = yield fetch(`/api/${base}/${v.id}`, {
+    let url = v.hasOwnProperty('id') ? `/api/${base}/${v.id}` : `/api/${base}`;
+    let data = yield fetch(url, {
       credentials: 'include',
       method: 'post',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
+      },
       body: JSON.stringify(v)
     });
     return yield data.json();
@@ -3947,7 +3958,7 @@ LitElement.finalized = true;
  */
 
 LitElement.render = _shadyRender.render;
-},{"lit-html":"../node_modules/lit-html/lit-html.js","lit-html/lib/shady-render":"../node_modules/lit-html/lib/shady-render.js","./lib/updating-element.js":"../node_modules/lit-element/lib/updating-element.js","./lib/decorators.js":"../node_modules/lit-element/lib/decorators.js","lit-html/lit-html":"../node_modules/lit-html/lit-html.js","./lib/css-tag.js":"../node_modules/lit-element/lib/css-tag.js"}],"notify.ts":[function(require,module,exports) {
+},{"lit-html":"../node_modules/lit-html/lit-html.js","lit-html/lib/shady-render":"../node_modules/lit-html/lib/shady-render.js","./lib/updating-element.js":"../node_modules/lit-element/lib/updating-element.js","./lib/decorators.js":"../node_modules/lit-element/lib/decorators.js","lit-html/lit-html":"../node_modules/lit-html/lit-html.js","./lib/css-tag.js":"../node_modules/lit-element/lib/css-tag.js"}],"util/notify.ts":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -3980,122 +3991,7 @@ class LitNotify extends _litElement.LitElement {
 
 var _default = LitNotify;
 exports.default = _default;
-},{"lit-element":"../node_modules/lit-element/lit-element.js"}],"login.ts":[function(require,module,exports) {
-"use strict";
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.Login = void 0;
-
-var tslib_1 = _interopRequireWildcard(require("tslib"));
-
-var _litElement = require("lit-element");
-
-function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = Object.defineProperty && Object.getOwnPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : {}; if (desc.get || desc.set) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } } newObj.default = obj; return newObj; } }
-
-let Login = class Login extends _litElement.LitElement {
-  constructor() {
-    super(...arguments);
-    this.email = "";
-    this.password = "";
-  }
-
-  onEmail(e) {
-    this.email = e.currentTarget.value;
-  }
-
-  onPw(e) {
-    this.password = e.currentTarget.value;
-  }
-
-  render() {
-    return _litElement.html`
-<div class="login-form">
-    <form method="POST" action="/users/login/">
-        <h2 class="text-center">Log in</h2>
-        <input class="form-control" 
-            type="text" name="email"
-            value="${this.email}" 
-            @changed="${e => this.onEmail(e)}">
-        <input class="form-control" 
-            type="password" 
-            name="password" 
-            value="${this.password}" 
-            @changed="${e => this.onPw(e)}">
-        <input class="form-control btn btn-primary" type="submit" value="Log in">
-    </form>
-</div>
-
-`;
-  }
-
-};
-exports.Login = Login;
-
-tslib_1.__decorate([(0, _litElement.property)()], Login.prototype, "email", void 0);
-
-tslib_1.__decorate([(0, _litElement.property)()], Login.prototype, "password", void 0);
-
-exports.Login = Login = tslib_1.__decorate([(0, _litElement.customElement)("login-form")], Login);
-},{"tslib":"../node_modules/tslib/tslib.es6.js","lit-element":"../node_modules/lit-element/lit-element.js"}],"signup.ts":[function(require,module,exports) {
-"use strict";
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.Signup = void 0;
-
-var tslib_1 = _interopRequireWildcard(require("tslib"));
-
-var _litElement = require("lit-element");
-
-function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = Object.defineProperty && Object.getOwnPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : {}; if (desc.get || desc.set) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } } newObj.default = obj; return newObj; } }
-
-let Signup = class Signup extends _litElement.LitElement {
-  constructor() {
-    super(...arguments);
-    this.email = "";
-    this.password = "";
-  }
-
-  onEmail(e) {
-    this.email = e.currentTarget.value;
-  }
-
-  onPw(e) {
-    this.password = e.currentTarget.value;
-  }
-
-  render() {
-    return _litElement.html`
-<div class="login-form">
-    <form method="POST" action="/users/signup/">
-        <h2 class="text-center">Sign up</h2>      
-        <input class="form-control"
-            type="text" name="email"
-            value="${this.email}" 
-            @changed="${e => this.onEmail(e)}">
-        <input class="form-control" 
-            type="password" 
-            name="password" 
-            value="${this.password}" 
-            @changed="${e => this.onPw(e)}">
-        <input class="form-control btn btn-primary" type="submit" value="Register">
-    </form>
-</div>
-`;
-  }
-
-};
-exports.Signup = Signup;
-
-tslib_1.__decorate([(0, _litElement.property)()], Signup.prototype, "email", void 0);
-
-tslib_1.__decorate([(0, _litElement.property)()], Signup.prototype, "password", void 0);
-
-exports.Signup = Signup = tslib_1.__decorate([(0, _litElement.customElement)("signup-form")], Signup);
-},{"tslib":"../node_modules/tslib/tslib.es6.js","lit-element":"../node_modules/lit-element/lit-element.js"}],"../node_modules/ace-builds/src-noconflict/ace.js":[function(require,module,exports) {
+},{"lit-element":"../node_modules/lit-element/lit-element.js"}],"../node_modules/ace-builds/src-noconflict/ace.js":[function(require,module,exports) {
 var global = arguments[3];
 var define;
 /* ***** BEGIN LICENSE BLOCK *****
@@ -27988,7 +27884,7 @@ dom.importCssString(exports.cssText, exports.cssClass);
                     });
                 })();
             
-},{}],"ace-editor.ts":[function(require,module,exports) {
+},{}],"util/ace-editor.ts":[function(require,module,exports) {
 "use strict";
 
 var tslib_1 = _interopRequireWildcard(require("tslib"));
@@ -28087,27 +27983,142 @@ tslib_1.__decorate([(0, _litElement.property)({
 })], AceEditor.prototype, "content", void 0);
 
 AceEditor = tslib_1.__decorate([(0, _litElement.customElement)("ace-editor")], AceEditor);
-},{"tslib":"../node_modules/tslib/tslib.es6.js","lit-element":"../node_modules/lit-element/lit-element.js","./notify":"notify.ts","ace-builds/src-noconflict/ace":"../node_modules/ace-builds/src-noconflict/ace.js","ace-builds/src-noconflict/ext-language_tools":"../node_modules/ace-builds/src-noconflict/ext-language_tools.js","ace-builds/src-noconflict/mode-lua":"../node_modules/ace-builds/src-noconflict/mode-lua.js","ace-builds/src-noconflict/theme-dreamweaver":"../node_modules/ace-builds/src-noconflict/theme-dreamweaver.js"}],"strat-detail.ts":[function(require,module,exports) {
+},{"tslib":"../node_modules/tslib/tslib.es6.js","lit-element":"../node_modules/lit-element/lit-element.js","./notify":"util/notify.ts","ace-builds/src-noconflict/ace":"../node_modules/ace-builds/src-noconflict/ace.js","ace-builds/src-noconflict/ext-language_tools":"../node_modules/ace-builds/src-noconflict/ext-language_tools.js","ace-builds/src-noconflict/mode-lua":"../node_modules/ace-builds/src-noconflict/mode-lua.js","ace-builds/src-noconflict/theme-dreamweaver":"../node_modules/ace-builds/src-noconflict/theme-dreamweaver.js"}],"login.ts":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.StratDetail = void 0;
+exports.Login = void 0;
 
 var tslib_1 = _interopRequireWildcard(require("tslib"));
 
 var _litElement = require("lit-element");
 
-var api = _interopRequireWildcard(require("./api"));
+function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = Object.defineProperty && Object.getOwnPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : {}; if (desc.get || desc.set) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } } newObj.default = obj; return newObj; } }
 
-var _notify = _interopRequireDefault(require("./notify"));
+let Login = class Login extends _litElement.LitElement {
+  constructor() {
+    super(...arguments);
+    this.email = "";
+    this.password = "";
+  }
+
+  onEmail(e) {
+    this.email = e.currentTarget.value;
+  }
+
+  onPw(e) {
+    this.password = e.currentTarget.value;
+  }
+
+  render() {
+    return _litElement.html`
+<div class="login-form">
+    <form method="POST" action="/users/login/">
+        <h2 class="text-center">Log in</h2>
+        <input class="form-control" 
+            type="text" name="email"
+            value="${this.email}" 
+            @changed="${e => this.onEmail(e)}">
+        <input class="form-control" 
+            type="password" 
+            name="password" 
+            value="${this.password}" 
+            @changed="${e => this.onPw(e)}">
+        <input class="form-control btn btn-primary" type="submit" value="Log in">
+    </form>
+</div>
+
+`;
+  }
+
+};
+exports.Login = Login;
+
+tslib_1.__decorate([(0, _litElement.property)()], Login.prototype, "email", void 0);
+
+tslib_1.__decorate([(0, _litElement.property)()], Login.prototype, "password", void 0);
+
+exports.Login = Login = tslib_1.__decorate([(0, _litElement.customElement)("login-form")], Login);
+},{"tslib":"../node_modules/tslib/tslib.es6.js","lit-element":"../node_modules/lit-element/lit-element.js"}],"signup.ts":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.Signup = void 0;
+
+var tslib_1 = _interopRequireWildcard(require("tslib"));
+
+var _litElement = require("lit-element");
+
+function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = Object.defineProperty && Object.getOwnPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : {}; if (desc.get || desc.set) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } } newObj.default = obj; return newObj; } }
+
+let Signup = class Signup extends _litElement.LitElement {
+  constructor() {
+    super(...arguments);
+    this.email = "";
+    this.password = "";
+  }
+
+  onEmail(e) {
+    this.email = e.currentTarget.value;
+  }
+
+  onPw(e) {
+    this.password = e.currentTarget.value;
+  }
+
+  render() {
+    return _litElement.html`
+<div class="login-form">
+    <form method="POST" action="/users/signup/">
+        <h2 class="text-center">Sign up</h2>      
+        <input class="form-control"
+            type="text" name="email"
+            value="${this.email}" 
+            @changed="${e => this.onEmail(e)}">
+        <input class="form-control" 
+            type="password" 
+            name="password" 
+            value="${this.password}" 
+            @changed="${e => this.onPw(e)}">
+        <input class="form-control btn btn-primary" type="submit" value="Register">
+    </form>
+</div>
+`;
+  }
+
+};
+exports.Signup = Signup;
+
+tslib_1.__decorate([(0, _litElement.property)()], Signup.prototype, "email", void 0);
+
+tslib_1.__decorate([(0, _litElement.property)()], Signup.prototype, "password", void 0);
+
+exports.Signup = Signup = tslib_1.__decorate([(0, _litElement.customElement)("signup-form")], Signup);
+},{"tslib":"../node_modules/tslib/tslib.es6.js","lit-element":"../node_modules/lit-element/lit-element.js"}],"strategies/detail.ts":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.Detail = void 0;
+
+var tslib_1 = _interopRequireWildcard(require("tslib"));
+
+var _litElement = require("lit-element");
+
+var api = _interopRequireWildcard(require("../util/api"));
+
+var _notify = _interopRequireDefault(require("../util/notify"));
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = Object.defineProperty && Object.getOwnPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : {}; if (desc.get || desc.set) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } } newObj.default = obj; return newObj; } }
 
-let StratDetail = class StratDetail extends _notify.default {
+let Detail = class Detail extends _notify.default {
   constructor() {
     super(...arguments);
     this.id = null;
@@ -28153,33 +28164,140 @@ content="${this.strat.body}"
   }
 
 };
-exports.StratDetail = StratDetail;
+exports.Detail = Detail;
 
 tslib_1.__decorate([(0, _litElement.property)({
   type: Number,
-  attribute: "strat-id"
-})], StratDetail.prototype, "id", void 0);
+  attribute: "strategy-id"
+})], Detail.prototype, "id", void 0);
 
 tslib_1.__decorate([(0, _litElement.property)({
   type: Object
-})], StratDetail.prototype, "strat", void 0);
+})], Detail.prototype, "strat", void 0);
 
-exports.StratDetail = StratDetail = tslib_1.__decorate([(0, _litElement.customElement)("strategy-form")], StratDetail);
-},{"tslib":"../node_modules/tslib/tslib.es6.js","lit-element":"../node_modules/lit-element/lit-element.js","./api":"api.ts","./notify":"notify.ts"}],"app.ts":[function(require,module,exports) {
+exports.Detail = Detail = tslib_1.__decorate([(0, _litElement.customElement)("strategy-detail")], Detail);
+},{"tslib":"../node_modules/tslib/tslib.es6.js","lit-element":"../node_modules/lit-element/lit-element.js","../util/api":"util/api.ts","../util/notify":"util/notify.ts"}],"strategies/list.ts":[function(require,module,exports) {
 "use strict";
 
-require("./api.ts");
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.Detail = void 0;
 
-require("./notify.ts");
+var tslib_1 = _interopRequireWildcard(require("tslib"));
+
+var _litElement = require("lit-element");
+
+var api = _interopRequireWildcard(require("../util/api"));
+
+function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = Object.defineProperty && Object.getOwnPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : {}; if (desc.get || desc.set) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } } newObj.default = obj; return newObj; } }
+
+let Detail = class Detail extends _litElement.LitElement {
+  constructor() {
+    super(...arguments);
+    this.strategies = null;
+    this.newName = null;
+  }
+
+  load() {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
+      this.strategies = yield api.getAll('strategies');
+    });
+  }
+
+  connectedCallback() {
+    super.connectedCallback();
+    this.load();
+  }
+
+  handleText(e) {
+    this.newName = e.target.value;
+  }
+
+  submitNew(e) {
+    api.postOne("strategies", {
+      name: this.newName,
+      body: ""
+    }).then(e => {
+      window.location.href = `/strategies/${e.id}`;
+    });
+  }
+
+  item(o) {
+    return _litElement.html`
+        <tr>
+        <td>${o.name}</td>
+        <td>${o.created}</td>
+        <td><a href="/strategies/${o.id}">Detail</a></td>
+        </tr>
+`;
+  }
+
+  form() {
+    return _litElement.html`
+        <div style="display: inline-block;">
+        <input name="name" type="text" .value="${this.newName}" @input="${e => this.handleText(e)}">
+        <button @click="${this.submitNew}">Create new</button>
+        </div>
+        `;
+  }
+
+  ok() {
+    return _litElement.html`
+    <table>
+        <thead>
+        <tr>
+            <th>Name</th>
+            <th>Created</th>
+            <th>Actions</th>
+        </tr>
+        </thead>
+        <tbody>
+        ${this.strategies.map(this.item)}
+        </tbody>
+    </table>
+       ${this.form()}
+        
+`;
+  }
+
+  loading() {
+    return _litElement.html`<div>Not yet loaded</div>`;
+  }
+
+  render() {
+    return _litElement.html`${this.strategies != null ? this.ok() : this.loading()}`;
+  }
+
+};
+exports.Detail = Detail;
+
+tslib_1.__decorate([(0, _litElement.property)({
+  type: Array
+})], Detail.prototype, "strategies", void 0);
+
+tslib_1.__decorate([(0, _litElement.property)({
+  type: String
+})], Detail.prototype, "newName", void 0);
+
+exports.Detail = Detail = tslib_1.__decorate([(0, _litElement.customElement)("strategy-list")], Detail);
+},{"tslib":"../node_modules/tslib/tslib.es6.js","lit-element":"../node_modules/lit-element/lit-element.js","../util/api":"util/api.ts"}],"app.ts":[function(require,module,exports) {
+"use strict";
+
+require("./util/api");
+
+require("./util/ace-editor");
+
+require("./util/notify.ts");
 
 require("./login.ts");
 
 require("./signup.ts");
 
-require("./ace-editor.ts");
+require("./strategies/detail");
 
-require("./strat-detail.ts");
-},{"./api.ts":"api.ts","./notify.ts":"notify.ts","./login.ts":"login.ts","./signup.ts":"signup.ts","./ace-editor.ts":"ace-editor.ts","./strat-detail.ts":"strat-detail.ts"}],"../../../../../../.config/yarn/global/node_modules/parcel-bundler/src/builtins/hmr-runtime.js":[function(require,module,exports) {
+require("./strategies/list");
+},{"./util/api":"util/api.ts","./util/ace-editor":"util/ace-editor.ts","./util/notify.ts":"util/notify.ts","./login.ts":"login.ts","./signup.ts":"signup.ts","./strategies/detail":"strategies/detail.ts","./strategies/list":"strategies/list.ts"}],"../../../../../../.config/yarn/global/node_modules/parcel-bundler/src/builtins/hmr-runtime.js":[function(require,module,exports) {
 var global = arguments[3];
 var OVERLAY_ID = '__parcel__error__overlay__';
 var OldModule = module.bundle.Module;
@@ -28206,7 +28324,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "36971" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "45587" + '/');
 
   ws.onmessage = function (event) {
     var data = JSON.parse(event.data);

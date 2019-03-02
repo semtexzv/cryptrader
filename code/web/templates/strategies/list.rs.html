@@ -2,30 +2,8 @@
 @use crate::templates::*;
 @use db::Strategy;
 
-@(base : &BaseTemplateInfo, strats : Vec<Strategy>)
+@(base : &BaseTemplateInfo)
 
 @:layout(base, {
-    <table>
-        <thead>
-        <tr>
-            <th>Name</th>
-            <th>Created</th>
-            <th>Actions</th>
-        </tr>
-        </thead>
-        <tbody>
-        @for s in strats {
-        <tr>
-            <td>@s.name</td>
-            <td>@s.created</td>
-            <td><a href="/strategies/@s.id">Edit</a></td>
-        </tr>
-        }
-        </tbody>
-        <form method="POST" action="/strategies">
-            <input name="name" type="text" value="Name">
-            <input name="body" type="text" hidden>
-            <input class="form-control btn btn-primary" type="submit" value="Create new">
-        </form>
-    </table>
+    <strategy-list></strategy-list>
 })

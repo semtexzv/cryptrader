@@ -12,9 +12,9 @@ use actix_web::{
 use super::State;
 use crate::users::middleware::UserAuthentication;
 
-async fn dispatch(req : HttpRequest<State>) -> Result<impl Responder> {
+async fn dispatch(req: HttpRequest<State>) -> Result<impl Responder> {
     if req.is_authenticated() {
-        return Ok(redirect_to(req,"homepage"));
+        return Ok(redirect_to(req, "homepage"));
     } else {
         return Ok(redirect("/users/login"));
     }
@@ -27,8 +27,7 @@ pub fn configure(app: App<State>) -> App<State> {
             .name("_TSESSION")
     )).resource("/users/", |r| {
         r.method(Method::GET).with(compat(dispatch))
-    })
-    .resource("/users/me/", |r| {
+    }).resource("/users/me/", |r| {
         r.method(Method::GET).with(compat(pages::me::get));
     }).resource("/users/signup/", |r| {
         r.method(Method::GET).with(compat(pages::signup::get));

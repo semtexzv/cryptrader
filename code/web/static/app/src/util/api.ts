@@ -19,7 +19,10 @@ class Api {
 export async function getAll(base: String): Promise<any[]> {
 
     let data = await fetch(`/api/${base}`, {
-        credentials: "include"
+        credentials: "include",
+        headers: {
+            'Accept': 'application/json'
+        }
     });
 
     return await data.json();
@@ -27,16 +30,28 @@ export async function getAll(base: String): Promise<any[]> {
 
 export async function getOne(base: String, id: Number): Promise<any> {
     let data = await fetch(`/api/${base}/${id}`, {
-        credentials: "include"
+        credentials: "include",
+        headers: {
+            'Accept': 'application/json'
+        }
+
     });
     return await data.json();
 }
 
 export async function postOne(base: String, v: any): Promise<any> {
-    let data = await fetch(`/api/${base}/${v.id}`, {
+
+    let url = v.hasOwnProperty('id') ? `/api/${base}/${v.id}` :
+        `/api/${base}`;
+
+    let data = await fetch(url, {
         credentials: 'include',
         method: 'post',
-        body : JSON.stringify(v),
+        headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(v),
     });
 
     return await data.json();
