@@ -1,84 +1,10 @@
 import {customElement, html, LitElement, property, TemplateResult} from "lit-element";
 import * as api from '../util/api'
 import CustomElement from "../util/notify";
-
+import {Trader} from "../util/api";
 
 
 let style = html` <style> :host { display: table-row; }  .td, ::content .td { display: table-cell; width: 50px;} </style>`;
-
-@customElement("trader-item")
-class TraderItem extends CustomElement {
-    // @ts-ignore
-    @property({type: api.Trader}) trader: api.Trader = {};
-
-    protected render(): TemplateResult | void {
-        return html`
-        ${style}
-            <td>${this.trader.name}</td>
-            <td>${this.trader.exchange}</td>
-            <td>${this.trader.api_key}</td>
-        <td>Hidden</td>
-`;
-    }
-}
-
-
-@customElement("trader-new")
-class NewItem extends CustomElement {
-    // @ts-ignore
-    @property({type: api.Trader}) trader: api.Trader = {};
-    @property({}) exchanges: string[] = [];
-
-    protected add(e) {
-
-    }
-
-    protected valid(): boolean {
-        return this.trader.api_secret != null && this.trader.api_key != null && this.trader.exchange != null;
-    }
-
-
-
-    protected render(): TemplateResult | void {
-        let but = html`<button @click="${this.add}" ?disabled="${!this.valid()}">Create new</button>`;
-
-        let exchListener = (e) => {
-            this.trader.exchange = e.target.options[e.target.selectedIndex].value
-            this.requestUpdate()
-        };
-
-        let nameListener = (e) => {
-            this.trader.name = e.target.value;
-            this.requestUpdate()
-        };
-
-        let keyListener = (e) => {
-            this.trader.api_key = e.target.value;
-            this.requestUpdate()
-        };
-
-        let secretListener = (e) => {
-            this.trader.api_secret = e.target.value;
-            this.requestUpdate()
-        }
-
-
-
-        return html`
-${style}
-<td><input @input="${nameListener}">${this.trader.name}</input></td>
-<td>
-    <select @change="${exchListener}" >
-           <option value="" disabled selected>Select Exchange</option>
-            ${this.exchanges.map(e => html`<option>${e}</option>`)}
-    </select>
-</td>
-<td><input @input="${keyListener}">${this.trader.api_key}</input></td>
-<td><input @input="${keyListener}">${this.trader.api_secret}</input></td>
-${but}
-`;
-    }
-}
 
 @customElement("trader-list")
 class TraderList extends CustomElement {
@@ -97,7 +23,7 @@ class TraderList extends CustomElement {
         this.load();
     }
 
-    head(): TemplateResult {
+    thead(): TemplateResult {
         return html`
         <thead class="thead-dark">
         <tr>
@@ -105,32 +31,100 @@ class TraderList extends CustomElement {
             <th>Exchange</th>
             <th>Key</th>
             <th>Secret</th>
+            <th>Actions</th>
         </tr>
         </thead>
         `
+    }
+
+    item(t) {
+        return html`
+        ${style}
+        <tr>
+        <td>${t.name}</td>
+        <td>${t.exchange}</td>
+        <td>${t.api_key}</td>
+        <td>Hidden</td>
+        <td>Delete</td>
+        </tr>
+        `
+    }
+
+    newTrader = new Trader();
+
+    itemNew(): TemplateResult {
+
+        let valid = (): Boolean => {
+            return this.newTrader.api_secret != null && this.newTrader.api_key != null && this.newTrader.exchange != null;
+        };
+
+        let clicked = async (e) => {
+            await api.postOne('traders', this.newTrader);
+            this.newTrader = new Trader();
+            await this.load();
+
+            console.log(e)
+        };
+
+        let but = html`<button @click="${clicked}"  ?disabled="${!valid()}">Create new</button>`;
+
+        let exchListener = (e) => {
+            this.newTrader.exchange = e.target.options[e.target.selectedIndex].value
+            this.requestUpdate()
+        };
+
+        let nameListener = (e) => {
+            this.newTrader.name = e.target.value;
+            this.requestUpdate()
+        };
+
+        let keyListener = (e) => {
+            this.newTrader.api_key = e.target.value;
+            this.requestUpdate()
+        };
+
+        let secretListener = (e) => {
+            this.newTrader.api_secret = e.target.value;
+            this.requestUpdate()
+        };
+
+
+        return html`
+${style}
+<td><input @input="${nameListener}" .value="${this.newTrader.name}"/></td>
+<td>
+    <select @change="${exchListener}" >
+           <option value="" disabled selected>Select Exchange</option>
+            ${this.exchanges.map(e => html`<option>${e}</option>`)}
+    </select>
+</td>
+<td><input @input="${keyListener}" .value="${this.newTrader.api_key}"/></td>
+<td><input @input="${secretListener}" .value="${this.newTrader.api_secret}"/>
+</td>
+${but}
+`
+    }
+
+
+    tbody() {
+        return html`
+<tbody>
+${this.itemNew()}
+${this.traders.map(this.item)}
+</tbody>
+`
     }
 
     created(e) {
         console.log(e);
     }
 
-    new(): TemplateResult {
-        return html`<trader-new .trader="${{}}" .exchanges="${this.exchanges}" @created="${(e) => console.log(e)}"></trader-new>`
-    }
-
-    body(): TemplateResult {
-        return html`<tbody>
-${this.new()}
-${this.traders.map(t => html`<trader-item .trader="${t}"></trader-item>`)}
-</tbody>
-`
-    }
 
     protected render(): TemplateResult | void {
         return html`
 <table id="traders" class="table">
-${this.head()}
-${this.body()}
+${this.thead()}
+${this.tbody()}
 </table>
 `;
     }

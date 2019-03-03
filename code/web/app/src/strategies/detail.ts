@@ -7,12 +7,12 @@ import CustomElement from "../util/notify";
 @customElement("strategy-detail")
 export class Detail extends CustomElement {
 
-    @property({type: Number}) id = null;
+    @property({type: Number,attribute: true}) strat_id = null;
     @property({type: Object}) strat = null;
 
 
     async loadStrat() {
-        this.strat = await api.getOne('strategies', this.id);
+        this.strat = await api.getOne('strategies', this.strat_id);
         console.log("Loaded strategy details: " + this.strat.name)
     }
 
@@ -20,14 +20,18 @@ export class Detail extends CustomElement {
         this.strat = await api.postOne('strategies', this.strat);
     }
 
-    connectedCallback(): void {
-        super.connectedCallback();
+    protected firstUpdated(_changedProperties: PropertyValues): void {
 
         this.addEventListener('id-changed', (e) => {
             this.loadStrat();
         });
 
         this.notifyPropChanged('id')
+    }
+
+    connectedCallback(): void {
+        super.connectedCallback();
+
     }
 
 

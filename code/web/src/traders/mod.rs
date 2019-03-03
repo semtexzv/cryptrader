@@ -9,6 +9,10 @@ use db::Database;
 use actix_web::Json;
 
 
+pub struct TraderData {
+
+}
+
 
 pub async fn api_post((req, form): (HttpRequest<State>, Json<db::NewTrader>)) -> Result<impl Responder> {
     let db: Database = req.state().db.clone();

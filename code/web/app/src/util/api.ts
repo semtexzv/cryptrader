@@ -61,7 +61,7 @@ export async function getOne(base: String, id: Number): Promise<any> {
 
 export async function postOne(base: String, v: any): Promise<any> {
 
-    let url = v.hasOwnProperty('id') ? `/api/${base}/${v.id}` :
+    let url = v.hasOwnProperty('id')  && v['id'] != null ? `/api/${base}/${v.id}` :
         `/api/${base}`;
 
     let data = await fetch(url, {
