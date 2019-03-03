@@ -21,26 +21,6 @@ pub struct StrategyInfo {
 use actix_web::Path;
 use common::types::OhlcPeriod;
 
-async fn list(req: HttpRequest<State>) -> Result<impl Responder> {
-    let db: Database = req.state().db.clone();
-    let base = await_compat!(BaseTemplateInfo::from_request(&req))?;
-    require_login!(base);
-
-    Ok(render(|o| crate::templates::strategies::list(o, &base)))
-}
-
-async fn detail((req, id): (HttpRequest<State>, Path<i32>)) -> Result<impl Responder> {
-    let db: Database = req.state().db.clone();
-    let base = await_compat!(BaseTemplateInfo::from_request(&req))?;
-    require_login!(base);
-
-    let id = id.into_inner();
-    let (strat, user) = await_compat!(db.strategy_data(id))?;
-
-    require_cond!(strat.owner_id == base.auth.uid);
-
-    Ok(render(|o| crate::templates::strategies::detail(o, &base, id)))
-}
 
 pub async fn save_strat(req: HttpRequest<State>, id: Option<i32>, info: StrategyInfo) -> Result<db::Strategy> {
     info!("Save strat: {:?}, {:?}", id, info);
@@ -102,12 +82,6 @@ pub fn configure(application: App<State>) -> App<State> {
         .resource("/api/strategies/{id}", |r| {
             r.method(Method::GET).with(compat(api_detail));
             r.method(Method::POST).with(compat(api_save));
-        })
-        .resource("/strategies", |r| {
-            r.method(Method::GET).with(compat(list));
-        })
-        .resource("/strategies/{id}", |r| {
-            r.method(Method::GET).with(compat(detail));
         })
 }
 

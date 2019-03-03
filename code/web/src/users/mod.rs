@@ -16,7 +16,7 @@ async fn dispatch(req: HttpRequest<State>) -> Result<impl Responder> {
     if req.is_authenticated() {
         return Ok(redirect_to(req, "homepage"));
     } else {
-        return Ok(redirect("/users/login"));
+        return Ok(redirect("/app/login"));
     }
 }
 
@@ -27,13 +27,9 @@ pub fn configure(app: App<State>) -> App<State> {
             .name("_TSESSION")
     )).resource("/users/", |r| {
         r.method(Method::GET).with(compat(dispatch))
-    }).resource("/users/me/", |r| {
-        r.method(Method::GET).with(compat(pages::me::get));
     }).resource("/users/signup/", |r| {
-        r.method(Method::GET).with(compat(pages::signup::get));
         r.method(Method::POST).with(compat(pages::signup::post));
     }).resource("/users/login/", |r| {
-        r.method(Method::GET).with(compat(pages::login::get_async));
         r.method(Method::POST).with(compat(pages::login::post_async));
     }).resource("/users/logout/", |r| {
         r.method(Method::POST).with(pages::logout);

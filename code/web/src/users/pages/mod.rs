@@ -1,8 +1,6 @@
 use crate::prelude::*;
 use crate::users::middleware::UserAuthentication;
 
-pub mod me;
-
 pub mod signup;
 
 pub mod login;

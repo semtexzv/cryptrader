@@ -6,10 +6,12 @@ use std::string::ToString;
 use actix_web::Path;
 use common::types::OhlcPeriod;
 use db::Database;
+use actix_web::Json;
 
 pub type StratTuple = (String, i32);
 
-#[derive(Default, Debug)]
+
+#[derive(Default, Debug,Clone, Deserialize, Serialize)]
 pub struct AssignmentItem {
     pub exchange: String,
     pub pair: String,
@@ -17,11 +19,31 @@ pub struct AssignmentItem {
     pub period: Option<String>,
     pub strategy_id: Option<i32>,
 
-    pub pi: isize,
-    pub si: isize,
+    pub trader_id: Option<i32>,
 }
 
-pub async fn list(req: HttpRequest<State>) -> Result<impl Responder> {
+impl AssignmentItem {
+    fn to_db(self, oid : i32) -> db::Assignment {
+        db::Assignment {
+            exchange: self.exchange,
+            pair : self.pair,
+            owner_id : oid,
+            period : self.period.unwrap_or("1m".into()),
+            strategy_id : self.strategy_id.unwrap_or(0),
+            trader_id : self.trader_id,
+        }
+    }
+}
+pub async fn pairs(req : HttpRequest<State>) -> Result<impl Responder, actix_web::Error> {
+    let db: Database = req.state().db.clone();
+    let base = await_compat!(BaseTemplateInfo::from_request(&req))?;
+    let pairs: Vec<db::Pair> = await_compat!(db.pairs())?;
+
+    Ok(Json(pairs).respond_to(&req)?)
+}
+
+
+pub async fn api_list(req: HttpRequest<State>) -> Result<impl Responder, actix_web::Error> {
     let db: Database = req.state().db.clone();
     let base = await_compat!(BaseTemplateInfo::from_request(&req))?;
     require_login!(base);
@@ -30,61 +52,31 @@ pub async fn list(req: HttpRequest<State>) -> Result<impl Responder> {
     let assignments: Vec<db::Assignment> = await_compat!(db.assignments(base.auth.uid))?;
     let strategies: Vec<db::Strategy> = await_compat!(db.user_strategies(base.auth.uid))?;
 
-    let periods: Vec<String> = OhlcPeriod::VALUES.iter().map(ToString::to_string).collect();
-
-    let mut items = vec![];
-    for db::Pair { exchange, pair } in pairs.iter() {
-        let e = exchange;
-        let p = pair;
-        if let Some(ass) = assignments.iter().find(|a| &a.exchange == e && &a.pair == p) {
-            let pi = periods.iter().position(|ee| ee == &ass.period).map(|i| i + 1).unwrap_or(0) as isize;
-            let si = strategies.iter().position(|ee| ee.id == ass.strategy_id).map(|i| i + 1).unwrap_or(0) as isize;
-            items.push(AssignmentItem {
-                exchange: e.clone(),
-                pair: p.clone(),
-
-                period: Some(ass.period.clone()),
-                strategy_id: Some(ass.strategy_id),
-                pi,
-                si,
-            })
-        } else {
-            items.push(AssignmentItem {
-                exchange: e.clone(),
-                pair: p.clone(),
-                ..Default::default()
-            })
-        }
-    }
-    let strategies = strategies.into_iter().map(|s| (s.name, s.id)).collect();
-
-    Ok(render(|o| crate::templates::assignments::list(o, &base, items, periods, strategies)))
+    Ok(Json(assignments).respond_to(&req)?)
 }
 
-
-pub async fn post((req, mut form): (HttpRequest<State>, Form<db::Assignment>)) -> Result<impl Responder> {
+pub async fn api_post((req,  data): (HttpRequest<State>, Json<AssignmentItem>)) -> Result<impl Responder> {
     let db: Database = req.state().db.clone();
     let base = await_compat!(BaseTemplateInfo::from_request(&req))?;
     require_login!(base);
 
-
-    form.owner_id = base.auth.uid;
-    if form.strategy_id == 0 || form.period.to_lowercase() == "none" {
-        await_compat!(db.delete_assignment(form.into_inner()))?;
+    let internal_data = data.clone().to_db(base.auth.uid);
+    if data.strategy_id.is_none() || data.period.is_none() {
+        await_compat!(db.delete_assignment(internal_data))?;
     } else {
-        await_compat!(db.save_assignment(form.into_inner()))?;
+        await_compat!(db.save_assignment(internal_data))?;
     }
-    Ok(see_other("/assignments"))
+    Ok(see_other("/app/assignments"))
 }
 
 pub fn configure(application: App<State>) -> App<State> {
     application
-        .resource("/assignments", |r| {
-            r.method(Method::GET).with(compat(list));
-            r.method(Method::POST).with(compat(post));
+        .resource("/api/pairs", |r| {
+            r.method(Method::GET).with(compat(pairs));
         })
-        .resource("/assignments/{exch}/{pair}", |r| {
-            r.method(Method::POST).with(compat(post));
+        .resource("/api/assignments", |r| {
+            r.method(Method::GET).with(compat(api_list));
+            r.method(Method::POST).with(compat(api_post));
         })
 }
 

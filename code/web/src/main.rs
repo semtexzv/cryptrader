@@ -21,11 +21,9 @@ use db::Database;
 use std::path::Path;
 use actix_web::http::header::ContentType;
 
-include!(concat!(env!("OUT_DIR"), "/templates.rs"));
 pub mod statics {
     include!(concat!(env!("OUT_DIR"), "/statics.rs"));
 }
-
 
 
 pub struct State {
@@ -34,11 +32,7 @@ pub struct State {
 
 fn check<S>(_: &HttpRequest<S>) -> impl Responder { format!("I'm UP") }
 
-
-pub fn static_file(req: HttpRequest<State>) -> Result<impl Responder> {
-    let name: String = req.match_info().query("tail")?;
-    info!("Retrieving : {:?}", name);
-
+pub fn static_file_named(name: &str) -> Result<impl Responder> {
     let mime = mime_guess::guess_mime_type(&Path::new(&name));
     if let Some(file) = statics::get(&name) {
         Ok(HttpResponse::Ok().header(http::header::CONTENT_TYPE, ContentType(mime)).body(file))
@@ -47,14 +41,25 @@ pub fn static_file(req: HttpRequest<State>) -> Result<impl Responder> {
     }
 }
 
+pub fn static_file(req: HttpRequest<State>) -> Result<impl Responder> {
+    let name: String = req.match_info().query("tail")?;
+    info!("Retrieving : {:?}", name);
+
+    return static_file_named(&name);
+}
+
 pub fn run() {
-    env::set_var("RUST_LOG","debug");
+    env::set_var("RUST_LOG", "debug");
     server::new(move || {
         let mut app = App::with_state(State {
             db: db::start(),
         });
         app = app.middleware(actix_web::middleware::Logger::default());
         // app = app.middleware(sentry_actix::SentryMiddleware::new());
+
+        app = app.resource("/app/{tail:.*}", |r| r.method(http::Method::GET).with(|r: HttpRequest<State>| {
+            static_file_named("index.html")
+        }));
 
         app = pages::configure(app);
         app = users::configure(app);
@@ -67,7 +72,7 @@ pub fn run() {
         app
             .resource("/healthy", |r| r.method(http::Method::GET).f(check))
             .resource("/ready", |r| r.method(http::Method::GET).f(check))
-            .resource("/static/{tail:.*}",|r| r.method(http::Method::GET).with(static_file))
+            .resource("/static/{tail:.*}", |r| r.method(http::Method::GET).with(static_file))
             .default_resource(|r| r.h(http::NormalizePath::default()))
     })
 

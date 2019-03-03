@@ -3,28 +3,14 @@ use crate::users::middleware::UserAuthentication;
 
 use db::NewUser;
 
-pub async fn get(request: HttpRequest<State>) -> Result<impl Responder> {
-    if request.is_authenticated() {
-        return Ok(redirect_to(request, "homepage"));
-    }
-
-    let base: BaseTemplateInfo = await_compat!(BaseTemplateInfo::from_request(&request))?;
-    Ok(render(|o| crate::templates::users::signup(o, &base)))
-}
-
-
 pub async fn post((request, user): (HttpRequest<State>, Form<NewUser>)) -> Result<HttpResponse> {
     if request.is_authenticated() {
         return Ok(redirect_to(request, "homepage"));
     }
 
-    let mut base: BaseTemplateInfo = await_compat!(BaseTemplateInfo::from_request(&request))?;
+    let  base: BaseTemplateInfo = await_compat!(BaseTemplateInfo::from_request(&request))?;
 
     let mut user = user.into_inner();
-    if let Err(e) = user.validate() {
-        base.errors = Some(collect_validation_errors(e));
-        return Ok(render(|o| crate::templates::users::signup(o, &base)))
-    }
 
     user.password = djangohashers::make_password(&user.password);
 
@@ -38,7 +24,7 @@ pub async fn post((request, user): (HttpRequest<State>, Form<NewUser>)) -> Resul
         }
         Err(e) => {
             error!("Error creating new user: {:?}", e);
-            return Ok(render(|o| crate::templates::users::signup(o, &base)));
+            return Ok(redirect_to(request, "homepage"));
             /*
             Ok(render(Self {
                 base,

@@ -6,11 +6,9 @@ use std::string::ToString;
 use actix_web::Path;
 use common::types::OhlcPeriod;
 use db::Database;
+use actix_web::Json;
 
-pub type EvalTuple = (db::Strategy, Vec<db::Evaluation>);
-
-
-pub async fn list(req: HttpRequest<State>) -> Result<impl Responder> {
+pub async fn api_list(req: HttpRequest<State>) -> Result<impl Responder, actix_web::Error> {
     let db: Database = req.state().db.clone();
     let base = await_compat!(BaseTemplateInfo::from_request(&req))?;
     require_login!(base);
@@ -22,14 +20,26 @@ pub async fn list(req: HttpRequest<State>) -> Result<impl Responder> {
         let evals = await_compat!(db.get_evals(s.id))?;
         items.push((s,evals));
     }
+    Ok(Json(items).respond_to(&req)?)
+}
 
-    Ok(render(|o| crate::templates::evaluations::list(o, &base, items)))
+pub async fn api_list_strat((req, id) : (HttpRequest<State>, Path<i32>)) -> Result<impl Responder, actix_web::Error> {
+    let db: Database = req.state().db.clone();
+    let base = await_compat!(BaseTemplateInfo::from_request(&req))?;
+    require_login!(base);
+
+    // TODO: Ensure user is owner of S
+    let evals = await_compat!(db.get_evals(id.into_inner()))?;
+    Ok(Json(evals).respond_to(&req)?)
 }
 
 pub fn configure(application: App<State>) -> App<State> {
     application
-        .resource("/evaluations", |r| {
-            r.method(Method::GET).with(compat(list));
+        .resource("/api/evaluations/", |r| {
+            r.method(Method::GET).with(compat(api_list));
+        })
+        .resource("/api/strategies/{id}/evaluations", |r| {
+            r.method(Method::GET).with(compat(api_list));
         })
 }
 

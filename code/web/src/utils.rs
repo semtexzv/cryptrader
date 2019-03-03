@@ -4,7 +4,7 @@ use std::borrow::Borrow;
 
 use common::validator::ValidationErrors;
 use std::future::Future;
-
+use actix_web::{http, HttpRequest, HttpResponse};
 pub use actix_web_async_await::*;
 
 use crate::users::middleware::UserAuthentication;
@@ -23,13 +23,13 @@ pub fn collect_validation_errors(e: ValidationErrors) -> Vec<String> {
 pub struct AuthTemplateInfo {
     pub signed_in: bool,
     pub email: String,
-    pub uid : i32,
+    pub uid: i32,
 }
 
 #[derive(Debug, Serialize)]
 pub struct BaseTemplateInfo {
     pub auth: AuthTemplateInfo,
-    pub errors : Option<Vec<String>>
+    pub errors: Option<Vec<String>>,
 }
 
 impl BaseTemplateInfo {
@@ -40,7 +40,7 @@ impl BaseTemplateInfo {
                 email: req.session().get("email").unwrap().unwrap_or("".into()),
                 uid: req.session().get("uid").unwrap().unwrap_or(0),
             },
-            errors : None,
+            errors: None,
         })
     }
 }
@@ -74,14 +74,13 @@ pub fn render<F>(tpl: F) -> HttpResponse
     let mut out = Vec::new();
     let _ = tpl(&mut out);
     return HttpResponse::Ok().content_type("text/html").body(out);
-
 }
 
 #[macro_export]
 macro_rules! require_login {
     ($base: expr) => {
         if !$base.auth.signed_in {
-            return Ok(actix_web::error::ErrorUnauthorized("Not logged in").into());
+            return Ok(HttpResponse::Unauthorized().finish());
 
         }
     };

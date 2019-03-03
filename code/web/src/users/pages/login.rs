@@ -6,13 +6,6 @@ use crate::users::middleware::UserAuthentication;
 use db::UserLogin;
 
 
-pub async fn get_async(request: HttpRequest<State>) -> Result<HttpResponse> {
-    if request.is_authenticated() {
-        return Ok(redirect_to(request, "homepage"));
-    }
-    let base: BaseTemplateInfo = await_compat!(BaseTemplateInfo::from_request(&request))?;
-    Ok(render(|o| crate::templates::users::login(o, &base)))
-}
 
 pub async fn post_async((request, login): (HttpRequest<State>, Form<UserLogin>)) -> Result<HttpResponse> {
     let mut base: BaseTemplateInfo = await_compat!(BaseTemplateInfo::from_request(&request))?;
@@ -28,7 +21,7 @@ pub async fn post_async((request, login): (HttpRequest<State>, Form<UserLogin>))
     if let Err(e) = login.validate() {
         error!("Error : {:?}", e);
         base.errors = Some(collect_validation_errors(e));
-        return Ok(render(move |o| crate::templates::users::login(o, &base)));
+        return Ok(redirect_to(request, "homepage"));
     }
 
     let password = login.password.clone();
@@ -42,14 +35,14 @@ pub async fn post_async((request, login): (HttpRequest<State>, Form<UserLogin>))
                 homepage
             } else {
                 base.errors = Some(vec!["Email or password is incorrect.".into()]);
-                return Ok(render(|o| crate::templates::users::login(o, &base)));
+                return Ok(redirect_to(request, "homepage"));
             }
         }
 
         Err(e) => {
             warn!("Error locating user: {:?}", e);
             base.errors = Some(vec!["Email or password is incorrect.".into()]);
-            return Ok(render(|o| crate::templates::users::login(o, &base)));
+            return Ok(redirect_to(request, "homepage"));
         }
     };
 }

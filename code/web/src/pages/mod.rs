@@ -11,8 +11,7 @@ use crate::users::middleware::UserAuthentication;
 use db::User;
 
 async fn root(req: HttpRequest<State>) -> Result<impl Responder> {
-    let base = await_compat!(BaseTemplateInfo::from_request(&req))?;
-    Ok(render(|o| crate::templates::index(o, &base)))
+    Ok(redirect("/app"))
 }
 
 pub fn configure(application: App<State>) -> App<State> {

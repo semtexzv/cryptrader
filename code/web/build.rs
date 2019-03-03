@@ -1,7 +1,5 @@
 extern crate ructe;
 
-
-use ructe::{compile_templates, StaticFiles};
 use std::env;
 use std::path::PathBuf;
 use std::fs::File;
@@ -15,9 +13,8 @@ fn main() {
     let cargo_dir = PathBuf::from(env::var("CARGO_MANIFEST_DIR").unwrap());
 
 
-    compile_templates(&cargo_dir.join("templates"), &out_dir).expect("compile templates");
 
-    includedir::start(cargo_dir.join(PathBuf::from("../../code/web/static")))
+    includedir::start(cargo_dir.join(PathBuf::from("../../code/web/app/dist/")))
         .dir(".")
         .passthrough(!is_k8s)
         .name("STATICS")
