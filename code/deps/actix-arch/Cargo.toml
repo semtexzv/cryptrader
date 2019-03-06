@@ -8,7 +8,7 @@ edition = "2018"
 path = "../../common"
 
 [dependencies]
-actix = "*"
 serde = "*"
-futures-util = { path = "../futures-util" }
 actix-comm = { path = "../actix-comm"}
+actix="*"
+actix_derive = "*"

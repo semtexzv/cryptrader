@@ -21,12 +21,14 @@ pub extern crate actix_web;
 pub extern crate url;
 pub extern crate chrono;
 pub extern crate time;
+pub extern crate uuid;
 pub extern crate base64;
 
 pub extern crate diesel;
 
 pub extern crate validator;
 pub extern crate validator_derive;
+
 
 
 

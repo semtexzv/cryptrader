@@ -3,7 +3,6 @@ use crate::prelude::*;
 use crate::actix_arch::balancing::*;
 use actix_arch::balancing::WorkerRequest;
 pub use strat_eval::EvalError;
-use futures_util::FutureExt;
 use actix_arch::balancing::WorkerProxy;
 use actix::msgs::StopArbiter;
 
@@ -73,7 +72,7 @@ impl Handler<ServiceRequest<EvalService>> for EvalWorker {
         let strat = self.db.strategy_data(req.strat_id);
 
         // Thousand ohlc candles ought to be enough for everyone
-        let data = self.db.resampled_ohlc_values(req.spec.clone(), req.last - (req.spec.period().seconds() * 1000));
+        let data = self.db.resampled_ohlc_values(req.spec.clone(), req.last - (req.spec.period().seconds() * 500));
 
         let fut = Future::join(strat, data);
         let fut = Future::map(fut, |((strat, user), data)| {

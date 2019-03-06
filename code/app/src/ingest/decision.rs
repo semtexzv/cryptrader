@@ -4,7 +4,6 @@ use crate::ingest::OhlcUpdate;
 use radix_trie::Trie;
 use crate::eval::EvalRequest;
 use std::time::Duration;
-use futures_util::FutureExt;
 use chrono::NaiveDateTime;
 
 #[derive(Debug, Serialize, Deserialize)]

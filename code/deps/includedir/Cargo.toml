@@ -10,7 +10,6 @@ repository = "https://github.com/tilpner/includedir"
 
 [dependencies]
 walkdir = "*"
-regex = "*"
 flate2 = "*"
 quote = "*"
 glob = "*"

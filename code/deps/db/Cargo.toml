@@ -5,13 +5,11 @@ authors = ["Michal Hornický <semtexzv@gmail.com>"]
 edition = "2018"
 
 [dependencies]
-serde = "*"
 common = {path = "../../common"}
+serde = "*"
 
 diesel = { version = "*", features = ["postgres", "r2d2", "chrono"]}
 diesel_migrations = "*"
 
 r2d2="*"
 r2d2-diesel="*"
-
-time = "*"

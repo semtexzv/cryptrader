@@ -29050,19 +29050,6 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 
 function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = Object.defineProperty && Object.getOwnPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : {}; if (desc.get || desc.set) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } } newObj.default = obj; return newObj; } }
 
-/*
-const outlet = document.getElementById('outlet');
-const router: Router = new Router(outlet);
-
-router.setRoutes([
-    {path: "/app", component: "app-root"},
-    {path: "/app/login", component: "auth-block"},
-    {path: '/app/strategies/:strat_id', component: 'strategy-detail'},
-    {path: '/app/strategies', component: 'strategy-list'},
-    {path: '/app/assignments', component: 'assignment-list'},
-    {path: '/app/traders', component: 'trader-list'},
-]);
-*/
 let AppHome = class AppHome extends _litElement.LitElement {
   render() {
     return _litElement.html`Root`;
@@ -29143,7 +29130,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "42569" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "37053" + '/');
 
   ws.onmessage = function (event) {
     var data = JSON.parse(event.data);

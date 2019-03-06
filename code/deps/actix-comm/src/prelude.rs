@@ -1,4 +1,6 @@
-pub use common::*;
+pub use common::{
+    self,*
+};
 pub use std::{
     time::Duration,
     collections::HashMap,
@@ -9,7 +11,7 @@ pub use futures::{
     sync::oneshot::{channel as oneshot, Sender as OneSender, Receiver as OneReceiver},
 };
 
-pub use uuid::Uuid;
+pub use common::uuid::Uuid;
 pub use tokio::prelude::*;
 pub use tzmq::{
     self,

@@ -3,13 +3,10 @@ use ::prelude::*;
 pub mod types;
 
 use ::common::{
-    actix_web,
-    actix_web::*,
+    actix_web::{self, *, error::ErrorUnauthorized},
     types::auth::AuthInfo,
 };
 use bitfinex::rest::types::WalletInfo;
-use actix_web::error::ErrorUnauthorized;
-
 
 fn auth_req(info: &AuthInfo, path: impl Into<String>, mut body: json::Value) -> StdResult<client::ClientRequest, actix_web::Error> {
     let path = path.into();

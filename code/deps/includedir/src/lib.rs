@@ -2,7 +2,6 @@
 
 extern crate walkdir;
 extern crate flate2;
-extern crate regex;
 #[macro_use]
 extern crate quote;
 extern crate glob;

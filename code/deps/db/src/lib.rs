@@ -3,7 +3,6 @@
 
 #[macro_use]
 extern crate common;
-extern crate time;
 #[macro_use]
 pub extern crate diesel;
 #[macro_use]

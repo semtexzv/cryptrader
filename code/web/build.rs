@@ -1,5 +1,3 @@
-extern crate ructe;
-
 use std::env;
 use std::path::PathBuf;
 use std::fs::File;

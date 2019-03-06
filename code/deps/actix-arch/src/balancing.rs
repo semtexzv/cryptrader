@@ -9,7 +9,7 @@ use actix_comm::ContextHandle;
 use crate::svc::ServiceRequest;
 use std::collections::vec_deque::VecDeque;
 use std::collections::btree_map::BTreeMap;
-use futures_util::FutureExt as Fe;
+use common::tokio::prelude::FutureExt;
 use actix_comm::Remotable;
 
 

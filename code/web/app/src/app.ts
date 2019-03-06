@@ -15,19 +15,6 @@ import {customElement, html, LitElement, TemplateResult} from "lit-element";
 import {routerMixin} from 'lit-element-router';
 import CustomElement from "./util/notify";
 
-/*
-const outlet = document.getElementById('outlet');
-const router: Router = new Router(outlet);
-
-router.setRoutes([
-    {path: "/app", component: "app-root"},
-    {path: "/app/login", component: "auth-block"},
-    {path: '/app/strategies/:strat_id', component: 'strategy-detail'},
-    {path: '/app/strategies', component: 'strategy-list'},
-    {path: '/app/assignments', component: 'assignment-list'},
-    {path: '/app/traders', component: 'trader-list'},
-]);
-*/
 
 @customElement("app-home")
 class AppHome extends LitElement {

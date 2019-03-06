@@ -13,9 +13,6 @@ extern crate serde_derive;
 #[macro_use]
 extern crate serde_json as json;
 
-extern crate futures;
-extern crate actix_web;
-
 mod prelude;
 
 pub mod bitfinex;

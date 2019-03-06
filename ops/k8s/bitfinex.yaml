@@ -33,5 +33,5 @@ items:
               command: ["/app", "bitfinex"]
               env: [{name: "RUST_LOG", value: ${RUST_LOG}}]
               resources:
-                requests:
-                  cpu: 50m
+                requests: { cpu: 50m, memory: 80M }
+                limits: {cpu: 50m, memory: 80M }

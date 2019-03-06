@@ -20,7 +20,6 @@ use crate::eval::EvalService;
 
 
 fn main() {
-    use futures_util::FutureExt;
     use common::actix::spawn as arb_spawn;
     env::set_var("RUST_BACKTRACE", "1");
 

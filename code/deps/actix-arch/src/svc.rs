@@ -4,7 +4,6 @@ use actix_comm::msg::{Remotable, RemoteMessage, RemoteError};
 use actix_comm::ctx::ContextHandle;
 
 
-use futures_util::FutureExt;
 use actix_comm::msg::SendRequest;
 
 pub trait ServiceInfo: 'static + Debug {

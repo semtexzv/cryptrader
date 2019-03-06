@@ -1,7 +1,6 @@
 use crate::prelude::*;
 use crate::msg::*;
 use crate::ctx::ContextHandle;
-use futures_util::FutureExt;
 use futures::sync::mpsc::UnboundedSender;
 use crate::util::*;
 

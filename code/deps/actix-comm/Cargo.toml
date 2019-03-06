@@ -9,19 +9,10 @@ edition = "2018"
 path = "../../common"
 
 [dependencies]
-serde = "1.0"
-
-futures = "0.1.*"
-futures-retry = "*"
-tokio = "0.1"
-failure = "*"
-uuid = { version = "*", features = ["v4","serde"] }
-time = "*"
-
-actix = "*"
+serde = "*"
+actix="*"
 actix_derive = "*"
-
-futures-util = { path = "../futures-util"}
+failure = "*"
 
 [dependencies.zmq]
 #git = "https://github.com/semtexzv/rust-zmq"
@@ -29,7 +20,5 @@ version = "*"
 
 [dependencies.tzmq]
 package = "tokio-zmq"
-#rev = "development"
-#git = "https://git.asonix.dog/asonix/async-zmq"
-path = "../async-zmq/tokio-zmq"
-#git = "https://github.com/semtexzv/tokio-zmq"
+rev = "master"
+git = "https://github.com/semtexzv/tokio-zmq"

@@ -8,22 +8,30 @@ serde = "1.0"
 serde_json = "1.0"
 serde_derive = "1.0"
 
-
 lazy_static= "*"
 env_logger="*"
 log = "*"
 failure = "*"
 failure_derive="*"
 bytes = { version = "0.4", features = ["serde"] }
+
 futures = "*"
+futures-retry = "*"
+
+
 url = "*"
+uuid = { version = "*", features = ["v4","serde"] }
+
 chrono = { version = "*", features = ["serde"]}
 time = "*"
 base64 = "*"
 
 tokio = "*"
-actix = "0.7"
-actix-web= { version = "*", features = ["tls"] }
+
+actix = { version = "0.7", default-features=false }
+actix-web = { version = "*", features = ["tls", "session"], default-features=false }
+actix-web-async-await = "*"
+
 diesel = "*"
 
 validator = "0.8"
