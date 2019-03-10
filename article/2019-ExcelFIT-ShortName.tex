@@ -64,17 +64,13 @@
 %--------------------------------------------------------
 
 \Abstract{
-What is the problem? What is the topic?, the aim of this paper?
-\phony{Lorem ipsum dolor sit amet, consectetur adipiscing elit. Fusce ullamcorper suscipit euismod. Mauris sed lectus non massa molestie congue. In hac habitasse platea dictumst.}
-%	
-How is the problem solved, the aim achieved (methodology)?
-\phony{Lorem ipsum dolor sit amet, consectetur adipiscing elit. Fusce ullamcorper suscipit euismod. Mauris sed lectus non massa molestie congue. In hac habitasse platea dictumst. Curabitur massa neque, commodo posuere fringilla ut, cursus at dui. Nulla quis purus a justo pellentesque.}
-%	
-What are the specific results? How well is the problem solved?
-\phony{Lorem ipsum dolor sit amet, consectetur adipiscing elit. Fusce ullamcorper suscipit euismod. Mauris sed lectus non massa molestie congue. In hac habitasse platea dictumst.}
-%	
-So what? How useful is this to Science and to the reader?
-\phony{Lorem ipsum dolor sit amet, consectetur adipiscing elit. Fusce ullamcorper suscipit euismod.}
+The success of cryptocurrencies like Bitcoin has created many new opportunities. In the wake of its succes, many online
+exchanges were created, that have unprecedented ease of use and acces to everyone, contrasting existing financial exchanges.
+Day-trading\footnote{Trading with short timeframes in order to capitalize on price changes} on these exchanges is easy, and has
+a large potential because of the extreme volatility of these new markets. The system described in this paper aims to create
+a product, that would simplify day-trading on these exchanges for new users, and provide tools for automatization for more
+experienced users. These goals combined with the problem domain pose some interesting requirements for the implementation.
+This papers aims to outline what were these problems, and how did they influence the implementation.
 }
 
 \Teaser{
@@ -105,13 +101,19 @@ So what? How useful is this to Science and to the reader?
 %--------------------------------------------------------
 \section{Introduction}
 
-\textbf{[Motivation]} What is the raison d'\^{e}tre of your project? Why should anyone care? No general meaningless claims. Make bulletproof arguments for the importance of your work.
-\phony{Lorem ipsum dolor sit amet, consectetur adipiscing elit. Integer sit amet neque vel mi sodales interdum nec a mi. Aliquam eget turpis venenatis, tincidunt purus eget, euismod neque. Nulla et porta tortor, id lobortis turpis. Sed scelerisque sem eget ante interdum, vel volutpat arcu volutpat.}
+\textbf{[Motivation]}
+The innovations in financial sector, mainly cryptocurrencies like Bitcoin, have created new opportunities. One of them,
+is the arrival of multiple online exchanges, that focus on trading cryptocurrencies. These exchanges have wvery low
+barrier to entry, and can be used for easy day trading. Goal of this project is creation of a website, that would allow
+automatization of day trading on these exchanges, and therefore would exploit the empty espace in the market.
 
-\textbf{[Problem definition]} What exactly are you solving? What is the core and what is a bonus? What parameters should a proper solution of the problem have? Define the problem precisely and state how its solution should be evaluated.
-\phony{Lorem ipsum dolor sit amet, consectetur adipiscing elit. Pellentesque non arcu quis nunc efficitur vestibulum. Integer gravida neque suscipit diam porta aliquet. Maecenas porttitor libero ut turpis porttitor, auctor porta ligula rhoncus. Etiam a turpis blandit, eleifend dolor eget, egestas ligula. Nullam sollicitudin pulvinar mi sit amet interdum. Etiam in ultrices ante. Suspendisse potenti. Duis vel nisi eget tellus volutpat tempor. Etiam laoreet magna elit, et sollicitudin lectus tempor sit. Maecenas porttitor libero ut turpis porttitor, auctor porta ligula rhoncus. Etiam a turpis blandit, eleifend dolor eget, egestas ligula.}
+\textbf{[Problem definition]} In order to allow effective day trading for multiple users, the system must be designed
+in a way that would allow seamless scalability. must provide simple interface that does nto reuqire advanced technical knowledge
+(Installation of local applications), and must provide a way to express more complex strategies, to serve more advanced users.
 
-\textbf{[Existing solutions]} Discuss existing solutions, be fair in identifying their strengths and weaknesses. Cite important works from the field of your topic. Try to define well what is the \textit{state of the art}. You can include a Section 2 titled ``Background'' or ``Previous Works'' and have the details there and make this paragraph short. Or, you can enlarge this paragraph to a whole page. In many scientific papers, \emph{this} is the most valuable part if it is written properly.
+\textbf{[Existing solutions]} Most attempts to fail at one or more of the requirements outlined earlier. The early solutions
+are mostly command-line applications that require complicated installlations, and hardware that must be continously managed.
+Discuss existing solutions, be fair in identifying their strengths and weaknesses. Cite important works from the field of your topic. Try to define well what is the \textit{state of the art}. You can include a Section 2 titled ``Background'' or ``Previous Works'' and have the details there and make this paragraph short. Or, you can enlarge this paragraph to a whole page. In many scientific papers, \emph{this} is the most valuable part if it is written properly.
 \phony{Lorem ipsum dolor sit amet, consectetur adipiscing elit. Praesent congue enim eu eros dictum sagittis. Aliquam ligula arcu, gravida at augue et, aliquet condimentum nulla. Morbi a lectus arcu. Nam ac commodo nisi, a accumsan nunc. Nam sed ante vel nulla elementum lobortis. Aliquam sed laoreet risus. Etiam ipsum odio, gravida eget sapien dictum, eleifend aliquet ex. Duis dapibus vitae enim vitae bibendum. Phasellus eget pulvinar massa. Mauris ornare urna. Maecenas porttitor libero ut turpis porttitor, auctor porta ligula rhoncus. Etiam a turpis blandit, eleifend dolor eget, egestas ligula. Nullam sollicitudin pulvinar mi sit amet interdum. Etiam in ultrices ante. Suspendisse potenti. Duis vel nisi eget tellus volutpat tempor. Suspendisse potenti. Duis vel nisi eget tellus volutpat tempor.}
 
 \textbf{[Our solution]} Make a quick outline of your approach -- pitch your solution.  The solution will be described in detail later, but give the reader a very quick overview now.

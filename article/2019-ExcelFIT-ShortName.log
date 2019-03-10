@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.14159265-2.6-1.40.19 (TeX Live 2018/Arch Linux) (preloaded format=pdflatex 2019.2.21)  6 MAR 2019 16:49
+This is pdfTeX, Version 3.14159265-2.6-1.40.19 (TeX Live 2018/Arch Linux) (preloaded format=pdflatex 2019.3.7)  7 MAR 2019 17:36
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -719,23 +719,23 @@ File: microtype.cfg 2018/01/14 v2.7a microtype main configuration file (RS)
 (./2019-ExcelFIT-ShortName.aux)
 \openout1 = `2019-ExcelFIT-ShortName.aux'.
 
-LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 92.
-LaTeX Font Info:    ... okay on input line 92.
-LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 92.
-LaTeX Font Info:    ... okay on input line 92.
-LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 92.
-LaTeX Font Info:    ... okay on input line 92.
-LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 92.
-LaTeX Font Info:    ... okay on input line 92.
-LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 92.
-LaTeX Font Info:    ... okay on input line 92.
-LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 92.
-LaTeX Font Info:    ... okay on input line 92.
-LaTeX Font Info:    Checking defaults for PD1/pdf/m/n on input line 92.
-LaTeX Font Info:    ... okay on input line 92.
-LaTeX Font Info:    Checking defaults for PU/pdf/m/n on input line 92.
-LaTeX Font Info:    ... okay on input line 92.
-LaTeX Font Info:    Try loading font information for OT1+ptm on input line 92.
+LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 88.
+LaTeX Font Info:    ... okay on input line 88.
+LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 88.
+LaTeX Font Info:    ... okay on input line 88.
+LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 88.
+LaTeX Font Info:    ... okay on input line 88.
+LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 88.
+LaTeX Font Info:    ... okay on input line 88.
+LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 88.
+LaTeX Font Info:    ... okay on input line 88.
+LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 88.
+LaTeX Font Info:    ... okay on input line 88.
+LaTeX Font Info:    Checking defaults for PD1/pdf/m/n on input line 88.
+LaTeX Font Info:    ... okay on input line 88.
+LaTeX Font Info:    Checking defaults for PU/pdf/m/n on input line 88.
+LaTeX Font Info:    ... okay on input line 88.
+LaTeX Font Info:    Try loading font information for OT1+ptm on input line 88.
 
 (/usr/share/texmf-dist/tex/latex/psnfss/ot1ptm.fd
 File: ot1ptm.fd 2001/06/04 font definitions for OT1/ptm.
@@ -811,9 +811,9 @@ Package caption Info: hyperref package is loaded.
 Package caption Info: End \AtBeginDocument code.
 Package lastpage Info: Please have a look at the pageslts package at
 (lastpage)             https://www.ctan.org/pkg/pageslts
-(lastpage)             ! on input line 92.
+(lastpage)             ! on input line 88.
 \AtBeginShipoutBox=\box53
-Package hyperref Info: Link coloring ON on input line 92.
+Package hyperref Info: Link coloring ON on input line 88.
 (/usr/share/texmf-dist/tex/latex/hyperref/nameref.sty
 Package: nameref 2016/05/21 v2.44 Cross-referencing by name of section
 
@@ -822,15 +822,15 @@ Package: gettitlestring 2016/05/16 v1.5 Cleanup title references (HO)
 )
 \c@section@level=\count326
 )
-LaTeX Info: Redefining \ref on input line 92.
-LaTeX Info: Redefining \pageref on input line 92.
-LaTeX Info: Redefining \nameref on input line 92.
+LaTeX Info: Redefining \ref on input line 88.
+LaTeX Info: Redefining \pageref on input line 88.
+LaTeX Info: Redefining \nameref on input line 88.
 
 (./2019-ExcelFIT-ShortName.out) (./2019-ExcelFIT-ShortName.out)
 \@outlinefile=\write3
 \openout3 = `2019-ExcelFIT-ShortName.out'.
 
-LaTeX Info: Redefining \microtypecontext on input line 92.
+LaTeX Info: Redefining \microtypecontext on input line 88.
 Package microtype Info: Generating PDF output.
 Package microtype Info: Character protrusion enabled (level 2).
 Package microtype Info: Using default protrusion set `alltext'.
@@ -844,7 +844,7 @@ Package microtype Info: No adjustment of character kerning.
 (/usr/share/texmf-dist/tex/latex/microtype/mt-ptm.cfg
 File: mt-ptm.cfg 2006/04/20 v1.7 microtype config. file: Times (RS)
 )
-LaTeX Font Info:    Try loading font information for OT1+phv on input line 94.
+LaTeX Font Info:    Try loading font information for OT1+phv on input line 90.
 
 (/usr/share/texmf-dist/tex/latex/psnfss/ot1phv.fd
 File: ot1phv.fd 2001/06/04 scalable font definitions for OT1/phv.
@@ -854,31 +854,31 @@ Package microtype Info: Loading generic protrusion settings for font family
 (microtype)             For optimal results, create family-specific settings.
 (microtype)             See the microtype manual for details.
 LaTeX Font Info:    Font shape `OT1/phv/bx/n' in size <20.74> not available
-(Font)              Font shape `OT1/phv/b/n' tried instead on input line 94.
+(Font)              Font shape `OT1/phv/b/n' tried instead on input line 90.
 <VUT-FIT-logo.pdf, id=28, 483.2454pt x 99.58405pt>
 File: VUT-FIT-logo.pdf Graphic file (type pdf)
 <use VUT-FIT-logo.pdf>
-Package pdftex.def Info: VUT-FIT-logo.pdf  used on input line 94.
+Package pdftex.def Info: VUT-FIT-logo.pdf  used on input line 90.
 (pdftex.def)             Requested size: 200.2039pt x 41.25648pt.
 <ExcelAtFIT-logo.pdf, id=29, 285.08607pt x 61.65715pt>
 File: ExcelAtFIT-logo.pdf Graphic file (type pdf)
 <use ExcelAtFIT-logo.pdf>
-Package pdftex.def Info: ExcelAtFIT-logo.pdf  used on input line 94.
+Package pdftex.def Info: ExcelAtFIT-logo.pdf  used on input line 90.
 (pdftex.def)             Requested size: 190.75871pt x 41.25648pt.
 LaTeX Font Info:    Font shape `OT1/phv/bx/n' in size <12> not available
-(Font)              Font shape `OT1/phv/b/n' tried instead on input line 94.
-LaTeX Font Info:    Try loading font information for OT1+pcr on input line 94.
+(Font)              Font shape `OT1/phv/b/n' tried instead on input line 90.
+LaTeX Font Info:    Try loading font information for OT1+pcr on input line 90.
 
 (/usr/share/texmf-dist/tex/latex/psnfss/ot1pcr.fd
 File: ot1pcr.fd 2001/06/04 font definitions for OT1/pcr.
 )
 LaTeX Font Info:    Font shape `OT1/pcr/bx/n' in size <12> not available
-(Font)              Font shape `OT1/pcr/b/n' tried instead on input line 94.
+(Font)              Font shape `OT1/pcr/b/n' tried instead on input line 90.
 Package microtype Info: Loading generic protrusion settings for font family
 (microtype)             `pcr' (encoding: OT1).
 (microtype)             For optimal results, create family-specific settings.
 (microtype)             See the microtype manual for details.
-LaTeX Font Info:    Try loading font information for OT1+ztmcm on input line 94
+LaTeX Font Info:    Try loading font information for OT1+ztmcm on input line 90
 .
 
 (/usr/share/texmf-dist/tex/latex/psnfss/ot1ztmcm.fd
@@ -888,30 +888,30 @@ Package microtype Info: Loading generic protrusion settings for font family
 (microtype)             `ztmcm' (encoding: OT1).
 (microtype)             For optimal results, create family-specific settings.
 (microtype)             See the microtype manual for details.
-LaTeX Font Info:    Try loading font information for OML+ztmcm on input line 94
+LaTeX Font Info:    Try loading font information for OML+ztmcm on input line 90
 .
 
 (/usr/share/texmf-dist/tex/latex/psnfss/omlztmcm.fd
 File: omlztmcm.fd 2000/01/03 Fontinst v1.801 font definitions for OML/ztmcm.
 )
-LaTeX Font Info:    Try loading font information for OMS+ztmcm on input line 94
+LaTeX Font Info:    Try loading font information for OMS+ztmcm on input line 90
 .
 
 (/usr/share/texmf-dist/tex/latex/psnfss/omsztmcm.fd
 File: omsztmcm.fd 2000/01/03 Fontinst v1.801 font definitions for OMS/ztmcm.
 )
-LaTeX Font Info:    Try loading font information for OMX+ztmcm on input line 94
+LaTeX Font Info:    Try loading font information for OMX+ztmcm on input line 90
 .
 
 (/usr/share/texmf-dist/tex/latex/psnfss/omxztmcm.fd
 File: omxztmcm.fd 2000/01/03 Fontinst v1.801 font definitions for OMX/ztmcm.
 )
 LaTeX Font Info:    Font shape `OT1/ptm/bx/n' in size <12> not available
-(Font)              Font shape `OT1/ptm/b/n' tried instead on input line 94.
+(Font)              Font shape `OT1/ptm/b/n' tried instead on input line 90.
 LaTeX Font Info:    Font shape `OT1/ptm/bx/n' in size <9> not available
-(Font)              Font shape `OT1/ptm/b/n' tried instead on input line 94.
+(Font)              Font shape `OT1/ptm/b/n' tried instead on input line 90.
 LaTeX Font Info:    Font shape `OT1/ptm/bx/n' in size <7> not available
-(Font)              Font shape `OT1/ptm/b/n' tried instead on input line 94.
+(Font)              Font shape `OT1/ptm/b/n' tried instead on input line 90.
 
 (/usr/share/texmf-dist/tex/latex/microtype/mt-msa.cfg
 File: mt-msa.cfg 2006/02/04 v1.1 microtype config. file: AMS symbols (a) (RS)
@@ -920,37 +920,61 @@ File: mt-msa.cfg 2006/02/04 v1.1 microtype config. file: AMS symbols (a) (RS)
 File: mt-msb.cfg 2005/06/01 v1.0 microtype config. file: AMS symbols (b) (RS)
 )
 LaTeX Font Info:    Font shape `OT1/phv/bx/n' in size <10.95> not available
-(Font)              Font shape `OT1/phv/b/n' tried instead on input line 94.
+(Font)              Font shape `OT1/phv/b/n' tried instead on input line 90.
 LaTeX Font Info:    Font shape `OT1/phv/bx/n' in size <20> not available
-(Font)              Font shape `OT1/phv/b/n' tried instead on input line 94.
+(Font)              Font shape `OT1/phv/b/n' tried instead on input line 90.
 <images/placeholder.pdf, id=31, 151.87993pt x 85.31876pt>
 File: images/placeholder.pdf Graphic file (type pdf)
 <use images/placeholder.pdf>
-Package pdftex.def Info: images/placeholder.pdf  used on input line 94.
+Package pdftex.def Info: images/placeholder.pdf  used on input line 90.
 (pdftex.def)             Requested size: 128.6582pt x 72.26999pt.
 File: images/placeholder.pdf Graphic file (type pdf)
 <use images/placeholder.pdf>
-Package pdftex.def Info: images/placeholder.pdf  used on input line 94.
+Package pdftex.def Info: images/placeholder.pdf  used on input line 90.
 (pdftex.def)             Requested size: 128.6582pt x 72.26999pt.
 File: images/placeholder.pdf Graphic file (type pdf)
 <use images/placeholder.pdf>
-Package pdftex.def Info: images/placeholder.pdf  used on input line 94.
+Package pdftex.def Info: images/placeholder.pdf  used on input line 90.
 (pdftex.def)             Requested size: 128.6582pt x 72.26999pt.
 LaTeX Font Info:    Font shape `OT1/ptm/bx/n' in size <10.95> not available
-(Font)              Font shape `OT1/ptm/b/n' tried instead on input line 94.
+(Font)              Font shape `OT1/ptm/b/n' tried instead on input line 90.
 LaTeX Font Info:    Font shape `OT1/ptm/bx/n' in size <8> not available
-(Font)              Font shape `OT1/ptm/b/n' tried instead on input line 94.
+(Font)              Font shape `OT1/ptm/b/n' tried instead on input line 90.
 LaTeX Font Info:    Font shape `OT1/ptm/bx/n' in size <6> not available
-(Font)              Font shape `OT1/ptm/b/n' tried instead on input line 94.
+(Font)              Font shape `OT1/ptm/b/n' tried instead on input line 90.
+LaTeX Font Info:    Try loading font information for OMS+ptm on input line 90.
+
+(/usr/share/texmf-dist/tex/latex/psnfss/omsptm.fd
+File: omsptm.fd 
+)
+LaTeX Font Info:    Font shape `OMS/ptm/m/n' in size <8> not available
+(Font)              Font shape `OMS/cmsy/m/n' tried instead on input line 90.
+LaTeX Font Info:    Font shape `OT1/ptm/bx/n' in size <5> not available
+(Font)              Font shape `OT1/ptm/b/n' tried instead on input line 90.
+LaTeX Font Info:    Font shape `OMS/ptm/m/n' in size <7> not available
+(Font)              Font shape `OMS/cmsy/m/n' tried instead on input line 90.
 LaTeX Font Info:    Font shape `OT1/phv/m/it' in size <9> not available
-(Font)              Font shape `OT1/phv/m/sl' tried instead on input line 94.
+(Font)              Font shape `OT1/phv/m/sl' tried instead on input line 90.
 LaTeX Font Info:    Font shape `OT1/phv/bx/n' in size <8> not available
-(Font)              Font shape `OT1/phv/b/n' tried instead on input line 106.
-
-Underfull \vbox (badness 1087) has occurred while \output is active []
+(Font)              Font shape `OT1/phv/b/n' tried instead on input line 102.
 
 
-Underfull \vbox (badness 10000) has occurred while \output is active []
+LaTeX Warning: Citation `bitcoin' on page 1 undefined on input line 108.
+
+
+LaTeX Warning: Citation `wiki:cloud' on page 1 undefined on input line 127.
+
+
+LaTeX Warning: Citation `web:k8s' on page 1 undefined on input line 128.
+
+
+Overfull \hbox (4.5395pt too wide) in paragraph at lines 126--131
+\OT1/ptm/m/n/10.95 (-20) prob-lems. Cloud computing[[]] is now more widespread,
+
+ []
+
+
+Underfull \vbox (badness 3108) has occurred while \output is active []
 
  [1{/var/lib/texmf/fonts/map/pdftex/updmap/pdftex.map}
 
@@ -960,107 +984,109 @@ Underfull \vbox (badness 10000) has occurred while \output is active []
 pdfTeX warning: pdflatex (file ./images/placeholder.pdf): PDF inclusion: multip
 le pdfs with page group included in a single page
 >]
-<images/keep-calm.png, id=70, 602.25pt x 702.625pt>
+<images/keep-calm.png, id=72, 602.25pt x 702.625pt>
 File: images/keep-calm.png Graphic file (type png)
 <use images/keep-calm.png>
-Package pdftex.def Info: images/keep-calm.png  used on input line 135.
+Package pdftex.def Info: images/keep-calm.png  used on input line 153.
 (pdftex.def)             Requested size: 163.816pt x 191.11575pt.
 LaTeX Font Info:    Font shape `OT1/phv/bx/n' in size <10> not available
-(Font)              Font shape `OT1/phv/b/n' tried instead on input line 136.
+(Font)              Font shape `OT1/phv/b/n' tried instead on input line 154.
 
-Overfull \hbox (1.96475pt too wide) in paragraph at lines 143--144
+Overfull \hbox (1.96475pt too wide) in paragraph at lines 161--162
 []\OT1/ptm/m/n/10.95 (-20) Rename \OT1/ptm/m/it/10.95 (-20) 2019-ExcelFIT-Short
 Name.tex \OT1/ptm/m/n/10.95 (-20) -- re-place
  []
 
-
-Overfull \hbox (2.41438pt too wide) in paragraph at lines 147--148
+[2 <./images/keep-calm.png (PNG copy)>]
+Overfull \hbox (2.41438pt too wide) in paragraph at lines 165--166
 []\OT1/ptm/m/n/10.95 (-20) Insert ref-er-ences to sup-ple-men-tary ma-te-rial. 
 That
  []
 
-[2 <./images/keep-calm.png (PNG copy)>]
 
-LaTeX Warning: Citation `Lebrun2011' on page 3 undefined on input line 152.
+LaTeX Warning: Citation `Lebrun2011' on page 3 undefined on input line 170.
 
-LaTeX Font Info:    Font shape `OT1/ptm/bx/n' in size <5> not available
-(Font)              Font shape `OT1/ptm/b/n' tried instead on input line 164.
 
-Underfull \hbox (badness 10000) in paragraph at lines 164--164
+Underfull \hbox (badness 10000) in paragraph at lines 182--182
 [][][][][]$\OT1/pcr/m/n/9 http : / / www . latextemplates . com / template /
  []
 
 
-Overfull \hbox (2.03119pt too wide) in paragraph at lines 165--166
+Overfull \hbox (2.03119pt too wide) in paragraph at lines 183--184
 []\OT1/ptm/m/n/10.95 (-20) This is the logo on the ti-tle page. 
  []
 
 File: images/placeholder.pdf Graphic file (type pdf)
 <use images/placeholder.pdf>
-Package pdftex.def Info: images/placeholder.pdf  used on input line 167.
+Package pdftex.def Info: images/placeholder.pdf  used on input line 185.
 (pdftex.def)             Requested size: 77.97221pt x 43.79999pt.
 
-LaTeX Warning: Citation `Herout-Abstract' on page 3 undefined on input line 178
+LaTeX Warning: Citation `Herout-Abstract' on page 3 undefined on input line 196
 .
 
 
-LaTeX Warning: Citation `Lebrun2011' on page 3 undefined on input line 179.
+LaTeX Warning: Citation `Lebrun2011' on page 3 undefined on input line 197.
 
 
-LaTeX Warning: Citation `Herout-Comics' on page 3 undefined on input line 181.
+LaTeX Warning: Citation `Herout-Comics' on page 3 undefined on input line 199.
 
 
-Overfull \hbox (3.33443pt too wide) in paragraph at lines 186--187
+Overfull \hbox (3.33443pt too wide) in paragraph at lines 204--205
 \OT1/ptm/m/n/10.95 (-20) like: []\OT1/ptm/b/n/10.95 [[you should do some-thing]
 ][]\OT1/ptm/m/n/10.95 (-20) . Un-like some
  []
 
-LaTeX Font Info:    Try loading font information for OMS+pcr on input line 187.
+LaTeX Font Info:    Try loading font information for OMS+pcr on input line 205.
 
 (/usr/share/texmf-dist/tex/latex/psnfss/omspcr.fd
 File: omspcr.fd 
 )
 LaTeX Font Info:    Font shape `OMS/pcr/m/n' in size <10.95> not available
-(Font)              Font shape `OMS/cmsy/m/n' tried instead on input line 187.
+(Font)              Font shape `OMS/cmsy/m/n' tried instead on input line 205.
  [3]
 LaTeX Font Info:    Font shape `OT1/phv/bx/n' in size <9> not available
-(Font)              Font shape `OT1/phv/b/n' tried instead on input line 258.
+(Font)              Font shape `OT1/phv/b/n' tried instead on input line 276.
+ [4]
 File: images/placeholder.pdf Graphic file (type pdf)
 <use images/placeholder.pdf>
-Package pdftex.def Info: images/placeholder.pdf  used on input line 282.
+Package pdftex.def Info: images/placeholder.pdf  used on input line 300.
 (pdftex.def)             Requested size: 386.96886pt x 122.86668pt.
 File: images/placeholder.pdf Graphic file (type pdf)
 <use images/placeholder.pdf>
-Package pdftex.def Info: images/placeholder.pdf  used on input line 283.
+Package pdftex.def Info: images/placeholder.pdf  used on input line 301.
 (pdftex.def)             Requested size: 96.73788pt x 54.34343pt.
 File: images/placeholder.pdf Graphic file (type pdf)
 <use images/placeholder.pdf>
-Package pdftex.def Info: images/placeholder.pdf  used on input line 284.
+Package pdftex.def Info: images/placeholder.pdf  used on input line 302.
 (pdftex.def)             Requested size: 96.73788pt x 54.34343pt.
 File: images/placeholder.pdf Graphic file (type pdf)
 <use images/placeholder.pdf>
-Package pdftex.def Info: images/placeholder.pdf  used on input line 285.
+Package pdftex.def Info: images/placeholder.pdf  used on input line 303.
 (pdftex.def)             Requested size: 96.73788pt x 54.34343pt.
 File: images/placeholder.pdf Graphic file (type pdf)
 <use images/placeholder.pdf>
-Package pdftex.def Info: images/placeholder.pdf  used on input line 286.
+Package pdftex.def Info: images/placeholder.pdf  used on input line 304.
 (pdftex.def)             Requested size: 96.73788pt x 54.34343pt.
- [4]
+
 (/usr/share/texmf-dist/tex/latex/listings/lstlang1.sty
 File: lstlang1.sty 2018/09/02 1.7 listings language file
 )
 LaTeX Font Info:    Font shape `OT1/pcr/bx/n' in size <9> not available
-(Font)              Font shape `OT1/pcr/b/n' tried instead on input line 311.
+(Font)              Font shape `OT1/pcr/b/n' tried instead on input line 329.
+
+
+Package lineno Warning: Linenumber reference failed, 
+(lineno)                rerun to get it right.
 
 No file 2019-ExcelFIT-ShortName.bbl.
 
 AED: lastpage setting LastPage
 [5] [6]
-Package atveryend Info: Empty hook `BeforeClearDocument' on input line 366.
-Package atveryend Info: Empty hook `AfterLastShipout' on input line 366.
+Package atveryend Info: Empty hook `BeforeClearDocument' on input line 384.
+Package atveryend Info: Empty hook `AfterLastShipout' on input line 384.
  (./2019-ExcelFIT-ShortName.aux)
-Package atveryend Info: Executing hook `AtVeryEndDocument' on input line 366.
-Package atveryend Info: Executing hook `AtEndAfterFileList' on input line 366.
+Package atveryend Info: Executing hook `AtVeryEndDocument' on input line 384.
+Package atveryend Info: Executing hook `AtEndAfterFileList' on input line 384.
 Package rerunfilecheck Info: File `2019-ExcelFIT-ShortName.out' has not changed
 .
 (rerunfilecheck)             Checksum: 3C3FBA7F3CBAD8E5E1B477EB1D9A88F8;967.
@@ -1068,31 +1094,35 @@ Package rerunfilecheck Info: File `2019-ExcelFIT-ShortName.out' has not changed
 
 LaTeX Warning: There were undefined references.
 
-Package atveryend Info: Empty hook `AtVeryVeryEnd' on input line 366.
+
+LaTeX Warning: Label(s) may have changed. Rerun to get cross-references right.
+
+Package atveryend Info: Empty hook `AtVeryVeryEnd' on input line 384.
  ) 
 Here is how much of TeX's memory you used:
- 26615 strings out of 492616
- 432719 string characters out of 6135177
- 738223 words of memory out of 5000000
- 29995 multiletter control sequences out of 15000+600000
- 604126 words of font info for 282 fonts, out of 8000000 for 9000
+ 26641 strings out of 492616
+ 433091 string characters out of 6135178
+ 751777 words of memory out of 5000000
+ 30010 multiletter control sequences out of 15000+600000
+ 604617 words of font info for 287 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
- 48i,10n,65p,848b,1358s stack positions out of 5000i,500n,10000p,200000b,80000s
+ 48i,15n,65p,848b,1358s stack positions out of 5000i,500n,10000p,200000b,80000s
 {/usr/share/texmf-dist/fonts/enc/dvips/base/8r.enc}</usr/share/texmf-dist/fon
 ts/type1/public/amsfonts/cm/cmmi10.pfb></usr/share/texmf-dist/fonts/type1/publi
 c/amsfonts/cm/cmr10.pfb></usr/share/texmf-dist/fonts/type1/public/amsfonts/cm/c
-msy10.pfb></usr/share/texmf-dist/fonts/type1/urw/courier/ucrb8a.pfb></usr/share
-/texmf-dist/fonts/type1/urw/courier/ucrr8a.pfb></usr/share/texmf-dist/fonts/typ
-e1/urw/helvetic/uhvb8a.pfb></usr/share/texmf-dist/fonts/type1/urw/helvetic/uhvr
-8a.pfb></usr/share/texmf-dist/fonts/type1/urw/helvetic/uhvro8a.pfb></usr/share/
-texmf-dist/fonts/type1/urw/symbol/usyr.pfb></usr/share/texmf-dist/fonts/type1/u
-rw/symbol/usyr.pfb></usr/share/texmf-dist/fonts/type1/urw/times/utmb8a.pfb></us
-r/share/texmf-dist/fonts/type1/urw/times/utmr8a.pfb></usr/share/texmf-dist/font
-s/type1/urw/times/utmri8a.pfb>
-Output written on 2019-ExcelFIT-ShortName.pdf (6 pages, 387889 bytes).
+msy10.pfb></usr/share/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy8.pfb></usr
+/share/texmf-dist/fonts/type1/urw/courier/ucrb8a.pfb></usr/share/texmf-dist/fon
+ts/type1/urw/courier/ucrr8a.pfb></usr/share/texmf-dist/fonts/type1/urw/helvetic
+/uhvb8a.pfb></usr/share/texmf-dist/fonts/type1/urw/helvetic/uhvr8a.pfb></usr/sh
+are/texmf-dist/fonts/type1/urw/helvetic/uhvro8a.pfb></usr/share/texmf-dist/font
+s/type1/urw/symbol/usyr.pfb></usr/share/texmf-dist/fonts/type1/urw/symbol/usyr.
+pfb></usr/share/texmf-dist/fonts/type1/urw/times/utmb8a.pfb></usr/share/texmf-d
+ist/fonts/type1/urw/times/utmr8a.pfb></usr/share/texmf-dist/fonts/type1/urw/tim
+es/utmri8a.pfb>
+Output written on 2019-ExcelFIT-ShortName.pdf (6 pages, 397438 bytes).
 PDF statistics:
- 211 PDF objects out of 1000 (max. 8388607)
- 175 compressed objects within 2 object streams
- 50 named destinations out of 1000 (max. 500000)
+ 310 PDF objects out of 1000 (max. 8388607)
+ 272 compressed objects within 3 object streams
+ 51 named destinations out of 1000 (max. 500000)
  54341 words of extra memory for PDF output out of 61914 (max. 10000000)
 
