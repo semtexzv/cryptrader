@@ -1,146 +1,115 @@
-CREATE OR REPLACE FUNCTION calculate_rescaled_ohlc(_exch VARCHAR, _pair VARCHAR, period BIGINT, start BIGINT,
-                                                   _end BIGINT)
-  RETURNS TABLE
-          (
-            "time" BIGINT,
-            open   DOUBLE PRECISION,
-            high   DOUBLE PRECISION,
-            low    DOUBLE PRECISION,
-            close  DOUBLE PRECISION,
-            vol    DOUBLE PRECISION
-          ) AS
-$$
-SELECT time_bucket(period, t.time) AS "stime",
-       first(t.open, t.time)       AS open,
-       max(t.high)                 AS high,
-       min(t.low)                  AS low,
-       last(t.close, t.time)       AS close,
-       sum(t.vol)                  AS vol
-FROM ohlc t
-WHERE t.pair = _pair
-  AND t.exchange = _exch
-  AND t.time >= start
-  AND t.time < ((_end + period) / period) * period
-GROUP BY "stime"
-ORDER BY stime DESC;
-$$
-  LANGUAGE SQL
-  STABLE;
-
-CREATE OR REPLACE FUNCTION calculate_rescaled_ohlc(_exch VARCHAR, _pair VARCHAR, period BIGINT, start BIGINT)
-  RETURNS TABLE
-          (
-            "time" BIGINT,
-            open   DOUBLE PRECISION,
-            high   DOUBLE PRECISION,
-            low    DOUBLE PRECISION,
-            close  DOUBLE PRECISION,
-            vol    DOUBLE PRECISION
-          ) AS
-$$
-SELECT *
-FROM calculate_rescaled_ohlc(_exch, _pair, period, start, 922337203685477580);
-$$
-  LANGUAGE SQL
-  STABLE;
-
-
-CREATE TABLE IF NOT EXISTS cached_ohlc
+CREATE TABLE IF NOT EXISTS ohlc_rollups
 (
-  LIKE ohlc,
-  period BIGINT,
-  PRIMARY KEY (pair, exchange, period, time)
+    LIKE ohlc,
+    period BIGINT,
+    PRIMARY KEY (pair, exchange, period, time)
 );
 
-CREATE OR REPLACE FUNCTION _generate_ohlc_cache(_exch VARCHAR, _pair VARCHAR, _period BIGINT, _start BIGINT,
-                                                _end BIGINT)
-  RETURNS VOID
-AS
+
+create or replace function locf_s(a float, b float)
+    returns float
+    language sql
+as
+'
+    SELECT COALESCE(b, a)
+';
+
+drop aggregate if exists locf(float);
+create aggregate locf(float) (
+    sfunc = locf_s,
+    stype = float
+    );
+
+
+create or replace function rescaled_ohlc(varchar, varchar, bigint, bigint, bigint = 1000000000000)
+    RETURNS TABLE
+            (
+                "time" BIGINT,
+                open   DOUBLE PRECISION,
+                high   DOUBLE PRECISION,
+                low    DOUBLE PRECISION,
+                close  DOUBLE PRECISION,
+                vol    DOUBLE PRECISION
+            ) AS
 $$
-BEGIN
-  INSERT INTO cached_ohlc
-    (SELECT c.time,
-            _exch,
-            _pair,
-            c.open,
-            c.high,
-            c.low,
-            c.close,
-            c.vol,
-            _period
-     FROM calculate_rescaled_ohlc(_exch, _pair, _period, _start, _end) c
-    )
-  ON CONFLICT (time,
-               exchange,
-               pair,
-               period)
-               DO UPDATE
-                 SET open = EXCLUDED.open,
-                   high = EXCLUDED.high,
-                   low = EXCLUDED.low,
-                   close = EXCLUDED.close,
-                   vol = EXCLUDED.vol;
-END;
-$$
-  LANGUAGE plpgsql;
+with cached as (select time as bucket,
+                       open,
+                       high,
+                       low,
+                       close,
+                       vol
+                from ohlc_rollups
+                where exchange = $1
+                  and pair = $2
+                  and time > $4
+                  and time < $5
+                  and period = $3
+                order by bucket desc
+),
+
+     calculated as (SELECT time_bucket($3, t.time) AS bucket,
+                           first(t.open, t.time)   AS open,
+                           max(t.high)             AS high,
+                           min(t.low)              AS low,
+                           last(t.close, t.time)   AS close,
+                           sum(t.vol)              AS vol
+                    FROM ohlc t
+                    WHERE t.pair = $2
+                      AND t.exchange = $1
+                      AND t.time > coalesce((select max(bucket) from cached), 0)
+                      AND t.time >= $4
+                      AND t.time < $5
+                    GROUP BY bucket
+                    ORDER BY bucket DESC),
+
+     min as (select coalesce(min(bucket), $4) as bucket from cached),
+     max as (select coalesce(max(bucket), $5) as bucket from calculated),
 
 
-CREATE OR REPLACE FUNCTION get_ohlc_with_cache(_exch VARCHAR, _pair VARCHAR, _period BIGINT, since BIGINT)
-  RETURNS TABLE
-          (
-            "time" BIGINT,
-            open   DOUBLE PRECISION,
-            high   DOUBLE PRECISION,
-            low    DOUBLE PRECISION,
-            close  DOUBLE PRECISION,
-            vol    DOUBLE PRECISION
-          ) AS
-$$
-DECLARE
-  cached_start BIGINT;
-  cached_end   BIGINT;
-BEGIN
+     insert as (insert into ohlc_rollups
+         select bucket,
+                $1,
+                $2,
+                open,
+                high,
+                low,
+                close,
+                vol,
+                $3 as period
+         from calculated
+         where case when $3 > 120 then 1 else 0 end = 1
+         on conflict do nothing
+     ),
+     filtered as (select distinct on (c.bucket) *
+                  from (select * from calculated union (select * from cached)) c
+                  order by c.bucket desc),
 
-  SELECT coalesce(min(c.time), 0),
-         coalesce(max(c.time), 0)
-         INTO cached_start, cached_end
-  FROM cached_ohlc c
-  WHERE c.pair = _pair
-    AND c.exchange = _exch
-    AND c.period = _period;
+     times as (select generate_series as bucket
+               from generate_series((select bucket from min), (select bucket from max), $3)
+               order by bucket desc
+               limit 2000
+     )
+        ,
 
-  -- Insert calculated values into cached table
-
-  IF cached_start > since
-  THEN
-    EXECUTE _generate_ohlc_cache(_exch, _pair, _period, since, cached_start);
-  END IF;
-
-
-  IF cached_end < since
-  THEN
-    EXECUTE _generate_ohlc_cache(_exch, _pair, _period, cached_end, 922337203685477580);
-  ELSE
-    EXECUTE _generate_ohlc_cache(_exch, _pair, _period, since, 922337203685477580);
-  END IF;
-
-  -- Return values from cached table
-  RETURN QUERY
-    SELECT c.time  AS time,
-           c.open  AS open,
-           c.high  AS high,
-           c.low   AS low,
-           c.close AS close,
-           c.vol   AS vol
-    FROM cached_ohlc c
-    WHERE c.exchange = _exch
-      AND c.pair = _pair
-      AND c.period = _period
-      AND c.time >= since;
-END;
-$$
-  LANGUAGE plpgsql;
-
-
-
-
+     filled as (select *
+                from filtered
+                         right join times using (bucket)
+                order by bucket desc
+                limit 2000
+     ),
+     backfilled as (
+         select bucket,
+                coalesce(open, locf(filled.close) over win)  as open,
+                coalesce(high, locf(filled.close) over win)  as high,
+                coalesce(low, locf(filled.close) over win)   as low,
+                coalesce(close, locf(filled.close) over win) as close,
+                coalesce(vol, 0)                             as volume
+         from filled window
+             win as (order by filled.bucket asc ROWS 50 preceding)
+         order by bucket desc
+         limit 2000)
+select *
+from backfilled
+where open is not null
+order by bucket desc
+$$ language SQL;

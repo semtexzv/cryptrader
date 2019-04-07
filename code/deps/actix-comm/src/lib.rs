@@ -2,7 +2,6 @@
 #![feature(specialization)]
 
 #![allow(unused_imports, dead_code, unused_variables)]
-#[macro_use]
 extern crate actix_derive;
 
 pub mod prelude;

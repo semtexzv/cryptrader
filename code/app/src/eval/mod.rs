@@ -72,7 +72,7 @@ impl Handler<ServiceRequest<EvalService>> for EvalWorker {
         let strat = self.db.strategy_data(req.strat_id);
 
         // Thousand ohlc candles ought to be enough for everyone
-        let data = self.db.resampled_ohlc_values(req.spec.clone(), req.last - (req.spec.period().seconds() * 500));
+        let data = self.db.resampled_ohlc_values(req.spec.clone(), req.last - (req.spec.period().seconds() * 1000));
 
         let fut = Future::join(strat, data);
         let fut = Future::map(fut, |((strat, user), data)| {

@@ -113,7 +113,7 @@ impl<S: ServiceInfo> LoadBalancer<S> {
             let worker_id = self.new_worker_id();
             self.workers.insert(worker_id, tx);
 
-            let fut = wrap_future(rx.timeout(Duration::from_secs(10)));
+            let fut = wrap_future(rx.timeout(Duration::from_secs(3)));
             let fut = fut.then(move |res, this : &mut Self, _ctx| {
                 let next = match res {
                     Ok(a) => Ok(a),

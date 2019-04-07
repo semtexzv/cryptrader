@@ -47,7 +47,7 @@ items:
       spec:
         containers:
           - name: postgres
-            image: timescale/timescaledb:1.2.1-pg11-oss
+            image: timescale/timescaledb:1.2.2-pg11
             imagePullPolicy: IfNotPresent
             ports:
               - containerPort: 5432
@@ -58,11 +58,11 @@ items:
                 name: postgresdb
             resources:
               requests:
-                cpu: 100m
-                memory: 300Mi
+                cpu: 350m
+                memory: 500Mi
               limits:
-                cpu: 150m
-                memory: 450Mi
+                cpu: 400m
+                memory: 700Mi
         volumes:
           - name: postgresdb
             persistentVolumeClaim:

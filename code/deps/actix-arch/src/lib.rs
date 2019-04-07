@@ -5,7 +5,6 @@
 extern crate common;
 
 
-#[macro_use]
 extern crate actix_derive;
 
 extern crate actix_comm;

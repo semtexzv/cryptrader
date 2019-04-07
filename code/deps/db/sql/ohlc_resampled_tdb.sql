@@ -14,4 +14,4 @@ LIMIT 400;
  */
 
 SELECT *
-FROM calculate_rescaled_ohlc($1, $2, $3, $3);
+FROM rescaled_ohlc($1, $2, $3, $4);

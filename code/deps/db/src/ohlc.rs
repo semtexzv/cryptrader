@@ -138,6 +138,7 @@ impl crate::Database {
 
     pub fn resampled_ohlc_values(&self, spec: OhlcSpec, since: i64) -> BoxFuture<Vec<Ohlc>> {
         let sql = ::diesel::sql_query(include_str!("../sql/ohlc_resampled_tdb.sql"));
+        error!("Retrieving ohlc since : {:?} for :{:?}", since, spec);
 
         //let since = spec.period().clamp_time(unixtime() as u64 - 400 * spec.period().seconds() as u64);
 
