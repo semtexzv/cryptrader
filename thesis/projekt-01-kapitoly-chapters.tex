@@ -14,7 +14,7 @@
 \chapter{Introduction}
 \label{chapter:introduction}
 Financial markets are complex systems, in which, market players interact with each other to determine
-prices of individual assets. Advances in financial technologies, like the advent of blockchain technology,
+price of an asset. Advances in financial technologies, like the advent of blockchain technology,
 and corresponding proliferation of cryptoccurencies , like Bitcoin\cite{bitcoin} have changed nature of trading.
 
 As a result of these advances, financial markets are now more approachable than ever, and thus present a significant
@@ -27,7 +27,7 @@ trading. Basis of algorithmic trading, is utilization of some kind of algorithm,
 order to determine most profitable actions, that should be performed on the market.
 
 This approach, has several requirements. One of them is large amount of computing power, since used algorithms
-might be extremely complex. Latency is also a big concern, since this space is extremely competitve, and a party,
+might be extremely complex. Latency is also a big concern, since this space is extremely competitive, and a party,
 which is able to perform optimal actions sooner than all other parties, will net a larger profit.
 Thanks to these requirements, usage of this technique is not easy, or cheap.
 
@@ -54,20 +54,20 @@ algorithms and strategies, and apply them to different markets.
 \chapter{Current state \& existing solutions}
 \label{chapter:current_state}
 Existing solutions for algorithmic trading that are aimed to regular users instead of specialized investment companies
-have been available for some time. Form of these solutions ranges from simple command-line applications that connect to single exchange
-to large distributed deployments with web interface that interface with the largest stock exchanges\cite{Agopyan_financialbusiness}.
+have been available for some time. These solutions range from simple command-line applications that connect to single exchange
+to large distributed deployments with web interface that connect to largest stock exchanges\cite{Agopyan_financialbusiness}.
 
 \section{Examples}
 We chose to look at a few solutions from different part of this spectrum in order to better understand the requirements
-that will be placed upon a designed system. All evaluated solutions perform algorithmic trading of cryptocurrencies.
-While restricting our research to this small part of global markets might affect our findings, the information learned about
-these systems should apply to similar ones that perform trading on different markets.
+that will be placed upon the designed system. All evaluated solutions perform algorithmic trading of cryptocurrencies.
+While restricting our research to this small part of global markets might affect our findings, the primary
+market in which the designed system will operate also is a cryuptocurrency market.
 
 \subsection{Gekko}
 On the lower end of the spectrum, there is a simple application written in javascript called Gekko\footnote{https://gekko.wizb.it/}.
-This application is open source and runs on top of the Node.js runtime. The application can import historical data,
-and use this historical data to backtest created strategies. The strategies are written in Javascript, with the support
-of a simpel library that contains implementations of financial indicators, that are commonly used with these types
+This application is open source and runs on top of the Node.js. The application can import historical data,
+and use this historical data to backtest\todo{Footnote} created strategies. The strategies are written in Javascript, with the support
+of a simple library that contains implementations of financial indicators, that are commonly used with these types
 of trading strategies.
 
 It also provides simple web interface, but can only connect to one exchange at a time, and only supports one user at a time.
@@ -87,7 +87,7 @@ our system.
 This chapter describes theoretical approach to different parts of target system.
 \section{Trading \& Exchanges}
 In order to define algorithmic trading, we must first define what trading is, and how it is performed.
-Trading is performed on exchanges. Key aspect of exchange trading is the price discovery mechanism. For almost all assets,
+Trading is performed on exchanges. Key aspect of exchange trading is the price discovery mechanism. For all assets,
 traded on an exchange, the price is not dictated by any single party. Instead, the price is "discovered" by interaction of
 buyers and sellers. Buyers advertise the highest price they are willing to pay for an asset, and sellers advertise the lowest price
 they are willing to accept. These 2 prices correspond to basic economic principle of supply and demand. When there are more sellers active
@@ -122,7 +122,7 @@ more effective ways of performing trading decisions, and executing resulting tra
 is a culmination of the automated trading arms race.
 
 \subsubsection{High frequency trading}
-This form of trading is characterized by high turnover and order-to-trade ratios(number of orders compared to trades).
+This form of trading is characterized by high turnover and order-to-trade ratios(number of created orders  compared to executed trades).
 It utilizes highly specialized order types, co-location of trading equipment as close as possible to exchange.
 In 2010, only 2\% of US based trading firms specialized in HFT, but these 2\% accounted for more than 73\% of all
 trading volume\cite{article:computerized_trading}.
@@ -141,7 +141,9 @@ There are four key categories of HFT strategies\cite{wiki:hft}:
 
 Our system will mainly support strategies, that would fall into \textbf{Tick data market making} category. This is due
 to simplicity of these strategies, and the fact that the information provided by the cryptocurrency exchanges is best suited
-for these strategies. Strategies will be used to create trading decisions for multiple assets. The fact that
+for these strategies.
+\todo{Reword}
+Strategies will be used to create trading decisions for multiple assets. The fact that
 there are multiple different strategies evaluated for multiple currencies means that the total number of strategy evaluations is
 extremely large. In addition to that , the system will also have to provide some degree of scalability, since the system will
 have to respond to changes in number of users.
@@ -181,7 +183,7 @@ Another aspect of component communication is the communication protocol. This do
 messages, but rather the protocol that determines what messages will be sent , and when.
 
 Components might communicate using simple request - reply based protocol , like HTTP. Or they might communicate using slightly different
-publish - subscribe model over technologies like ZeroMQ, or message buses like Kafka. Or the combination of these approaches.
+publish - subscribe model over technologies like ZeroMQ, or message buses like Kafka.
 
 We can also examine the rigidity of the system. The number and types of components can be either dynamic, or static. This
 property influences the \todo{Self healing architectures need dynamic components, figure out wording}
@@ -231,18 +233,23 @@ a transition and placing a marker in output place, in reality, these 3 actions w
 While CSP model has similar goals to actor model, there are several ways, in which these 2 models differ.
 Most important difference is that Actor model is inherently
 dynamic, while CSP model if based on a fixed number of sequential processes communicating in a fixed topology\cite{Hoare:1985:CSP:3921}.
+Usage of this model therefore is not particularly suited for our purposes, since designed system should be dynamically scalable,
+which is not possible in CSP model.
 
 \subsection{Implementations}
 While the actor model is almost 4 decades old, implementations of concurrent and distributed systems that
-are based on this model are more common than ever. This model is used in both general purpose languages, and
-languages specially designed for programming with this model in mind. Historically, this model
-was used in very niche systems, like telecommunications.
+are based on this model are more common than ever.
+\todo{Reword}
+Originally, this model was primarily used in niche systems, like
+telecommunications
 
 The success in these kinds of systems slowly fueled growth of this paradigm into more general purpose programming. With this
 growth, several libraries started popping up. There are multiple similar libraries in
 wide variety of languages, ranging from Lisp to C++. Today, one of the most commonly used libraries is Akka\cite{web:akka}, which was originally
 developed for Java and Scala, but was reimplemented using C\# for the .NET platform. While Akka is extremely easy to use,
 extensible, and performant, it is still only implemented for managed languages, which require heavy runtime with tracing garbage collection.
+
+\todo{Erlang here}
 
 This was one of the aspects , which influenced the decision to look for another library, that would be implemented in
 non-managed language. The library, we chose is called Actix\cite{web:actix}, and is implemented in Rust\cite{Blandy:2015:RPL:3019371}
@@ -266,7 +273,7 @@ It has functions, a module system, and other features, that will be uninterestin
 However, some of the more advanced concepts make this language particularly well suited for large concurrent systems, and
 will be explored later in this chapter.
 
-Language has 2 primary conceptual entities, types, and traits.
+Language has 2 primary conceptual entities -- types, and traits.
 For the types, language supports product and sum types(structs and enums respectively), and references (which can be mutable or immutable).
 Traits are more interesting feature. They are similar to interfaces in Java, but their closest analogy would be typeclasses from Haskell.
 Traits are used to declare a set of constraints, types, constants, and functions, that an implementing type(implementor) must provide.
@@ -521,7 +528,7 @@ While actix provided extremely well designed base for implementing concurrent ap
 one glaring flaw. It does not provide tools for running actors on different computers, and thus can't really be used for
 distributed applications by itself.
 
-To reify this issue, part of this thesis was the design and implementation of \verb|actix-net| library, which extends
+To reify this issue, part of this thesis was the design and implementation of \verb|actix-comm| library, which extends
 base actix library with primitives for communication between actors on different computers using ZeroMQ technology.
 This library is described in detail in \autoref{chapter:design}.
 
@@ -530,14 +537,14 @@ While usage of low level language, with the support for Effective concurrent pro
 advantage, this does not solve the scalability problem. One of the requirements was for the resulting system to
 be able to scale according to number of users, and resulting load on the system.
 
-To solve the scalability problem , we have decided to utilize a dynamic computing environment. This approach is called Cloud Computing\cite{wiki:cloud}
+To solve the scalability problem, we have decided to utilize a dynamic computing environment. This approach is called Cloud Computing\cite{wiki:cloud}
 This approach is characterized by shared pools of configurable system resources and services, that can be rapidly provisioned
 with low latency. Cloud computing relies on sharing of resources, and economies of scale to provide better
 cost to performance ratio than dedicated computing environments.
 
-There are multiple provides of cloud computing environments, with different Service and deployment models.
-Most popular of these environments are Amazon web services, Microsoft Azure or Google Cloud Services. For the purpose of
-this thesis, the Google Cloud Service was chosen to be primary provider, but modifying created system for other
+There are multiple providers of cloud computing environments, with different Service and deployment models.
+Most popular of these environments are Amazon web services, Microsoft Azure, Google Cloud Services, or Digital Ocean. For the purpose of
+this thesis, the Digital Ocean was chosen to be primary provider, but modifying created system for other
 environments should be relatively simple.
 
 \subsection{Virtual machine model}
@@ -592,13 +599,14 @@ concepts and technologoies outlined in \autoref{chapter:theory}.
 System is designed as a collection of loosely coupled components, running inside virtualized environment provided by kubernetes, which
 can be distributed across many computing nodes. Basic diagram of intended architecture can be found in \autoref{img:arch}.
 
-Each component will be implemented as a set of actors, inside a single process and communicate with other components
+Each component will be implemented as a set of actors that run inside a single process and communicate with other components
 over ZeroMQ using both Request reply and Pub-Sub communication patterns.
 
-The actual communication protocol will be implemented in \verb|actix-net| library that is described in \autoref{section:actix_net}.
+The actual communication protocol will be implemented in \verb|actix-comm| library that is described in \autoref{section:actix_comm}.
 
-The user facing part of the system will be a web application, that will be also implemented using the same technologies
-as the system itself.
+\todo{Reword, mention React more}
+The user facing part of the system will be a web application, that will be also implemented using the Rust language and
+\verb|actix-web| library for the back-end and \verb|React| for the front end. This library builds upon the \verb|actix| library mentioned earlier, and provides
 
 
 \begin{figure}[H]
@@ -617,14 +625,14 @@ This fact greatly simplifies architectural challenges. The only architectural ch
 of how will the application components be connected and communicate. While the actual communication protocol is
 defined later in this chapter, here we are interested in more conceptual approach.
 
-Application is divided into several components/services:
+Application is divided into several components:
 \begin{itemize}
-    \item Web service - Provides a web interface for users' inetraction with the system, and interacts with Core service
-    \item Core service - Accepts input from users, incoming data from exchanges, decides when to evaluate strategies, and when to create orders on exchanges
-    \item Evaluation service - Evaluates strategies based on requests from Core service
-    \item Persistence service - Stores tick data and user data upon provided by core service, and provides this data to all services if necessary
-    \item Exchange services - Each of this services provides interface with a exchange. This service sends updates of financial data
-    to Core service, and performs actions requested by Core service on exchanges
+    \item Web component - Provides a web interface for users' inetraction with the system, and interacts with Core service
+    \item Core component - Accepts input from users, incoming data from exchanges, decides when to evaluate strategies, and when to create orders on exchanges
+    \item Evaluation component - Evaluates strategies based on requests from Core service
+    \item Persistence component - Stores tick data and user data upon provided by core service, and provides this data to all services if necessary
+    \item Exchange components - Each of these components serves as an adapter, that connects to external exchange API, and
+        maps its specific API onto internal communication channels.
 \end{itemize}
 
 \begin{figure}[H]
@@ -638,18 +646,18 @@ will occur in response to receiving new financial data from an exchange. The sys
 into persistent storage for later use, and if the information is up to date, it will initiate strategy evaluation
 for strategies applied to currency of incoming data.
 
-\subsection{Individual service architecture}
+\subsection{Individual component architecture}
 Each of these services will be comprised of one or more kubernetes \kubecomp{service}-\kubecomp{deployment} pairs. The
 \kubecomp{service} part will ensure availability of information about individual pods on kubernetes' internal DNS server.
 The \kubecomp{deployment} part will ensure the availability of actual pods.
 
 Each service will be comprised of one ore more \kubecomp{pods} that will be managed by \kubecomp{deployment}. Each \kubecomp{pod}
-will contain base communication actor from \verb|actix-net| library, and several other actors to support communication with other services. In addition to
+will contain base communication actor from \verb|actix-comm| library, and several other actors to support communication with other services. In addition to
 these supporting actors, it will also contain varying number of actors, that will collectively implement
-the desired functionality of a particular Service.
+the desired functionality of a particular component.
 
-\section{Communication \& actix-net}
-\label{section:actix_net}
+\section{Communication \& actix-comm}
+\label{section:actix_comm}
 As described earlier the Actix library does not provide tools for communication between actors on different machines. One of the
 goals of this thesis was to design \& implement a library that would facilitate this functionality. The resulting library
 should be usable by other projects.
@@ -664,8 +672,9 @@ It also provides wide array of socket types to implement different communication
 The Router-Dealer socket pair is well suited for asynchronous request-reply communication pattern, and will be most commonly used as
 such.
 
-The Pub-Sub socket pair will be used for pub-sub communication pattern, and the goal is to use this pattern for additional communication
-like Logging. This part has not yet been implemented
+\todo{Reword}
+The Pub-Sub socket pair will be used for pub-sub communication pattern. This communication pattern will be used for receiving
+large amounts of financial data from exchanges, and maybe for some additional system functions, like logging.
 
 \subsection{Library interface}
 Because the library is intended to be used exclusively with the Actix framework, the only provided interface will be in form
@@ -676,23 +685,52 @@ in one process, and data messages are requests to send data to different process
 The implementation of additional functionality by creating a set of actors \& messages is is very common within the actix ecosystem.
 The actix-web library, which is used to implement the web application, is also built with similar approach
 
+\todo{Rewrite - Not accurate anymore}
 \subsection{Communication protocol}
+The library imnple
 Each component will utilize several ZeroMQ sockets. The primary socket will be of Dealer type, and will serve as an endpoint
 for accepting connections from other components. In addition to one Dealer socket, each component will alse create a router
 socket for each connection to another component. The requests will be sent over this router socket.
 
 \begin{figure}[H]
-    \includegraphics[width=\textwidth]{obrazky-figures/Actix-net communication.png}
-    \caption{Actix-net communication}
-    \label{img:actix_net}
+    \includegraphics[width=\textwidth]{obrazky-figures/actix-net communication.png}
+    \caption{actix-comm communication}
+    \label{img:actix_comm}
 \end{figure}
-In \autoref{img:actix_net} you can see simple sequence diagram showing types of most common interactions with the library. The \actor{Communicator}
+
+In \autoref{img:actix_comm} you can see simple sequence diagram showing types of most common interactions with the library. The \actor{Communicator}
 actor serves as a entry point into the library. By creating and sending \msg{Connect} message to this actor, the \actor{Node} actor is created,
 and the address of created node is retruned into user code. User can use the \actor{Node} actor for sending messages to
 and the address of created node is retruned into user code. User can use the \actor{Node} actor for sending messages to
 remote nodes. User can register global handlers for specific message type
 using the \msg{RegisterRecipient} message, and specific actors using the \msg{RegisterActor} message. The response to \msg{RegisterActor}
 message is global actor address, which can be sent to other nodes, and used to send messages to specific actor on local node.
+
+
+\subsection{Actix-arch}
+\todo{Service \& Endpoint abvstraction}
+\todo{Load balancing}
+\todo{Mention proxy}
+
+
+\subsection{Storage}
+\todo{Postgresql with timescaledb}
+\todo{Hypertable - sharding}
+\todo{Currently more htan enough, we'll see about future}
+
+\todo{Experimental Scylladb backend}
+\todo{Not in production, postgresql more than enough}
+
+\subsection{Web}
+\todo{Classing Client-Server SPA Design}
+\todo{Usage of actix-web for Rest API}
+\todo{React for frontend with material-ui}
+\todo{Ace editor for editing code}
+\todo{Future enhancement - websocket with live notifications}
+
+\subsection{Exchange adapters}
+\todo{Connecting to websocket}
+\todo{Mapping to core using Fan-In topology}
 
 \section{Strategies}
 In \autoref{chapter:current_state} we have described several implementations of automatic trading systems. Each one of them
@@ -729,6 +767,12 @@ key properties, which caused this decision.
     it is one of the fastest scripting languages available.
 \end{itemize}
 
+\subsection{Safety}
+By using an intepreted language for implementation of user strategies, we have successfully eliminated a whole
+class of risks. By using a safe language, the probability of user code crashing the executing process is virtually
+none. However, there still are several safety issues, that have to be resolved, even with using an interpreted language.
+\todo{Safety - Creating safe environment withouyt file access, Limit execution time}
+
 \section{Evaluation}
 Since users can crate multiple strategies, and then apply these trategies to multiple different assets on different exchanges,
 the amount of work associated with a single user can vary extremely. In addition to that, the number of users of our system can vary.
@@ -744,18 +788,81 @@ Each worker will be a single pod with multiple worker actors, each of which will
 
 The control layer will also perform load balancing, ensuring that no single worker is over- or underutilized.
 
+\todo{Eval balancer implemented as a load balancing broker}
+
+\todo{TA library used to provide basic indicatiors (optimized) - Otherwise an iterator over raw values is available,
+user can manuall implement his logic}
+
 Then, the kubernetes horizontal pod autoscaler\footnote{\url{https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/}} will be used to dynamically adjust number of pods. In addition to that,
 the Google Kubernetes Engine also supports automatic node provisioning, meaning we can automate every part of scaling the system
 compute capabilities.
 
 \chapter{Implementation}
+\todo{Implemented using rust}
+\todo{Rust version - Features used}
+\todo{Global architecture - Packages - Common, deps and app/web}
+
+\todo{Persistence - ERD}
+\todo{Needs to be first do better understand other components}
+
+\section{Bitfinex adapter}
+\todo{Implemented in deps library - apis }
+\todo{Other exchanges similar}
+
+
+\section{Core component}
+\todo{Ingest - Cleanup }
+\todo{Rescaler - Generation of virtual ohlc values}
+\todo{Decision - Loads assignemnts from database, }
+
+\section{Eval}
+\todo{Balancing broker - Implementation in actix-arch - detail }
+\todo{Worker - Connects to broker, internally a ServiceHandler}
+\todo{Upon request - Loads OHLC + Strategy data from db}
+\todo{Ohlc - Complex query - performs backfilling - rescaling}
+\todo{Instantiates Lua VM, executes}
+\todo{TA library}
+
+\section{Trader component}
+\todo{Receives requests for trades }
+\todo{Forwards to individual exchanges}
+\todo{Generic positionService provided by exhcnages}
+\todo{First the balanceServicea to get wallet balances}
+\todo{THen TradeService to execute trades and ensure target position}
+
+\todo{Everything logged into}
+
+\section{Persistence component}
+\todo{Implemented in the DB library}
+\todo{Uses diesel for query generation}
+\todo{Synchronous - uses R2d2 for connection pooling and SyncActors for concurrent access to DB}
+
+\todo{Experimental storage of OHLC data in ScyllaDB}
+
+
+\section{Web component}
+\todo{}
+
+\section{Deployment and Management}
+\todo{Describe ops}
+\todo{Deployment process using opnmly makefiles and kubernetes config}
+\todo{Docker image creation}
+\todo{Tagging by hash for debug, by git for release}
+
+\todo{Monitoring using kubernetes dashboard}
+
 
 \chapter{Testing and evaluation}
+\todo{Application logging}
+\todo{Debugging using telepresence and local components}
+
+
+
 
 \chapter{Conclusion \& Future work}
 The title of this thesis is a Design and development of distributed system that would perform a specific function.
 Most of the work performed so far was design of the system, and implementation of supporting technologies. The
-future development plan starts with finishing the \verb|actix-net| library. Then, designing and implementing a persistence
+future development plan starts with finishing the \verb|actix-comm| library. Then, designing and implementing a persistence
 service that would resolve bottlenecks found in current solution.
 
 After issues with this part of the system are resolved, the next step will be implementation of the strategy evaluation service,

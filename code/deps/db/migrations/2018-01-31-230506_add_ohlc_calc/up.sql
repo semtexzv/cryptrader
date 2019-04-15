@@ -111,7 +111,7 @@ with cached as (select time as bucket,
                 coalesce(close, locf(filled.close) over win) as close,
                 coalesce(vol, 0)                             as volume
          from filled window
-             win as (order by filled.bucket asc ROWS 50 preceding)
+             win as (order by filled.bucket asc ROWS unbounded preceding)
          order by bucket asc
          limit 1000)
 select *

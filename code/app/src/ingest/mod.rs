@@ -69,6 +69,7 @@ pub struct Ingest {
     input: Subscriber<IngestEndpoint>,
 
     db: Database,
+    csdb: csdb::CsDb,
     out: Recipient<OhlcUpdate>,
 
     last: BTreeMap<PairId, Ohlc>,
@@ -87,7 +88,7 @@ impl Handler<IngestUpdate> for Ingest {
     type Result = ();
 
     fn handle(&mut self, msg: IngestUpdate, ctx: &mut Context<Self>) {
-        trace!("Received ingest update : {:?}", msg);
+        trace!("Received ingest update : {:?} with : {:?} points", msg.spec, msg.ohlc.len());
         self.apply_update(msg).unwrap();
     }
 }
@@ -105,6 +106,7 @@ impl Ingest {
                 Ingest {
                     handle,
                     input,
+                    csdb: csdb::connect(),
                     db,
                     out,
                     last,
@@ -171,7 +173,7 @@ impl Ingest {
 
         filtered.sort_by_key(|x| x.time);
 
-        //self.csdb.save(data.spec.pair_id().clone(),data.ohlc.clone());
+        self.csdb.save(data.spec.pair_id().clone(), data.ohlc.clone());
 
 
         let f = self.db.do_save_ohlc(data.spec.pair_id().clone(), data.ohlc.clone());

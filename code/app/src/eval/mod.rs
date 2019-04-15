@@ -73,7 +73,7 @@ impl Handler<ServiceRequest<EvalService>> for EvalWorker {
         let strat = self.db.single_strategy(req.strat_id);
 
         // Thousand ohlc candles ought to be enough for everyone
-        let data = self.db.resampled_ohlc_values(req.spec.clone(), req.last - (req.spec.period().seconds() * 1000));
+        let data = self.db.ohlc_history_backfilled(req.spec.clone(), req.last - (req.spec.period().seconds() * 2000));
             //.timeout(std::time::Duration::from_secs(30));
 
 

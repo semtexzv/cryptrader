@@ -44,6 +44,12 @@ impl Ohlc {
             vol,
         };
     }
+
+    pub fn rescale<'a>(values: impl Iterator<Item=&'a Ohlc>, period: OhlcPeriod) -> Vec<Ohlc> {
+        let period = period.seconds() / 60;
+        unimplemented!()
+
+    }
 }
 
 

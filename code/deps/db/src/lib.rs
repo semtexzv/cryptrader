@@ -58,10 +58,11 @@ pub fn start() -> Database {
 
     let manager = r2d2_diesel::ConnectionManager::new(url);
     let pool = diesel::r2d2::Pool::builder()
+        .max_size(8)
         .build(manager)
         .expect("Failed to create connection pool");
 
-    return Database(SyncArbiter::start(2, move || DbWorker(pool.clone())));
+    return Database(SyncArbiter::start(4, move || DbWorker(pool.clone())));
 }
 
 impl Actor for DbWorker {

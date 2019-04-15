@@ -1,8 +1,6 @@
 use cdrs::{
     query_values,
-    authenticators::{
-        NoneAuthenticator, PasswordAuthenticator,
-    },
+    authenticators::PasswordAuthenticator,
     cluster::{
         session::{
             Session,
@@ -45,6 +43,7 @@ pub fn connect() -> CsDb {
 
 
 use cdrs_helpers_derive::{IntoCDRSValue, TryFromRow};
+use common::prelude::PreciseTime;
 
 
 #[derive(Clone, Debug, IntoCDRSValue, TryFromRow, PartialEq)]
@@ -73,11 +72,20 @@ impl CsDb {
                 vol: candle.vol,
             }
         }).collect();
+        let t1 = PreciseTime::now();
 
-        let q = self.0.prepare(INSERT_OHLC).expect("Prepare queryt");
+        let q = self.0.prepare(INSERT_OHLC).expect("Prepare query");
+
+        let mut queries = BatchQueryBuilder::new();
 
         for o in new_ohlc.into_iter() {
-            self.0.exec_with_values(&q, o).unwrap();
+            let values = query_values!(o.time,o.exchange,o.pair,o.open,o.high,o.low,o.close,o.vol);
+            queries = queries.add_query_prepared(q.clone(), values);
         }
+        self.0.batch_with_params(queries.finalize().expect("Finalized"))
+            .expect("Batched write");
+
+        let t2 = PreciseTime::now();
+        println!("Saved csdb items, took {:?} ", t1.to(t2).num_milliseconds());
     }
 }

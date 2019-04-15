@@ -69,6 +69,7 @@ impl crate::Database {
 
     pub fn do_save_ohlc(&self, id: PairId, ohlc: Vec<Ohlc>) {
         self.do_invoke::<_, _, ()>(move |this, ctx| {
+            let t1 = PreciseTime::now();
             use crate::schema::ohlc::{self, *};
 
             let conn: &ConnType = &this.0.get().unwrap();
@@ -105,7 +106,9 @@ impl crate::Database {
                 stmt.execute(conn)
                     .expect("Error saving candle into the database");
             }
-            debug!("Saved {} items", new_ohlc.len());
+
+            let t2 = PreciseTime::now();
+            debug!("Saved {} items, took {:?} ", new_ohlc.len(), t1.to(t2).num_milliseconds());
             Ok(())
         })
     }
@@ -136,6 +139,31 @@ impl crate::Database {
 
                 })).collect();
 
+            Ok(vals)
+        });
+    }
+
+    pub fn ohlc_history_backfilled(&self, spec: OhlcSpec, since: i64) -> BoxFuture<Vec<Ohlc>> {
+        return box self.invoke::<_, _, Error>(move |this, ctx| {
+
+            let sql = ::diesel::sql_query(include_str!("../sql/ohlc_raw_backfilling.sql"));
+
+            use crate::schema::ohlc::*;
+
+            let conn: &ConnType = &this.0.get().unwrap();
+
+            let min_time = since as i64;
+
+            let (vals, t): (Vec<Ohlc>, _) = measure_time(|| {
+                sql.bind::<Text, _>(&spec.exch())
+                    .bind::<Text, _>(&spec.pair().to_string())
+                    .bind::<BigInt, _>(spec.period().seconds() as i64)
+                    .bind::<BigInt, _>(since as i64)
+                    .load::<LoadOhlc>(conn).expect("Could not query db")
+                    .iter()
+                    .map(|c| c.clone().into()).collect()
+            });
+            warn!("Loading ohlc data took {:?} ms, retrieved {:?} items", t, vals.len());
             Ok(vals)
         });
     }
