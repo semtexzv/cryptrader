@@ -1,0 +1,13 @@
+[package]
+name = "actix-async-await"
+version = "0.1.0"
+authors = ["Michal Hornický <semtexzv@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+
+actix = { version = "0.7", default-features=false }
+actix-web = {version = "*"}
+
+futures = "0.1"
+tokio-async-await = { version = "0.1", features = [ "async-await-preview" ] }

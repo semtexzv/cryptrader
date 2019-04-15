@@ -72,7 +72,6 @@ pub struct Ingest {
     out: Recipient<OhlcUpdate>,
 
     last: BTreeMap<PairId, Ohlc>,
-
 }
 
 impl Actor for Ingest {
@@ -171,6 +170,9 @@ impl Ingest {
             .collect();
 
         filtered.sort_by_key(|x| x.time);
+
+        //self.csdb.save(data.spec.pair_id().clone(),data.ohlc.clone());
+
 
         let f = self.db.do_save_ohlc(data.spec.pair_id().clone(), data.ohlc.clone());
 

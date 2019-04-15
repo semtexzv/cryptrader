@@ -4,15 +4,16 @@ use crate::users::middleware::UserAuthentication;
 
 
 use db::UserLogin;
-
+use db::validator::Validate;
 
 
 pub async fn post_async((request, login): (HttpRequest<State>, Form<UserLogin>)) -> Result<HttpResponse> {
+    error!("Login");
     let mut base: BaseTemplateInfo = await_compat!(BaseTemplateInfo::from_request(&request))?;
 
     let url = request.url_for("homepage", &[""; 0]).unwrap();
     let homepage = Ok(redirect(url.as_str()));
-
+    error!("Homepage is on : {:?}", url);
     if request.is_authenticated() {
         return homepage;
     }

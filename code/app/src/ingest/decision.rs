@@ -5,6 +5,7 @@ use radix_trie::Trie;
 use crate::eval::EvalRequest;
 use std::time::Duration;
 use chrono::NaiveDateTime;
+use time::precise_time_s;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct TradingRequestSpec {
@@ -114,6 +115,8 @@ impl Handler<OhlcUpdate> for Decider {
                 let period = spec.ohlc.period().to_string();
                 let fut = wrap_future(self.eval_svc.send(req));
 
+                let t1 = PreciseTime::now();
+
                 let fut = fut.and_then(move |res, this: &mut Self, ctx| {
                     info!("Evaluated to {:?}", res);
 
@@ -142,6 +145,8 @@ impl Handler<OhlcUpdate> for Decider {
                         }
                     };
 
+                    let t2 = PreciseTime::now();
+
                     let evaluation = db::Evaluation {
                         strategy_id,
                         exchange,
@@ -152,12 +157,13 @@ impl Handler<OhlcUpdate> for Decider {
                         time: common::chrono::Utc::now().naive_utc(),
                         ok,
                         error,
+                        duration: (t1.to(t2)).num_milliseconds() as _,
                     };
 
-                    let f = wrap_future(this.db.log_eval(evaluation).drop_item().set_err(RemoteError::MailboxClosed));
+                    let log_fut = wrap_future(this.db.log_eval(evaluation).drop_item().set_err(RemoteError::MailboxClosed));
 
 
-                    f
+                    log_fut
                 });
 
                 ctx.spawn(fut.drop_err());

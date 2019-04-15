@@ -9,6 +9,6 @@ path = "../../common"
 
 [dependencies]
 serde = "*"
+actix = { version = "0.7", default-features=false }
 actix-comm = { path = "../actix-comm"}
-actix="*"
 actix_derive = "*"

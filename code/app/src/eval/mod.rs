@@ -5,6 +5,7 @@ use actix_arch::balancing::WorkerRequest;
 pub use strat_eval::EvalError;
 use actix_arch::balancing::WorkerProxy;
 use actix::msgs::StopArbiter;
+use time::Duration;
 
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -69,19 +70,24 @@ impl Handler<ServiceRequest<EvalService>> for EvalWorker {
     fn handle(&mut self, msg: ServiceRequest<EvalService>, ctx: &mut Self::Context) -> Self::Result {
         let req: EvalRequest = msg.0;
 
-        let strat = self.db.strategy_data(req.strat_id);
+        let strat = self.db.single_strategy(req.strat_id);
 
         // Thousand ohlc candles ought to be enough for everyone
         let data = self.db.resampled_ohlc_values(req.spec.clone(), req.last - (req.spec.period().seconds() * 1000));
+            //.timeout(std::time::Duration::from_secs(30));
+
 
         let fut = Future::join(strat, data);
-        let fut = Future::map(fut, |((strat, user), data)| {
+        let fut = Future::map(fut, |(strat, data)| {
+            debug!("Starting exec");
             let data = data.into_iter().map(|x| (x.time, x)).collect();
+            debug!("Starting Eval");
             let res = strat_eval::eval(data, strat.body)?;
+            debug!("Done Eval");
             Ok(res)
         });
 
-        return Response::r#async(fut.drop_err().set_err(RemoteError::Timeout));
+        return Response::r#async(fut.unwrap_err().set_err(RemoteError::Timeout));
     }
 }
 

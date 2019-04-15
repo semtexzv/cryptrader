@@ -1,7 +1,7 @@
 import {LitElement, html, property, customElement, TemplateResult, PropertyValues} from 'lit-element';
 
 import * as api from '../util/api';
-import CustomElement from "../util/notify";
+import {CustomElement, navigate} from "../util/notify";
 import {repeat} from "lit-html/lib/repeat";
 
 @customElement("strategy-list")
@@ -27,36 +27,46 @@ export class Detail extends CustomElement {
     }
 
     submitNew(e) {
-        api.postOne("strategies",{
-            name : this.newName,
+        api.postOne("strategies", {
+            name: this.newName,
             body: ""
         }).then(e => {
-            window.location.href = `/strategies/${e.id}`
+            window.location.href = `/app/strategies/${e.id}`
         });
     }
 
 
     item(o): TemplateResult {
-        return html`
+        var link = `/app/strategies/${o.id}`;
+        return html`fs
         <tr>
         <td>${o.name}</td>
         <td>${o.created}</td>
-        <td><a href="/app/strategies/${o.id}">Detail</a></td>
+        <td><a class="btn btn-primary"  href="${link}" @click="${(e) => navigate(link)}" >Detail</a></td>
         </tr>
 `
     }
 
+
     form(): TemplateResult {
         return html`
-        <div style="display: inline-block;">
-        <input name="name" type="text" .value="${this.newName}" @input="${(e) => this.handleText(e)}">
-        <button @click="${this.submitNew}">Create new</button>
-        </div>
+<tr>
+<td>
+    <input id="strategyname" name="name" type="text" class="form-control" .value="${this.newName}" @input="${(e) => this.handleText(e)}">
+     </td>
+        <td></td>
+        <td><button class="btn btn-primary " @click="${this.submitNew}">Create new</button></td>
+        </tr>
         `
     }
 
     ok(): TemplateResult {
         return html`
+<div class="card">
+<div class="card-header">
+    <h3>User strategies</h3>
+</div>
+<div class="card-body">
     <table class="table">
         <thead>
         <tr>
@@ -66,10 +76,22 @@ export class Detail extends CustomElement {
         </tr>
         </thead>
         <tbody>
+        ${this.form()}
         ${this.strategies.map(this.item)}
         </tbody>
     </table>
-       ${this.form()}
+</div>
+</div>
+
+
+<div class="card">
+<div class="card-header">
+    <h3>Evaluations</h3>
+</div>
+<div class="card-body">
+    asda
+</div>
+</div>
         
 `
     }

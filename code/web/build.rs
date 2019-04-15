@@ -12,7 +12,7 @@ fn main() {
 
 
 
-    includedir::start(cargo_dir.join(PathBuf::from("../../code/web/app/dist/")))
+    includedir::start(cargo_dir.join(PathBuf::from("../../code/web/app2/dist/")))
         .dir(".")
         .passthrough(!is_k8s)
         .name("STATICS")

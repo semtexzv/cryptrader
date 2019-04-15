@@ -1,6 +1,6 @@
 import {customElement, html, LitElement, property, TemplateResult} from "lit-element";
 import * as api from '../util/api'
-import CustomElement from "../util/notify";
+import { CustomElement } from "../util/notify";
 import {Trader} from "../util/api";
 
 
@@ -19,13 +19,13 @@ class TraderList extends CustomElement {
 
 
     connectedCallback(): void {
-        super.connectedCallback()
+        super.connectedCallback();
         this.load();
     }
 
     thead(): TemplateResult {
         return html`
-        <thead class="thead-dark">
+        <thead >
         <tr>
             <th>Name</th>
             <th>Exchange</th>
@@ -45,7 +45,7 @@ class TraderList extends CustomElement {
         <td>${t.exchange}</td>
         <td>${t.api_key}</td>
         <td>Hidden</td>
-        <td>Delete</td>
+        <td><button class="btn btn-danger">Delete</button></td>
         </tr>
         `
     }
@@ -66,7 +66,7 @@ class TraderList extends CustomElement {
             console.log(e)
         };
 
-        let but = html`<button @click="${clicked}"  ?disabled="${!valid()}">Create new</button>`;
+        let but = html`<button class="btn btn-primary" @click="${clicked}"  ?disabled="${!valid()}">Create new</button>`;
 
         let exchListener = (e) => {
             this.newTrader.exchange = e.target.options[e.target.selectedIndex].value
@@ -91,15 +91,15 @@ class TraderList extends CustomElement {
 
         return html`
 ${style}
-<td><input @input="${nameListener}" .value="${this.newTrader.name}"/></td>
+<td><input class="form-control" @input="${nameListener}" .value="${this.newTrader.name}"/></td>
 <td>
-    <select @change="${exchListener}" >
+    <select class="form-control" @change="${exchListener}" >
            <option value="" disabled selected>Select Exchange</option>
             ${this.exchanges.map(e => html`<option>${e}</option>`)}
     </select>
 </td>
-<td><input @input="${keyListener}" .value="${this.newTrader.api_key}"/></td>
-<td><input @input="${secretListener}" .value="${this.newTrader.api_secret}"/>
+<td><input class="form-control" @input="${keyListener}" .value="${this.newTrader.api_key}"/></td>
+<td><input class="form-control" @input="${secretListener}" .value="${this.newTrader.api_secret}"/>
 </td>
 ${but}
 `
@@ -122,10 +122,17 @@ ${this.traders.map(this.item)}
 
     protected render(): TemplateResult | void {
         return html`
-<table id="traders" class="table">
-${this.thead()}
-${this.tbody()}
+<div class="card">
+<div class="card-header card-header-primary">
+    <h3>Trader accounts</h3>
+</div>
+<div class="card-body">
+    <table id="traders" class="table">
+    ${this.thead()}
+    ${this.tbody()}
 </table>
+</div>
+</div>
 `;
     }
 }

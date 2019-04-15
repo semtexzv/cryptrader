@@ -2,6 +2,9 @@
 %\documentclass[czech]{ExcelAtFIT} % when writing in CZECH
 %\documentclass[slovak]{ExcelAtFIT} % when writing in SLOVAK
 
+\usepackage{float}
+\clubpenalty=10000
+\widowpenalty=10000
 
 %--------------------------------------------------------
 %--------------------------------------------------------
@@ -10,7 +13,7 @@
 
 %   LEAVE this line commented out for the REVIEW VERSIONS
 %   UNCOMMENT this line to get the FINAL VERSION
-%\ExcelFinalCopy
+\ExcelFinalCopy
 
 
 %--------------------------------------------------------
@@ -96,33 +99,38 @@ combined with problem domain pose interesting requirements, which influenced the
 
     \textbf{[Motivation]}
     The innovations in financial sector, mainly cryptocurrencies like Bitcoin, have created new opportunities. One of them,
-    is the arrival of multiple online exchanges, that focus on trading cryptocurrencies. These exchanges have very low
+    is the arrival of multiple online exchanges, that focus on cryptocurrency trading . These exchanges have very low
     barrier to entry, and can be used for easy day trading. Goal of this project is creation of a website, that would allow
-    automatization of day trading on these exchanges, and therefore would exploit the empty space in the market.
+    automatization of day trading on these exchanges.
 
-    \textbf{[Problem definition]} In order to allow effective day trading for multiple users, the system must be designed
-    in a way that would allow seamless scalability. It also must provide simple interface that does not require advanced technical knowledge
-    (Installation of local applications), and a way to express more complex strategies, to serve more advanced users.
+    \textbf{[Problem definition]} In order to effectively support multiple users, the designed system must be able to seamlessly
+    scale according to computing load. It must must allow its users to easily create multiple trading strategies, and execute
+    trades on cryptocurrency exchanges.
 
-    \textbf{[Existing solutions]} Most attempts to fail at one or more of the requirements outlined earlier. The older solutions
+    \textbf{[Existing solutions]} Most attempts to fail at one or more of the requirements. The older solutions
     are mostly command-line applications that require complicated installations, and hardware that must be continuously managed.
+    One of these is the \textbf{Gekko\footnote{https://gekko.wizb.it/}} trading bot. Main drawback of this solution is
+    the use of JavaScript as the implementation language, and the requirement of Node.js.
+
     Other cloud based solutions, that are more closely related to our approach are usually overly complex, requiring user to write
     complex strategies that must decide not only when to execute trades, but specifics of these trades.
+    One of these systems is \textbf{CryptoTrader\footnote{https://cryptotrader.org/}}, that uses CoffeeScript as a language for implementing
+    user strategies. This system supports multiple assets within one strategy, making them extremely expressive. However,
+    the drawback of this approach is the increased complexity.
 
-    \textbf{[Our solution]} Our solution aims to improve on other ones in several aspects. The first is ease of use thanks to the fact, that the system
-    is a web application that does not require manual installation onto a local machine. The second is extreme scalability
-    of the implemented system through the use of a distributed architecture. The third is customization through
-    use of LUA scripting language to implement trading strategies.
+    \textbf{[Our solution]} our solution aims to surpass other automated trading systems in several aspects.
+    Thanks to the decision to implement the system as a web application, we remove all local software requirements, making
+    the system very approachable. Thanks to the distributed architecture, the system will have the necessary degree of scalability.
 
     \textbf{[Contributions]} Implemented system is built upon scalable architecture that utilizes cloud environment, is able to scale from single to thousands of users seamlessly,
     It also allows sub-second latency between receiving of new financial information and possible execution of actual trades on real exchange.
     Implemented system currently utilizes only one exchange, however support of additional exchanges should be extremely easy.
 
     \section{Theoretical background}
-    In order to talk about automated trading , we must first outline, the idea of an exchange, as it is the environment, in which our system will operate.
-    While historically, the exchanges dealt with physical goods, and were physical locations, almost all modern exchanges are purely virtual. The core concept of
-    an exchange is the price discovery mechanism. This means, that the actual exchange doesn't determine price of an asset, but rather the price is "discovered"
-    by interactions of individual actors on the exchange. In simplistic terms, this corresponds to supply-demand market mechanism. When the supply of an asset is larger
+    In order to understand automated trading systems, we must first understand how, modern exchanges operate.
+    The core concept of an exchange is the price discovery mechanism. In short, this means, that the exchange does not determine the price of an asset, but
+    rather the price is  "discovered" by interactions of individual actors on the exchange.
+    In simplistic terms, this corresponds to supply-demand market mechanism. When the supply of an asset is larger
     than demand, the price falls, and when the demand rises, the price rises accordingly.
 
     \subsection{Automated trading}
@@ -131,55 +139,49 @@ combined with problem domain pose interesting requirements, which influenced the
 
     \subsection{High frequency trading}
     Modern incarnation of high-end automated trading systems is called High Frequency Trading(HFT). These systems are commonly co-located with the exchanges, aiming for lowest possible latency
-    between receiving financial data, and execution of market orders. There are several key groups of these system , based on the decision process for creating market orders.
+    between receiving financial data, and execution of market orders. We can divide them into several groups based on the decision process used for creating market orders.
 
-    We will focus on \textbf{Tick-data market making} strategies, that utilize periodic data about price of an asset, in order to determine short and long term trends of the price, and
-    based on them, forecast the price into the future. These strategies do not rely on any other information sources.
+    We will focus on \textbf{Tick-data market making} strategies.
+    These strategies that utilize periodic information the about price of an asset in order to determine short and long term trends of this price.
+    Based on the short and long term trends these strategies forecast the price into the future.
 
-    The benefit of this approach is mainly simplicity. The implemented strategies do not have to rely on complex data describing real world events, that might influence price
-    of an asset(eg. company mergers), and implemented strategies do not have to perform actual trades explicitly. The strategy must only
-    determine the desired market position (short or long), and the creation of the orders can be internally within the system.
-    These kinds of strategies are also easily applied to multiple asset types simultaneously.
+    The benefit of this approach is mainly simplicity. These strategies do not have to rely on complex data describing real world events, that might influence price
+    of an asset(eg. company mergers), and they do not have to perform actual trades explicitly.
+
 
     \subsection{Computing environment}
     While strategies outlined earlier are easy to implement, they require non-trivial amount of computing power.
-    Coupled with the the requirement to support multiple users, the requirements for computing power needed to
+    Coupled with the the need to support multiple users, the requirements for computing power needed to
     run this system grow.
 
     In order to provide this amount of computing power, we decided to design and implement the system using distributed architecture.
-    This means, that the system is written in manner, that allows its individual components to operate separately, and be deployed on different machines.
-    To achieve this goal, we have chosen to use Cloud computing approach (\footnote{https://en.wikipedia.org/wiki/Cloud\_computing}) on the deployment side.
+    This means, that the system is written in way, that allows its individual components to operate separately, and be deployed on different machines.
+    To achieve this goal, we have chosen to use Cloud computing approach\footnote{https://en.wikipedia.org/wiki/Cloud\_computing} on the deployment side.
     And utilize Actor Model as the core paradigm on implementation side.
 
     \subsection{Actor model}
-    Actor model is a conceptual model of describing concurrent computation. Each actor can: Create new actors, send messages, modify its state and decide how to respond to
+    Actor model is a conceptual model of describing concurrent computation\cite{journal:actor}. Each actor can: Create new actors, send messages, modify its state and decide how to respond to
     received messages. Primary constraint of this model is the restriction of modifying application state.
     Each actor can modify its local state however it wants, but can only affect other actors by sending messages.
 
-    Thanks to this property of isolation, there are no necessary locks to ensure memory safety.
-    It originated in 1973, and has been used for understanding distributed computation, and also as
-    a basis of several implementations of concurrent systems.
-
     \subsection{Rust \& Actix}
-    Thanks to authors previous experience with the Rust language, it was investigated as a possible implementation language for this project. Since
-    the core computing parading chosen to implement this project is actor model, there were other languages that were also considered. Among them
-    were C\# with Akka.NET, or Erlang, with it's distributed model, that is particularly suited for these kinds of applications. However, each of the
-    alternatives was dismissed because of large run-time overhead (VM), or difficulty interacting with other required technologies.
+    Due to the choice of the Actor model as a core paradigm, the choice of possible implementation languages was limited.
+    The chosen language would have support this programming model (either implicitly, or through the use of a library).
+    Other considerations included were the runtime overhead, safety, ease of integration with other technologies.
+    Evaluated languages and frameworks include: C\# with Akka.NET, Erlang, Java with Akka, and Rust with Actix.
 
-    With the choice of rust as an implementation language, we have reduced the run-time overhead, and therefore also reduced the computing power requirements.
-
-    Another aspect of the implementation stemming from the use of rust as an implementation language, is the use of Actix\footnote{https://actix.rs/} as a core
-    architectural library. This library implements the Actor model, and each part of the system is built upon it.
+    Rust with the Actix library was chosen mainly due to extremely low overhead of this programming language (not requiring a VM),
+    ease of integration with other technologies (LUA), and due the authors personal interest in this language, and corresponding library.
 
     \section{Designed system}
     Probably the biggest obstacle to the implementation of the system was its distributed nature. On the implementation side, this meant the use of Actor model, as a
     core architectural paradigm. The use of the Actix library has simplified many challenges with the use of this computing paradigm, but it also
-    came with some drawbacks. The library is written in a way that allows seamless use of actors within single or multi-threaded environments,
-    each actor running concurrently, but it does not contain an implementation of primitives that would allow actors to communicate between processes
+    came with some drawbacks. The library allows seamless use of actors within single or multi-threaded environments,
+    supporting use of single or multiple concurrent threads, but it does not contain an implementation of primitives that would allow actors to communicate between processes
     or even different machines.
 
     \subsection{Communication}
-    Therefore, part of this project was the design, and implementation of capability. We have designed and implemented the \textbf{actix-zmq} library, that
+    Therefore, part of this project was the design, and implementation of this capability. We have designed and implemented the \textbf{actix-zmq} library, that
     provides actors for communication over the ZeroMQ networking technology, and \textbf{actix-comm} library that provides abstractions
     for implementing simple Request-Reply services, Publish-subscribe pipelines, and other supplementary components (eg. Load balancing broker for services).
     The \textbf{actix-comm} library builds on top of \textbf{actix-zmq}, and both of them should be usable in other projects, and will be published
@@ -210,53 +212,83 @@ combined with problem domain pose interesting requirements, which influenced the
 
     \subsection{Actual system}
     The actual system is then designed as a set of loosely coupled components. Each component is comprised of several kubernetes Pods,
-    managed by a Deployment, and exposed by a service. Within each pod, there might be multiple containers, but most of them only use single one.
+    managed by a Deployment, and exposed by a Service. Within each pod, there might be multiple containers, but most of them only use single one.
 
     Here are components that that describe our system in simplest terms
     \begin{itemize}
-        \item Exchange - provides interface to a specific exchange,
-        \item Core - Receives updates from exchange, Decides when to evaluate strategies against this data, also forward
-        trading decisions to individual exchanges
+        \item Exchange - provides interface to a specific exchange, currently only the Bitfinex exchange,
+        \item Core - Receives updates from exchanges, Decides when to evaluate strategies against this data, and forwards
+            trading decisions to individual exchanges.
         \item Eval - Evaluates strategies using multiple load-balanced workers
         \item Web - Provides web interface for user interaction
-        \item Storage - Stores financial data, and user data.
+        \item Storage - Stores financial and user data.
     \end{itemize}
 
 
     \section{Implementation}
     As mentioned earlier, the implementation was performed using the Rust language on top of Actix actors as a basic architectural blocks.
-    It is divided into 2 applications, The \verb|web| application houses the user interface implemented using actix-web as a back-end,
-    and LitElement\footnote{https://lit-element.polymer-project.org/} based Single-Page application as front-end.
+    It is currently divided into 2 executables, The \verb|web| executable houses the user interface implemented using actix-web as a back-end,
+    and LitElement\footnote{https://lit-element.polymer-project.org/} based web application as front-end.
 
-    The second application is the \verb|trader| application. This is implemented as a command line application, that houses several
-    different components. Each component is started by specifying different command to this application. These individual components should
-    be separated into different applications in the future.
+    The second executable is the \verb|trader| application. This is implemented as a command line application, that contains the
+    implementations of several different components, and should be split into separate executable for each component in the future.
 
     \subsection{Data flow}
     The whole system is best described by the type of data it consumes, and how this data flows throughout it. Primary data sources
     are individual exchanges, and the web application. The web application only communicates with the database, and thus is not that
     interesting in this aspect.
 
-    However, the exchanges are more interesting. The exchanges each connect using \textbf{PUB} ZeroMQ socket to core service,
-    that binds \textbf{SUB} socket to a known port. This forms a Fan-In topology, that would be difficult to implement using other technologies.
+    However, the exchanges are more interesting. Most cryptocurrency exchanges provide REST API used for executing trades,
+    and WebSocket endpoint, that is used for providing latest financial data.
+    For each exchange supported by the system there is a dedicated component, that serves as an adapter to this exchange.
+    Main purpose of an exchange adapter is translation system requests into a specific exchange API requests, and forwarding the updates received over WebSocket to core
+    system component.
 
-    The data flowing from exchanges is in the form of per minute OHLC\footnote{https://en.wikipedia.org/wiki/Open-high-low-close\_chart} data.
-    This is then processed by the core component, which removes duplicate entries, determines when received data is final(there will be no more
-    updates to data from a specific time interval), computes data points for different time-scales, and publishes them along with received updates.
-    During this step, the data is also stored into persistent storage, which, for the momen, takes the form of a PostgreSQL database.
+    The individual exchange adapters each connect using \textbf{PUB} ZeroMQ socket to core service.
+    This forms a Fan-In topology, that would be difficult to implement using other technologies.
 
-    This database, along with financial data, also stores user data. User data is primarily the strategies, assignment of these
-    strategies to individual assets on an exchange, and information about trading accounts for an exchange. A strategy is a LUA\footnote{https://www.lua.org/} script, that takes OHLC data as an input, and produces
-    desired market position as an output. Each strategy can be assigned to multiple assets.
-    One asset, can only have assigned one strategy, and possibly one trading account.
+    The data flowing from exchanges is in the form of per--minute OHLC\footnote{https://en.wikipedia.org/wiki/Open-high-low-close\_chart} data.
+    This is then processed by the core component, which removes duplicate entries, computes data points for different time-scales,
+    and publishes them along with received updates.
+    During this step, the data is also stored into persistent storage, which currently takes the form of a PostgreSQL database.
 
-    The decision component periodically loads the assignment information from the database, and for each update from the core
-    component determines strategies, that should be evaluated, using newly updated data. It then submits a request to evaluation
-    component, which performs the actual strategy execution. Evaluation component is implemented as a load-balancing broker, that distributes work to multiple workers in round-robin fashion.
+    The decision actor in core component periodically loads the information about assignment of strategies to individual assets.
+    Whenever it receives new OHLC data it determines which strategies should be evaluated, and sends this information
+    to the evaluation component, which is implemented as a load-balancing broker, with multiple workers.
 
-    If an individual assignment had a trading account associated with it, the decision component then submits a request to \textbf{Position} component, along
-    with the account information, which retrieves the state of an account from an exchange, and if necessary, submits trading orders, to
-    move the balance int the desired market position.
+    Whenever an evaluation worker receives an evaluation request, it retrieves the strategy text, and historical data from the
+    database. It then creates a new Lua VM, configures it (eg. disabling file access), and provides a suite
+    of analytical functions, that can be used by individual strategies. Then it loads the strategy script into this VM, and executes it.
+
+    \begin{figure}[H]
+        \centering
+        \begin{verbatim}
+// Simple moving average
+local sma = ta.sma(10)
+// Exponential moving average
+local em = ta.ema(10)
+
+// Short term > long term
+if sma() > ema() then
+    return "short"
+else
+    return "long"
+end
+        \end{verbatim}
+        \caption{Example strategy}
+    \end{figure}
+
+
+    The output of the strategy is the desired market position - "long" or "short", the former denoting ownership of target
+    asset and the latter denoting the ownership of the exchange currency, eg. US Dollars.
+
+    This work does not focus upon the individual strategies, or methodologies behind them, it only provides basic building blocks
+    for creating them. One of future enhancements might the support of more advanced types of strategies.
+
+    Then upon receiving the results of strategy evaluation, the core component checks whether there is trading account information
+    associated with the asset. If there is, it then sends a request to an exchange adapter,
+    which then might check the current market position of the user, and possibly execute one or more trades, ensuring that the requested market position is achieved on this trading account.
+
 
     \section{Conclusions}
     \label{sec:Conclusions}

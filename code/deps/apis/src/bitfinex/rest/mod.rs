@@ -1,12 +1,20 @@
-use ::prelude::*;
+use crate::prelude::*;
 
 pub mod types;
 
-use ::common::{
-    actix_web::{self, *, error::ErrorUnauthorized},
-    types::auth::AuthInfo,
+use common::types::auth::AuthInfo;
+use actix_web::{
+    self,
+    client,
+    http,
+    HttpMessage,
+    Either,
+    error::ErrorUnauthorized,
 };
-use bitfinex::rest::types::WalletInfo;
+
+
+
+use crate::bitfinex::rest::types::WalletInfo;
 
 fn auth_req(info: &AuthInfo, path: impl Into<String>, mut body: json::Value) -> StdResult<client::ClientRequest, actix_web::Error> {
     let path = path.into();
@@ -57,4 +65,9 @@ pub fn new_order(auth: AuthInfo, amount: f64, pair: TradePair, buy: bool) -> imp
     req.from_err().and_then(|r| {
         r.body().from_err()
     }).map(|_| ())
+}
+
+
+pub fn order_status(auth: AuthInfo, order_id: i64) -> Result<types::OrderStatus> {
+    unimplemented!()
 }

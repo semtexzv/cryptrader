@@ -2,6 +2,7 @@
 name = "common"
 version = "0.0.0"
 authors = ["Michal Hornický <semtexzv@gmail.com>"]
+edition = "2018"
 
 [dependencies]
 serde = "1.0"
@@ -13,26 +14,21 @@ env_logger="*"
 log = "*"
 failure = "*"
 failure_derive="*"
-bytes = { version = "0.4", features = ["serde"] }
+
+bytes = { version = "*", features = ["serde"] }
 
 futures = "*"
 futures-retry = "*"
 
-
 url = "*"
-uuid = { version = "*", features = ["v4","serde"] }
+uuid = { version = "<0.7.0", features = ["v4","serde"] }
 
 chrono = { version = "*", features = ["serde"]}
 time = "*"
 base64 = "*"
 
-tokio = "*"
+tokio = { version ="*"}
 
 actix = { version = "0.7", default-features=false }
-actix-web = { version = "*", features = ["tls", "session"], default-features=false }
-actix-web-async-await = "*"
-
-diesel = "*"
-
-validator = "0.8"
-validator_derive = "0.8"
+actix-web = { version = "*", features = ["tls", "session"]}
+actix-async-await =  { path = "../deps/actix-async-await" }

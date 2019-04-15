@@ -2,6 +2,7 @@ use crate::prelude::*;
 use diesel::query_dsl::InternalJoinDsl;
 use schema::strategies;
 
+use validator::Validate;
 
 #[derive(Insertable, Validate, Deserialize, Serialize, Debug)]
 #[table_name = "strategies"]
@@ -25,12 +26,26 @@ impl crate::Database {
 
     pub fn strategy_data(&self, sid: i32) -> BoxFuture<(crate::Strategy, crate::User)> {
         return self.invoke(move |this, ctx| {
+            debug!("Receiving strategy data");
             use schema::strategies::dsl::*;
             use schema::users::dsl::*;
 
             let conn: &ConnType = &this.0.get().unwrap();
             let (strat, user) = strategies.find(sid).inner_join(users).get_result(conn)?;
             return Ok((strat, user));
+        });
+    }
+
+    pub fn single_strategy(&self, sid : i32) -> BoxFuture<crate::Strategy> {
+        return self.invoke(move |this, ctx| {
+            debug!("Receiving strategy source : {:?}", sid);
+            use schema::strategies::dsl::*;
+            use schema::users::dsl::*;
+
+            let conn: &ConnType = &this.0.get().unwrap();
+            let strat = strategies.find(sid).get_result(conn)?;
+            debug!("Got strategy source : {:?}", sid);
+            return Ok(strat);
         });
     }
 

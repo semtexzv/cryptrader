@@ -17,49 +17,42 @@ pub use std::{
 
 pub use lazy_static::lazy_static;
 
-pub use serde_derive::{Serialize, Deserialize};
-pub use serde::{
-    Serialize, Deserialize, de::DeserializeOwned, ser::Serializer, de::Deserializer,
-};
+pub use serde_derive::{self, Serialize, Deserialize};
+pub use serde::{Serialize, Deserialize, de::DeserializeOwned, ser::Serializer, de::Deserializer};
 
-pub use json::{
-    self,
-    json,
-};
-
-pub use actix::prelude::*;
-
+pub use serde_json as json;
+pub use json::json;
 
 pub use actix::{
-    fut::{
-        self as afut,
-        wrap_future,
-        wrap_stream,
-    }
-};
+    self,
+    prelude::*,
+    fut::{self as afut, wrap_future, wrap_stream}};
+
+pub use actix_web;
 
 pub use url::Url;
 pub use log::{log, trace, debug, info, warn, error};
+pub use env_logger;
+
 pub use bytes::{Bytes, BytesMut};
 
 pub use failure::{self, bail, format_err, Error};
-pub use failure_derive::Fail;
+pub use failure_derive::{self, Fail};
 
-pub use validator::{self, Validate};
-pub use validator_derive::Validate;
+pub use tokio::{self,util::FutureExt as _};
+
+pub use base64;
 
 pub use chrono;
 pub use uuid;
 
-pub use futures::{
-    prelude::*,
-    future,
-};
+pub use futures::{self, prelude::*, future};
 
 pub type Result<T, E = Error> = std::result::Result<T, E>;
 
 pub use std::result::Result as StdResult;
-use time::PreciseTime;
+
+pub use time::{self, PreciseTime};
 
 
 pub fn unixtime_millis() -> i64 {
@@ -125,19 +118,14 @@ impl<K: Ord + Clone, V> BTreeMapExt<K, V> for BTreeMap<K, V> {
 }
 
 
-pub fn measure_time<R, F>(f: F) -> (R,i64)
+pub fn measure_time<R, F>(f: F) -> (R, i64)
     where F: FnOnce() -> R {
     let t1 = PreciseTime::now();
     let res = f();
     let t2 = PreciseTime::now();
 
-    return (res, t1.to(t2).num_milliseconds())
+    return (res, t1.to(t2).num_milliseconds());
 }
-
-
-
-
-use futures::prelude::*;
 
 
 pub struct DropErr<F> {
@@ -221,3 +209,4 @@ pub trait FutureExt: Future + Sized {
 impl<F> FutureExt for F where F: Future + Sized {}
 
 pub use self::FutureExt as _;
+

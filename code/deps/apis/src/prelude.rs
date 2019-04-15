@@ -5,6 +5,7 @@ pub use common::{
         auth::AuthInfo,
     },
 };
+
 pub use std::str::FromStr;
 pub use std::fmt::Write;
 
@@ -50,4 +51,11 @@ pub fn f64_from_str_opt<'de, D>(deserializer: D) -> StdResult<Option<f64>, D::Er
 {
     let s = <Option<String>>::deserialize(deserializer)?;
     s.map(|s| f64::from_str(&s).map_err(::serde::de::Error::custom)).transpose()
+}
+
+pub fn tradepair_from_bfx<'de, D>(deserializer : D) -> StdResult<TradePair, D::Error>
+    where D : Deserializer<'de>
+{
+    let s = <String>::deserialize(deserializer)?;
+    Ok(TradePair::from_bfx_pair(&s))
 }

@@ -1,5 +1,5 @@
 import {LitElement, html, property, customElement, TemplateResult} from 'lit-element';
-import CustomElement from "../util/notify";
+import { CustomElement } from "../util/notify";
 
 
 @customElement("auth-form")

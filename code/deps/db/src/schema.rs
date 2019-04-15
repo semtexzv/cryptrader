@@ -1,5 +1,6 @@
 use super::*;
 use ::std::result::Result as Result;
+use uuid::Uuid;
 
 table! {
     assignments (exchange, pair, owner_id) {
@@ -9,20 +10,6 @@ table! {
         period -> Text,
         strategy_id -> Int4,
         trader_id -> Nullable<Int4>,
-    }
-}
-
-table! {
-    cached_ohlc (pair, exchange, period, time) {
-        time -> Int8,
-        exchange -> Varchar,
-        pair -> Varchar,
-        open -> Float8,
-        high -> Float8,
-        low -> Float8,
-        close -> Float8,
-        vol -> Float8,
-        period -> Int8,
     }
 }
 
@@ -37,6 +24,7 @@ table! {
         status -> Bool,
         ok -> Nullable<Text>,
         error -> Nullable<Text>,
+        duration -> Int8,
     }
 }
 
@@ -50,6 +38,20 @@ table! {
         low -> Float8,
         close -> Float8,
         vol -> Float8,
+    }
+}
+
+table! {
+    ohlc_rollups (pair, exchange, period, time) {
+        time -> Int8,
+        exchange -> Varchar,
+        pair -> Varchar,
+        open -> Float8,
+        high -> Float8,
+        low -> Float8,
+        close -> Float8,
+        vol -> Float8,
+        period -> Int8,
     }
 }
 
@@ -76,6 +78,23 @@ table! {
 }
 
 table! {
+    trades (uuid) {
+        uuid -> Uuid,
+        time -> Timestamptz,
+        trader_id -> Int4,
+        exchange -> Varchar,
+        pair -> Varchar,
+        period -> Varchar,
+        buy -> Bool,
+        amount -> Float8,
+        price -> Float8,
+        status -> Bool,
+        ok -> Nullable<Text>,
+        error -> Nullable<Text>,
+    }
+}
+
+table! {
     users (id) {
         id -> Int4,
         name -> Nullable<Text>,
@@ -95,14 +114,16 @@ joinable!(assignments -> users (owner_id));
 joinable!(evaluations -> strategies (strategy_id));
 joinable!(strategies -> users (owner_id));
 joinable!(traders -> users (user_id));
+joinable!(trades -> traders (trader_id));
 
 allow_tables_to_appear_in_same_query!(
     assignments,
-    cached_ohlc,
     evaluations,
     ohlc,
+    ohlc_rollups,
     strategies,
     traders,
+    trades,
     users,
 );
 
@@ -130,7 +151,7 @@ pub struct Trader {
     pub user_id: i32,
     pub name: String,
 
-    pub exchange : String,
+    pub exchange: String,
     pub api_key: String,
     pub api_secret: String,
 }
@@ -182,11 +203,11 @@ pub struct Strategy {
 pub struct Assignment {
     pub exchange: String,
     pub pair: String,
-    pub owner_id : i32,
+    pub owner_id: i32,
     pub period: String,
     pub strategy_id: i32,
 
-    pub trader_id : Option<i32>,
+    pub trader_id: Option<i32>,
 }
 
 
@@ -198,9 +219,33 @@ pub struct Evaluation {
     pub exchange: String,
     pub pair: String,
     pub period: String,
-    pub owner_id : i32,
+    pub owner_id: i32,
 
     pub time: chrono::NaiveDateTime,
+    pub status: bool,
+    pub ok: Option<String>,
+    pub error: Option<String>,
+
+    pub duration : i64,
+}
+
+
+#[derive(PartialEq, Deserialize, Serialize, Debug, Clone)]
+#[derive(Queryable, Insertable, AsChangeset, Associations, QueryableByName)]
+#[table_name = "trades"]
+pub struct Trade {
+    pub uuid: Uuid,
+    pub time: chrono::NaiveDateTime,
+
+    pub trader_id: i32,
+    pub exchange: String,
+    pub pair: String,
+    pub period: String,
+
+    pub buy: bool,
+    pub amount: f64,
+    pub price: f64,
+
     pub status: bool,
     pub ok: Option<String>,
     pub error: Option<String>,
@@ -209,7 +254,7 @@ pub struct Evaluation {
 
 
 // This is a table resulting from materialized view
-table!{
+table! {
     pairs(exchange, pair) {
         exchange -> Text,
         pair -> Text,

@@ -8,8 +8,18 @@ edition = "2018"
 common = {path = "../../common"}
 serde = "*"
 
-diesel = { version = "*", features = ["postgres", "r2d2", "chrono"]}
+diesel = { version = "*", features = ["postgres", "r2d2", "chrono", "uuid"]}
 diesel_migrations = "*"
 
 r2d2="*"
 r2d2-diesel="*"
+
+
+cdrs = { version = "2" }
+cdrs_helpers_derive = "*"
+
+
+validator={ version = "*", default-features=false}
+validator_derive = "*"
+
+

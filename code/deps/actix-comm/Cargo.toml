@@ -10,7 +10,7 @@ path = "../../common"
 
 [dependencies]
 serde = "*"
-actix="*"
+actix = { version = "0.7", default-features=false }
 actix_derive = "*"
 failure = "*"
 
@@ -22,3 +22,6 @@ version = "*"
 package = "tokio-zmq"
 rev = "master"
 git = "https://github.com/semtexzv/tokio-zmq"
+
+#[dependencies.tmq]
+#path = "../tmq"

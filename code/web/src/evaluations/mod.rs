@@ -18,12 +18,12 @@ pub async fn api_list(req: HttpRequest<State>) -> Result<impl Responder, actix_w
     let strats = await_compat!(db.user_strategies(base.auth.uid))?;
     for s in strats {
         let evals = await_compat!(db.get_evals(s.id))?;
-        items.push((s,evals));
+        items.extend_from_slice(&evals);
     }
     Ok(Json(items).respond_to(&req)?)
 }
 
-pub async fn api_list_strat((req, id) : (HttpRequest<State>, Path<i32>)) -> Result<impl Responder, actix_web::Error> {
+pub async fn api_list_evals((req, id) : (HttpRequest<State>, Path<i32>)) -> Result<impl Responder, actix_web::Error> {
     let db: Database = req.state().db.clone();
     let base = await_compat!(BaseTemplateInfo::from_request(&req))?;
     require_login!(base);
@@ -39,7 +39,7 @@ pub fn configure(application: App<State>) -> App<State> {
             r.method(Method::GET).with(compat(api_list));
         })
         .resource("/api/strategies/{id}/evaluations", |r| {
-            r.method(Method::GET).with(compat(api_list));
+            r.method(Method::GET).with(compat(api_list_evals));
         })
 }
 

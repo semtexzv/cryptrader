@@ -3,10 +3,9 @@ use crate::prelude::*;
 use std::mem;
 use ta::{
     indicators::*,
-    *,
 };
 
-use rlua::{self, Lua, LightUserData, FromLua, ToLua, UserData, UserDataMethods};
+use rlua::{self, Lua, UserData, UserDataMethods};
 use crate::{StrategyInput, TradingStrategy};
 use crate::EvalError;
 
@@ -24,7 +23,7 @@ impl LuaStrategy {
 
         let x: Result<(), rlua::Error> = lua.context(|ctx| {
             register_ta(ctx).unwrap();
-            disable_io(ctx).unwrap();
+            init_saferun(ctx).unwrap();
             let fun: rlua::Function = ctx.load(src).into_function()?;
             ctx.globals().set("__strategy", fun)?;
             Ok(())
@@ -36,21 +35,24 @@ impl LuaStrategy {
             lua
         });
     }
-}
 
-impl TradingStrategy for LuaStrategy {
-    fn decide(&self, data: &StrategyInput) -> Result<TradingPosition, EvalError> {
-        return self.lua.context(|ctx| {
+    pub fn set_data(&self, data: &StrategyInput) {
+        self.lua.context(|ctx| {
             ctx.globals()
                 .set("__ohlc",
                      data.ohlc
                          .iter()
                          .map(|(k, v)| { LuaOhlc(v.clone()) })
                          .collect::<Vec<LuaOhlc>>()).unwrap();
-
-            let strat: rlua::Function = ctx.globals().get("__strategy").unwrap();
-
-            let res = strat.call::<_, rlua::Value>(());
+        });
+    }
+    pub fn execute(&self) -> Result<TradingPosition, EvalError> {
+        return self.lua.context(|ctx| {
+            println!("Executing");
+            //let exec = ctx.load("return run_sandbox(__strategy)");
+            let exec: rlua::Function = ctx.globals().get("__strategy").unwrap();
+            let res = exec.call::<_, rlua::Value>(());
+            println!("Res is : {:?}", res);
 
             match res {
                 Ok(rlua::Value::Number(n)) => {
@@ -69,6 +71,13 @@ impl TradingStrategy for LuaStrategy {
                 }
             }
         });
+    }
+}
+
+impl TradingStrategy for LuaStrategy {
+    fn decide(&self, data: &StrategyInput) -> Result<TradingPosition, EvalError> {
+        self.set_data(data);
+        return self.execute();
     }
 }
 
@@ -117,20 +126,62 @@ impl rlua::UserData for LuaPairData {
     fn add_methods<'lua, T: UserDataMethods<'lua, Self>>(_methods: &mut T) {}
 }
 
-fn disable_io(lua: rlua::Context) -> Result<(), rlua::Error> {
+fn init_saferun(lua: rlua::Context) -> Result<(), rlua::Error> {
     let src = r#"
-local oldprint = print
-print = function(...)
-    oldprint("In ur print!");
-    oldprint(...);
-end"#;
+-- save a pointer to globals that would be unreachable in sandbox
+local e=_ENV
 
-    lua.load(src).exec()?;
+-- sample sandbox environment
+sandbox_env = {
+  ta = ta,
 
+  ipairs = ipairs,
+  next = next,
+  pairs = pairs,
+  pcall = pcall,
+  tonumber = tonumber,
+  tostring = tostring,
+  type = type,
+  unpack = unpack,
+  coroutine = { create = coroutine.create, resume = coroutine.resume,
+      running = coroutine.running, status = coroutine.status,
+      wrap = coroutine.wrap },
+  string = { byte = string.byte, char = string.char, find = string.find,
+      format = string.format, gmatch = string.gmatch, gsub = string.gsub,
+      len = string.len, lower = string.lower, match = string.match,
+      rep = string.rep, reverse = string.reverse, sub = string.sub,
+      upper = string.upper },
+  table = { insert = table.insert, maxn = table.maxn, remove = table.remove,
+      sort = table.sort },
+  math = { abs = math.abs, acos = math.acos, asin = math.asin,
+      atan = math.atan, atan2 = math.atan2, ceil = math.ceil, cos = math.cos,
+      cosh = math.cosh, deg = math.deg, exp = math.exp, floor = math.floor,
+      fmod = math.fmod, frexp = math.frexp, huge = math.huge,
+      ldexp = math.ldexp, log = math.log, log10 = math.log10, max = math.max,
+      min = math.min, modf = math.modf, pi = math.pi, pow = math.pow,
+      rad = math.rad, random = math.random, sin = math.sin, sinh = math.sinh,
+      sqrt = math.sqrt, tan = math.tan, tanh = math.tanh },
+  os = { clock = os.clock, difftime = os.difftime, time = os.time },
+}
+
+function run_sandbox(sb_func, ...)
+  local sb_orig_env=_ENV
+  if (not sb_func) then return nil end
+  _ENV=sandbox_env
+  local sb_ret={e.pcall(sb_func, ...)}
+  _ENV=sb_orig_env
+  return e.table.unpack(sb_ret)
+end
+return run_sandbox
+"#;
+
+    let fun: rlua::Function = lua.load(src).eval()?;
+    lua.globals().set("safe_run", fun)?;
     Ok(())
 }
 
-fn register_ta<'lua>(lua: rlua::Context<'lua>) -> Result<()> {
+
+fn register_ta(lua: rlua::Context) -> Result<()> {
     let ta = lua.create_table()?;
     ta.set("ema", lua.create_function(|lua, (period, ): (u32, )| {
         Ok(LuaIndicator {

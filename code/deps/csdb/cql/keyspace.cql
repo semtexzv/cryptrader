@@ -1,0 +1,1 @@
+CREATE KEYSPACE IF NOT EXISTS main_ks WITH REPLICATION = {  'class' : 'SimpleStrategy', 'replication_factor' : 2 };

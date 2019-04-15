@@ -54,7 +54,9 @@ fn main() {
             "bitfinex" => {
                 common::actix::Arbiter::spawn(exch::bitfinex::BitfinexClient::new(ctx.clone())
                     .then(|v| {
-                        v.unwrap();
+                        if let Err(e) = v {
+                            panic!("Smth happened : {:?}", e);
+                        }
                         result(Ok(()))
                     })
                 );

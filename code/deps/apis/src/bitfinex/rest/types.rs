@@ -1,4 +1,4 @@
-use prelude::*;
+use crate::prelude::*;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct WalletInfo {
@@ -15,7 +15,7 @@ pub struct WalletInfo {
 pub struct NewOrderPayload {
     pub symbol: TradePair,
     pub amount: f64,
-    pub buy : bool,
+    pub buy: bool,
 }
 
 impl Serialize for NewOrderPayload {
@@ -50,5 +50,13 @@ pub struct SymbolDetail {
     pub pair: String,
     pub price_precision: usize,
     #[serde(deserialize_with = "f64_from_str")]
-    pub minimum_order_size : f64
+    pub minimum_order_size: f64,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct OrderStatus {
+    pub id: usize,
+    pub exchange: String,
+    #[serde(deserialize_with = "tradepair_from_bfx")]
+    pub pair: TradePair,
 }

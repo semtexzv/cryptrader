@@ -41,10 +41,11 @@ with cached as (select time as bucket,
                 from ohlc_rollups
                 where exchange = $1
                   and pair = $2
-                  and time > $4
+                  and time >= $4
                   and time < $5
                   and period = $3
-                order by bucket desc
+                order by bucket asc
+                limit 1000
 ),
 
      calculated as (SELECT time_bucket($3, t.time) AS bucket,
@@ -60,7 +61,8 @@ with cached as (select time as bucket,
                       AND t.time >= $4
                       AND t.time < $5
                     GROUP BY bucket
-                    ORDER BY bucket DESC),
+                    ORDER BY bucket asc
+                    limit 1000),
 
      min as (select coalesce(min(bucket), $4) as bucket from cached),
      max as (select coalesce(max(bucket), $5) as bucket from calculated),
@@ -80,14 +82,17 @@ with cached as (select time as bucket,
          where case when $3 > 120 then 1 else 0 end = 1
          on conflict do nothing
      ),
-     filtered as (select distinct on (c.bucket) *
-                  from (select * from calculated union (select * from cached)) c
-                  order by c.bucket desc),
+
+     filtered as (select *
+                  from calculated
+                  union
+                  (select * from cached)
+     ),
 
      times as (select generate_series as bucket
                from generate_series((select bucket from min), (select bucket from max), $3)
-               order by bucket desc
-               limit 2000
+               order by bucket asc
+               limit 1000
      )
         ,
 
@@ -95,8 +100,9 @@ with cached as (select time as bucket,
                 from filtered
                          right join times using (bucket)
                 order by bucket desc
-                limit 2000
+                limit 1000
      ),
+
      backfilled as (
          select bucket,
                 coalesce(open, locf(filled.close) over win)  as open,
@@ -106,10 +112,10 @@ with cached as (select time as bucket,
                 coalesce(vol, 0)                             as volume
          from filled window
              win as (order by filled.bucket asc ROWS 50 preceding)
-         order by bucket desc
-         limit 2000)
+         order by bucket asc
+         limit 1000)
 select *
 from backfilled
 where open is not null
-order by bucket desc
+order by bucket asc
 $$ language SQL;

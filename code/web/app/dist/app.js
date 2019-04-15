@@ -524,7 +524,7 @@ Object.defineProperty(exports, "__esModule", {
 exports.getAll = getAll;
 exports.getOne = getOne;
 exports.postOne = postOne;
-exports.Trader = exports.Assignment = exports.Strategy = void 0;
+exports.Evaluation = exports.Trader = exports.Assignment = exports.Strategy = void 0;
 
 var tslib_1 = _interopRequireWildcard(require("tslib"));
 
@@ -559,6 +559,22 @@ class Trader {
 }
 
 exports.Trader = Trader;
+
+class Evaluation {
+  constructor() {
+    this.strategy_id = null;
+    this.exchange = null;
+    this.pair = null;
+    this.period = null;
+    this.time = null;
+    this.status = null;
+    this.ok = null;
+    this.error = null;
+  }
+
+}
+
+exports.Evaluation = Evaluation;
 
 function getAll(base) {
   return tslib_1.__awaiter(this, void 0, void 0, function* () {
@@ -2915,7 +2931,6 @@ class UpdatingElement extends HTMLElement {
     Object.defineProperty(this.prototype, name, {
       // tslint:disable-next-line:no-any no symbol in index
       get() {
-        // tslint:disable-next-line:no-any no symbol in index
         return this[key];
       },
 
@@ -2924,7 +2939,8 @@ class UpdatingElement extends HTMLElement {
         const oldValue = this[name]; // tslint:disable-next-line:no-any no symbol in index
 
         this[key] = value;
-        this.requestUpdate(name, oldValue);
+
+        this._requestUpdate(name, oldValue);
       },
 
       configurable: true,
@@ -3035,7 +3051,10 @@ class UpdatingElement extends HTMLElement {
 
 
   initialize() {
-    this._saveInstanceProperties();
+    this._saveInstanceProperties(); // ensures first update will be caught by an early access of `updateComplete`
+
+
+    this._requestUpdate();
   }
   /**
    * Fixes any properties set on the instance before upgrade time.
@@ -3082,7 +3101,7 @@ class UpdatingElement extends HTMLElement {
   }
 
   connectedCallback() {
-    this._updateState = this._updateState | STATE_HAS_CONNECTED; // Ensure connection triggers an update. Updates cannot complete before
+    this._updateState = this._updateState | STATE_HAS_CONNECTED; // Ensure first connection completes an update. Updates cannot complete before
     // connection and if one is pending connection the `_hasConnectionResolver`
     // will exist. If so, resolve it to complete the update, otherwise
     // requestUpdate.
@@ -3091,8 +3110,6 @@ class UpdatingElement extends HTMLElement {
       this._hasConnectedResolver();
 
       this._hasConnectedResolver = undefined;
-    } else {
-      this.requestUpdate();
     }
   }
   /**
@@ -3170,6 +3187,46 @@ class UpdatingElement extends HTMLElement {
     }
   }
   /**
+   * This private version of `requestUpdate` does not access or return the
+   * `updateComplete` promise. This promise can be overridden and is therefore
+   * not free to access.
+   */
+
+
+  _requestUpdate(name, oldValue) {
+    let shouldRequestUpdate = true; // If we have a property key, perform property update steps.
+
+    if (name !== undefined) {
+      const ctor = this.constructor;
+      const options = ctor._classProperties.get(name) || defaultPropertyDeclaration;
+
+      if (ctor._valueHasChanged(this[name], oldValue, options.hasChanged)) {
+        if (!this._changedProperties.has(name)) {
+          this._changedProperties.set(name, oldValue);
+        } // Add to reflecting properties set.
+        // Note, it's important that every change has a chance to add the
+        // property to `_reflectingProperties`. This ensures setting
+        // attribute + property reflects correctly.
+
+
+        if (options.reflect === true && !(this._updateState & STATE_IS_REFLECTING_TO_PROPERTY)) {
+          if (this._reflectingProperties === undefined) {
+            this._reflectingProperties = new Map();
+          }
+
+          this._reflectingProperties.set(name, options);
+        }
+      } else {
+        // Abort the request if the property should not be considered changed.
+        shouldRequestUpdate = false;
+      }
+    }
+
+    if (!this._hasRequestedUpdate && shouldRequestUpdate) {
+      this._enqueueUpdate();
+    }
+  }
+  /**
    * Requests an update which is processed asynchronously. This should
    * be called when an element should update based on some state not triggered
    * by setting a property. In this case, pass no arguments. It should also be
@@ -3185,33 +3242,7 @@ class UpdatingElement extends HTMLElement {
 
 
   requestUpdate(name, oldValue) {
-    let shouldRequestUpdate = true; // if we have a property key, perform property update steps.
-
-    if (name !== undefined && !this._changedProperties.has(name)) {
-      const ctor = this.constructor;
-      const options = ctor._classProperties.get(name) || defaultPropertyDeclaration;
-
-      if (ctor._valueHasChanged(this[name], oldValue, options.hasChanged)) {
-        // track old value when changing.
-        this._changedProperties.set(name, oldValue); // add to reflecting properties set
-
-
-        if (options.reflect === true && !(this._updateState & STATE_IS_REFLECTING_TO_PROPERTY)) {
-          if (this._reflectingProperties === undefined) {
-            this._reflectingProperties = new Map();
-          }
-
-          this._reflectingProperties.set(name, options);
-        } // abort the request if the property should not be considered changed.
-
-      } else {
-        shouldRequestUpdate = false;
-      }
-    }
-
-    if (!this._hasRequestedUpdate && shouldRequestUpdate) {
-      this._enqueueUpdate();
-    }
+    this._requestUpdate(name, oldValue);
 
     return this.updateComplete;
   }
@@ -3224,22 +3255,36 @@ class UpdatingElement extends HTMLElement {
     // Mark state updating...
     this._updateState = this._updateState | STATE_UPDATE_REQUESTED;
     let resolve;
+    let reject;
     const previousUpdatePromise = this._updatePromise;
-    this._updatePromise = new Promise(res => resolve = res); // Ensure any previous update has resolved before updating.
-    // This `await` also ensures that property changes are batched.
+    this._updatePromise = new Promise((res, rej) => {
+      resolve = res;
+      reject = rej;
+    });
 
-    await previousUpdatePromise; // Make sure the element has connected before updating.
+    try {
+      // Ensure any previous update has resolved before updating.
+      // This `await` also ensures that property changes are batched.
+      await previousUpdatePromise;
+    } catch (e) {} // Ignore any previous errors. We only care that the previous cycle is
+    // done. Any error should have been handled in the previous update.
+    // Make sure the element has connected before updating.
+
 
     if (!this._hasConnected) {
       await new Promise(res => this._hasConnectedResolver = res);
-    } // Allow `performUpdate` to be asynchronous to enable scheduling of updates.
+    }
 
+    try {
+      const result = this.performUpdate(); // If `performUpdate` returns a Promise, we await it. This is done to
+      // enable coordinating updates with a scheduler. Note, the result is
+      // checked to avoid delaying an additional microtask unless we need to.
 
-    const result = this.performUpdate(); // Note, this is to avoid delaying an additional microtask unless we need
-    // to.
-
-    if (result != null && typeof result.then === 'function') {
-      await result;
+      if (result != null) {
+        await result;
+      }
+    } catch (e) {
+      reject(e);
     }
 
     resolve(!this._hasRequestedUpdate);
@@ -3257,10 +3302,13 @@ class UpdatingElement extends HTMLElement {
     return this._updateState & STATE_HAS_UPDATED;
   }
   /**
-   * Performs an element update.
+   * Performs an element update. Note, if an exception is thrown during the
+   * update, `firstUpdated` and `updated` will not be called.
    *
-   * You can override this method to change the timing of updates. For instance,
-   * to schedule updates to occur just before the next frame:
+   * You can override this method to change the timing of updates. If this
+   * method is overridden, `super.performUpdate()` must be called.
+   *
+   * For instance, to schedule updates to occur just before the next frame:
    *
    * ```
    * protected async performUpdate(): Promise<unknown> {
@@ -3277,20 +3325,32 @@ class UpdatingElement extends HTMLElement {
       this._applyInstanceProperties();
     }
 
-    if (this.shouldUpdate(this._changedProperties)) {
-      const changedProperties = this._changedProperties;
-      this.update(changedProperties);
+    let shouldUpdate = false;
+    const changedProperties = this._changedProperties;
 
+    try {
+      shouldUpdate = this.shouldUpdate(changedProperties);
+
+      if (shouldUpdate) {
+        this.update(changedProperties);
+      }
+    } catch (e) {
+      // Prevent `firstUpdated` and `updated` from running when there's an
+      // update exception.
+      shouldUpdate = false;
+      throw e;
+    } finally {
+      // Ensure element can accept additional updates after an exception.
       this._markUpdated();
+    }
 
+    if (shouldUpdate) {
       if (!(this._updateState & STATE_HAS_UPDATED)) {
         this._updateState = this._updateState | STATE_HAS_UPDATED;
         this.firstUpdated(changedProperties);
       }
 
       this.updated(changedProperties);
-    } else {
-      this._markUpdated();
     }
   }
 
@@ -3302,7 +3362,8 @@ class UpdatingElement extends HTMLElement {
    * Returns a Promise that resolves when the element has completed updating.
    * The Promise value is a boolean that is `true` if the element completed the
    * update without triggering another update. The Promise result is `false` if
-   * a property was set inside `updated()`. This getter can be implemented to
+   * a property was set inside `updated()`. If the Promise is rejected, an
+   * exception was thrown during the update. This getter can be implemented to
    * await additional state. For example, it is sometimes useful to await a
    * rendered element before fulfilling this Promise. To do this, first await
    * `super.updateComplete` then any subsequent state.
@@ -3386,7 +3447,9 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 exports.property = property;
-exports.eventOptions = exports.queryAll = exports.query = exports.customElement = void 0;
+exports.query = query;
+exports.queryAll = queryAll;
+exports.eventOptions = exports.customElement = void 0;
 
 /**
  * @license
@@ -3503,21 +3566,47 @@ function property(options) {
 /**
  * A property decorator that converts a class property into a getter that
  * executes a querySelector on the element's renderRoot.
+ *
+ * @ExportDecoratedItems
  */
 
 
-const query = _query((target, selector) => target.querySelector(selector));
+function query(selector) {
+  return (protoOrDescriptor, // tslint:disable-next-line:no-any decorator
+  name) => {
+    const descriptor = {
+      get() {
+        return this.renderRoot.querySelector(selector);
+      },
+
+      enumerable: true,
+      configurable: true
+    };
+    return name !== undefined ? legacyQuery(descriptor, protoOrDescriptor, name) : standardQuery(descriptor, protoOrDescriptor);
+  };
+}
 /**
  * A property decorator that converts a class property into a getter
  * that executes a querySelectorAll on the element's renderRoot.
+ *
+ * @ExportDecoratedItems
  */
 
 
-exports.query = query;
+function queryAll(selector) {
+  return (protoOrDescriptor, // tslint:disable-next-line:no-any decorator
+  name) => {
+    const descriptor = {
+      get() {
+        return this.renderRoot.querySelectorAll(selector);
+      },
 
-const queryAll = _query((target, selector) => target.querySelectorAll(selector));
-
-exports.queryAll = queryAll;
+      enumerable: true,
+      configurable: true
+    };
+    return name !== undefined ? legacyQuery(descriptor, protoOrDescriptor, name) : standardQuery(descriptor, protoOrDescriptor);
+  };
+}
 
 const legacyQuery = (descriptor, proto, name) => {
   Object.defineProperty(proto, name, descriptor);
@@ -3529,30 +3618,6 @@ const standardQuery = (descriptor, element) => ({
   key: element.key,
   descriptor
 });
-/**
- * Base-implementation of `@query` and `@queryAll` decorators.
- *
- * @param queryFn exectute a `selector` (ie, querySelector or querySelectorAll)
- * against `target`.
- * @suppress {visibility} The descriptor accesses an internal field on the
- * element.
- */
-
-
-function _query(queryFn) {
-  return selector => (protoOrDescriptor, // tslint:disable-next-line:no-any decorator
-  name) => {
-    const descriptor = {
-      get() {
-        return queryFn(this.renderRoot, selector);
-      },
-
-      enumerable: true,
-      configurable: true
-    };
-    return name !== undefined ? legacyQuery(descriptor, protoOrDescriptor, name) : standardQuery(descriptor, protoOrDescriptor);
-  };
-}
 
 const standardEventOptions = (options, element) => {
   return Object.assign({}, element, {
@@ -3737,7 +3802,7 @@ exports.LitElement = void 0;
 
 var _litHtml = require("lit-html");
 
-var _shadyRender = require("lit-html/lib/shady-render");
+var _shadyRender = require("lit-html/lib/shady-render.js");
 
 var _updatingElement = require("./lib/updating-element.js");
 
@@ -3765,7 +3830,7 @@ Object.keys(_decorators).forEach(function (key) {
   });
 });
 
-var _litHtml2 = require("lit-html/lit-html");
+var _litHtml2 = require("lit-html/lit-html.js");
 
 var _cssTag = require("./lib/css-tag.js");
 
@@ -3995,14 +4060,15 @@ LitElement.finalized = true;
  */
 
 LitElement.render = _shadyRender.render;
-},{"lit-html":"../node_modules/lit-html/lit-html.js","lit-html/lib/shady-render":"../node_modules/lit-html/lib/shady-render.js","./lib/updating-element.js":"../node_modules/lit-element/lib/updating-element.js","./lib/decorators.js":"../node_modules/lit-element/lib/decorators.js","lit-html/lit-html":"../node_modules/lit-html/lit-html.js","./lib/css-tag.js":"../node_modules/lit-element/lib/css-tag.js"}],"util/notify.ts":[function(require,module,exports) {
+},{"lit-html":"../node_modules/lit-html/lit-html.js","lit-html/lib/shady-render.js":"../node_modules/lit-html/lib/shady-render.js","./lib/updating-element.js":"../node_modules/lit-element/lib/updating-element.js","./lib/decorators.js":"../node_modules/lit-element/lib/decorators.js","lit-html/lit-html.js":"../node_modules/lit-html/lit-html.js","./lib/css-tag.js":"../node_modules/lit-element/lib/css-tag.js"}],"util/notify.ts":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
 exports.eventNameForProperty = eventNameForProperty;
-exports.default = void 0;
+exports.navigate = navigate;
+exports.CustomElement = void 0;
 
 var _litElement = require("lit-element");
 
@@ -4013,14 +4079,25 @@ function eventNameForProperty(name) {
   return `${name.toLowerCase()}-changed`;
 }
 
+function navigate(href) {
+  window.history.pushState({}, null, href + window.location.search);
+  window.dispatchEvent(new CustomEvent('route')); // @ts-ignore
+  //if (super.navigate) super.navigate();
+}
+
 class CustomElement extends _litElement.LitElement {
   createRenderRoot() {
     return this;
   }
 
+  loading() {
+    return _litElement.html`<div>Not yet loaded</div>`;
+  }
+
   notifyPropChanged(name, value = null) {
     this.dispatchEvent(new CustomEvent(eventNameForProperty(name), {
       detail: {
+        // @ts-ignore
         value: value != null ? value : this[name]
       },
       bubbles: true,
@@ -4030,8 +4107,7 @@ class CustomElement extends _litElement.LitElement {
 
 }
 
-var _default = CustomElement;
-exports.default = _default;
+exports.CustomElement = CustomElement;
 },{"lit-element":"../node_modules/lit-element/lit-element.js"}],"../node_modules/ace-builds/src-noconflict/ace.js":[function(require,module,exports) {
 var global = arguments[3];
 var define;
@@ -27932,7 +28008,7 @@ var tslib_1 = _interopRequireWildcard(require("tslib"));
 
 var _litElement = require("lit-element");
 
-var _notify = _interopRequireDefault(require("./notify"));
+var _notify = require("./notify");
 
 var ace = _interopRequireWildcard(require("ace-builds/src-noconflict/ace"));
 
@@ -27942,11 +28018,9 @@ require("ace-builds/src-noconflict/mode-lua");
 
 require("ace-builds/src-noconflict/theme-dreamweaver");
 
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
 function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = Object.defineProperty && Object.getOwnPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : {}; if (desc.get || desc.set) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } } newObj.default = obj; return newObj; } }
 
-let AceEditor = class AceEditor extends _notify.default {
+let AceEditor = class AceEditor extends _notify.CustomElement {
   constructor() {
     super(...arguments);
     this.content = "";
@@ -27964,7 +28038,7 @@ let AceEditor = class AceEditor extends _notify.default {
 
   initEditor() {
     ace.config.set('basePath', 'https://cdnjs.cloudflare.com/ajax/libs/ace/1.4.2/');
-    var shadow = this.shadowRoot;
+    var shadow = this;
 
     ace.require("ace/ext/lanugage_tools");
 
@@ -27979,7 +28053,7 @@ let AceEditor = class AceEditor extends _notify.default {
                     border: solid 1px gray;                 
                 }
                 #editor {
-                    height: 200px;
+                    height: 500px;
                 }
             `]], shadow);
     this.editor = ace.edit(shadow.querySelector("#editor"), {
@@ -27994,27 +28068,6 @@ let AceEditor = class AceEditor extends _notify.default {
     this.editor.session.on('change', () => {
       this.notifyPropChanged('content', this.editor.session.getValue());
     });
-  }
-
-  bind(property) {
-    return e => {
-      try {
-        var schema = this; // a moving reference to internal objects within obj
-
-        var pList = property.split('.');
-        var len = pList.length;
-
-        for (var i = 0; i < len - 1; i++) {
-          var elem = pList[i];
-          if (!schema[elem]) schema[elem] = {};
-          schema = schema[elem];
-        }
-
-        if (schema) schema[pList[len - 1]] = e.target.value;
-      } catch (e) {
-        console.error("Error in 2-way DataBinding", e);
-      }
-    };
   }
 
 };
@@ -28036,13 +28089,11 @@ var tslib_1 = _interopRequireWildcard(require("tslib"));
 
 var _litElement = require("lit-element");
 
-var _notify = _interopRequireDefault(require("../util/notify"));
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+var _notify = require("../util/notify");
 
 function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = Object.defineProperty && Object.getOwnPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : {}; if (desc.get || desc.set) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } } newObj.default = obj; return newObj; } }
 
-let Login = class Login extends _notify.default {
+let Login = class Login extends _notify.CustomElement {
   constructor() {
     super(...arguments);
     this.email = "";
@@ -28090,7 +28141,35 @@ let AuthBlock = class AuthBlock extends _litElement.LitElement {
 
 };
 AuthBlock = tslib_1.__decorate([(0, _litElement.customElement)("auth-block")], AuthBlock);
-},{"tslib":"../node_modules/tslib/tslib.es6.js","lit-element":"../node_modules/lit-element/lit-element.js","../util/notify":"util/notify.ts"}],"strategies/detail.ts":[function(require,module,exports) {
+},{"tslib":"../node_modules/tslib/tslib.es6.js","lit-element":"../node_modules/lit-element/lit-element.js","../util/notify":"util/notify.ts"}],"auth/auth-nav-item.ts":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.AuthNavItem = void 0;
+
+var tslib_1 = _interopRequireWildcard(require("tslib"));
+
+var _notify = require("../util/notify");
+
+var _litHtml = require("lit-html");
+
+var _litElement = require("lit-element");
+
+function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = Object.defineProperty && Object.getOwnPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : {}; if (desc.get || desc.set) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } } newObj.default = obj; return newObj; } }
+
+let AuthNavItem = class AuthNavItem extends _notify.CustomElement {
+  render() {
+    return _litHtml.html`<a class="nav-link" href="#" @click="${e => {
+      console.log("Logging out");
+    }}">Logout</a>`;
+  }
+
+};
+exports.AuthNavItem = AuthNavItem;
+exports.AuthNavItem = AuthNavItem = tslib_1.__decorate([(0, _litElement.customElement)("auth-nav-item")], AuthNavItem);
+},{"tslib":"../node_modules/tslib/tslib.es6.js","../util/notify":"util/notify.ts","lit-html":"../node_modules/lit-html/lit-html.js","lit-element":"../node_modules/lit-element/lit-element.js"}],"strategies/detail.ts":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -28104,22 +28183,23 @@ var _litElement = require("lit-element");
 
 var api = _interopRequireWildcard(require("../util/api"));
 
-var _notify = _interopRequireDefault(require("../util/notify"));
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+var _notify = require("../util/notify");
 
 function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = Object.defineProperty && Object.getOwnPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : {}; if (desc.get || desc.set) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } } newObj.default = obj; return newObj; } }
 
-let Detail = class Detail extends _notify.default {
+let Detail = class Detail extends _notify.CustomElement {
   constructor() {
     super(...arguments);
     this.strat_id = null;
     this.strat = null;
+    this.evaluations = [];
   }
 
   loadStrat() {
     return tslib_1.__awaiter(this, void 0, void 0, function* () {
       this.strat = yield api.getOne('strategies', this.strat_id);
+      this.evaluations = yield api.getAll(`strategies/${this.strat_id}/evaluations`);
+      this.notifyPropChanged('evaluations');
       console.log("Loaded strategy details: " + this.strat.name);
     });
   }
@@ -28137,21 +28217,24 @@ let Detail = class Detail extends _notify.default {
     this.notifyPropChanged('id');
   }
 
-  connectedCallback() {
-    super.connectedCallback();
-  }
-
   editor() {
+    var disabled = false;
     return _litElement.html`
+<div class="card">
+<div class="card-header">
+    <h3>Strategy detail : ${this.strat.name}</h3>
+</div>
+<div class="card-body">
+
 <ace-editor 
 content="${this.strat.body}" 
 @content-changed="${e => this.strat.body = e.detail.value}"></ace-editor>
-<button @click="${e => this.saveStrat()}">Save</button>
-`;
-  }
+<button class="btn btn-primary float-right" @click="${e => this.saveStrat()}" ?disabled="${disabled}">Save</button>
+${this.evaluations.map(e => _litElement.html`aa `)}
+</div>
+</div>
 
-  loading() {
-    return _litElement.html`<div>Not yet loaded</div>`;
+`;
   }
 
   render() {
@@ -28170,6 +28253,10 @@ tslib_1.__decorate([(0, _litElement.property)({
   type: Object
 })], Detail.prototype, "strat", void 0);
 
+tslib_1.__decorate([(0, _litElement.property)({
+  type: Array
+})], Detail.prototype, "evaluations", void 0);
+
 exports.Detail = Detail = tslib_1.__decorate([(0, _litElement.customElement)("strategy-detail")], Detail);
 },{"tslib":"../node_modules/tslib/tslib.es6.js","lit-element":"../node_modules/lit-element/lit-element.js","../util/api":"util/api.ts","../util/notify":"util/notify.ts"}],"strategies/list.ts":[function(require,module,exports) {
 "use strict";
@@ -28185,13 +28272,11 @@ var _litElement = require("lit-element");
 
 var api = _interopRequireWildcard(require("../util/api"));
 
-var _notify = _interopRequireDefault(require("../util/notify"));
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+var _notify = require("../util/notify");
 
 function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = Object.defineProperty && Object.getOwnPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : {}; if (desc.get || desc.set) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } } newObj.default = obj; return newObj; } }
 
-let Detail = class Detail extends _notify.default {
+let Detail = class Detail extends _notify.CustomElement {
   constructor() {
     super(...arguments);
     this.strategies = null;
@@ -28218,31 +28303,40 @@ let Detail = class Detail extends _notify.default {
       name: this.newName,
       body: ""
     }).then(e => {
-      window.location.href = `/strategies/${e.id}`;
+      window.location.href = `/app/strategies/${e.id}`;
     });
   }
 
   item(o) {
+    var link = `/app/strategies/${o.id}`;
     return _litElement.html`
         <tr>
         <td>${o.name}</td>
         <td>${o.created}</td>
-        <td><a href="/app/strategies/${o.id}">Detail</a></td>
+        <td><a class="btn btn-primary"  href="${link}" @click="${e => (0, _notify.navigate)(link)}" >Detail</a></td>
         </tr>
 `;
   }
 
   form() {
     return _litElement.html`
-        <div style="display: inline-block;">
-        <input name="name" type="text" .value="${this.newName}" @input="${e => this.handleText(e)}">
-        <button @click="${this.submitNew}">Create new</button>
-        </div>
+<tr>
+<td>
+    <input id="strategyname" name="name" type="text" class="form-control" .value="${this.newName}" @input="${e => this.handleText(e)}">
+     </td>
+        <td></td>
+        <td><button class="btn btn-primary " @click="${this.submitNew}">Create new</button></td>
+        </tr>
         `;
   }
 
   ok() {
     return _litElement.html`
+<div class="card">
+<div class="card-header">
+    <h3>User strategies</h3>
+</div>
+<div class="card-body">
     <table class="table">
         <thead>
         <tr>
@@ -28252,10 +28346,22 @@ let Detail = class Detail extends _notify.default {
         </tr>
         </thead>
         <tbody>
+        ${this.form()}
         ${this.strategies.map(this.item)}
         </tbody>
     </table>
-       ${this.form()}
+</div>
+</div>
+
+
+<div class="card">
+<div class="card-header">
+    <h3>Evaluations</h3>
+</div>
+<div class="card-body">
+    asda
+</div>
+</div>
         
 `;
   }
@@ -28289,15 +28395,13 @@ var _litElement = require("lit-element");
 
 var api = _interopRequireWildcard(require("../util/api"));
 
-var _notify = _interopRequireDefault(require("../util/notify"));
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+var _notify = require("../util/notify");
 
 function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = Object.defineProperty && Object.getOwnPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : {}; if (desc.get || desc.set) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } } newObj.default = obj; return newObj; } }
 
-let AssignmentItem = class AssignmentItem extends _notify.default {};
+let AssignmentItem = class AssignmentItem extends _notify.CustomElement {};
 AssignmentItem = tslib_1.__decorate([(0, _litElement.customElement)("assignment-item")], AssignmentItem);
-let AssignmentList = class AssignmentList extends _notify.default {
+let AssignmentList = class AssignmentList extends _notify.CustomElement {
   constructor() {
     super(...arguments);
     this.periods = ["1m", "5m", "15m"];
@@ -28353,6 +28457,9 @@ let AssignmentList = class AssignmentList extends _notify.default {
   }
 
   form() {
+    let selectExchange = _litElement.html`
+        `;
+
     let pairListener = e => {
       let p = e.target.options[e.target.selectedIndex];
       this.newData.exchange = p.dataset.exchange;
@@ -28361,7 +28468,7 @@ let AssignmentList = class AssignmentList extends _notify.default {
     };
 
     let selectPair = _litElement.html`
-        <select @change="${pairListener}" required>
+        <select class="form-control" @change="${pairListener}" required>
            <option value="" disabled selected>Select pair</option>
 ${this.pairs.map(p => _litElement.html`
 <option data-exchange="${p.exchange}" data-pair="${p.pair}">${p.exchange}/${p.pair}</option>`)}
@@ -28374,7 +28481,7 @@ ${this.pairs.map(p => _litElement.html`
     };
 
     let selectPeriod = _litElement.html`
-<select @change="${periodListener}">
+<select class="form-control" @change="${periodListener}">
 ${this.periods.map(p => _litElement.html`<option>${p}</option>`)}
 </select>
         `;
@@ -28385,7 +28492,7 @@ ${this.periods.map(p => _litElement.html`<option>${p}</option>`)}
     };
 
     let selectStrat = _litElement.html`
-        <select @change="${stratListener}">
+        <select class="form-control" @change="${stratListener}">
            <option value="" disabled selected>Select Strategy</option>
         ${this.strategies.map(s => _litElement.html`<option data-id="${s.id}" >${s.name}</option>`)}
         </select>
@@ -28397,27 +28504,25 @@ ${this.periods.map(p => _litElement.html`<option>${p}</option>`)}
     };
 
     let selectTrader = _litElement.html`
-        <select @change="${traderListener}">
+        <select class="form-control" @change="${traderListener}">
            <option value="" disabled selected>Select trader</option>
            <option value="" >None</option>
         ${this.traders.filter(t => this.assignments.find(a => a.trader_id == t.id) == null).map(s => _litElement.html`<option data-id="${s.id}">${s.name}</option>`)}
         </select>
         `;
     return _litElement.html`
-        <div style="display: inline-block;">
-        ${selectPair}
-        ${selectPeriod}
-        ${selectStrat}
-        ${selectTrader}
-        <button @click="${this.createNew}" ?disabled="${this.newData.pair == null || this.newData.strategy_id == null}">Create new</button>
-        </div>
+        <td colspan="2">${selectPair}</td>
+        <td>${selectPeriod}</td>
+        <td>${selectStrat}</td>
+        <td>${selectTrader}</td>
+        <td><button class="btn btn-primary" @click="${this.createNew}" ?disabled="${this.newData.pair == null || this.newData.strategy_id == null}">Create new</button></td>
         
         `;
   }
 
   header() {
     return _litElement.html`
-          <thead>
+          <thead class="thead-default">
         <tr>
         <th>Exchange</th>
         <th>Pair</th>
@@ -28438,7 +28543,7 @@ ${this.periods.map(p => _litElement.html`<option>${p}</option>`)}
         <td>${a.period}</td>
         <td>${this.strategies.find(s => s.id == a.strategy_id).name}</td>
         <td>${this.trader_name(a.trader_id)}</td>
-        <td><button @click="${e => this.delete(a)}">Delete</button></td>
+        <td><button class="btn btn-danger" @click="${e => this.delete(a)}">Delete</button></td>
 </tr>
         
         `;
@@ -28450,13 +28555,22 @@ ${this.periods.map(p => _litElement.html`<option>${p}</option>`)}
 
   ok() {
     return _litElement.html`
-        ${this.form()}
-<table id="assignments" class="table">
+<div class="card">
+<div class="card-header">
+    <h3>Strategy assignments</h3>
+</div>
+<div class="card-body">
+    <table id="assignments" class="table">
     ${this.header()}  
     <tbody>
+    ${this.form()}
     ${this.assignments.map(a => this.row(a))}
     </tbody>
 </table>
+</div>
+</div>
+
+
         `;
   }
 
@@ -28477,14 +28591,12 @@ var _litElement = require("lit-element");
 
 var api = _interopRequireWildcard(require("../util/api"));
 
-var _notify = _interopRequireDefault(require("../util/notify"));
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+var _notify = require("../util/notify");
 
 function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = Object.defineProperty && Object.getOwnPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : {}; if (desc.get || desc.set) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } } newObj.default = obj; return newObj; } }
 
 let style = _litElement.html` <style> :host { display: table-row; }  .td, ::content .td { display: table-cell; width: 50px;} </style>`;
-let TraderList = class TraderList extends _notify.default {
+let TraderList = class TraderList extends _notify.CustomElement {
   constructor() {
     super(...arguments);
     this.traders = [];
@@ -28507,7 +28619,7 @@ let TraderList = class TraderList extends _notify.default {
 
   thead() {
     return _litElement.html`
-        <thead class="thead-dark">
+        <thead >
         <tr>
             <th>Name</th>
             <th>Exchange</th>
@@ -28527,7 +28639,7 @@ let TraderList = class TraderList extends _notify.default {
         <td>${t.exchange}</td>
         <td>${t.api_key}</td>
         <td>Hidden</td>
-        <td>Delete</td>
+        <td><button class="btn btn-danger">Delete</button></td>
         </tr>
         `;
   }
@@ -28544,7 +28656,7 @@ let TraderList = class TraderList extends _notify.default {
       console.log(e);
     });
 
-    let but = _litElement.html`<button @click="${clicked}"  ?disabled="${!valid()}">Create new</button>`;
+    let but = _litElement.html`<button class="btn btn-primary" @click="${clicked}"  ?disabled="${!valid()}">Create new</button>`;
 
     let exchListener = e => {
       this.newTrader.exchange = e.target.options[e.target.selectedIndex].value;
@@ -28568,15 +28680,15 @@ let TraderList = class TraderList extends _notify.default {
 
     return _litElement.html`
 ${style}
-<td><input @input="${nameListener}" .value="${this.newTrader.name}"/></td>
+<td><input class="form-control" @input="${nameListener}" .value="${this.newTrader.name}"/></td>
 <td>
-    <select @change="${exchListener}" >
+    <select class="form-control" @change="${exchListener}" >
            <option value="" disabled selected>Select Exchange</option>
             ${this.exchanges.map(e => _litElement.html`<option>${e}</option>`)}
     </select>
 </td>
-<td><input @input="${keyListener}" .value="${this.newTrader.api_key}"/></td>
-<td><input @input="${secretListener}" .value="${this.newTrader.api_secret}"/>
+<td><input class="form-control" @input="${keyListener}" .value="${this.newTrader.api_key}"/></td>
+<td><input class="form-control" @input="${secretListener}" .value="${this.newTrader.api_secret}"/>
 </td>
 ${but}
 `;
@@ -28597,10 +28709,17 @@ ${this.traders.map(this.item)}
 
   render() {
     return _litElement.html`
-<table id="traders" class="table">
-${this.thead()}
-${this.tbody()}
+<div class="card">
+<div class="card-header card-header-primary">
+    <h3>Trader accounts</h3>
+</div>
+<div class="card-body">
+    <table id="traders" class="table">
+    ${this.thead()}
+    ${this.tbody()}
 </table>
+</div>
+</div>
 `;
   }
 
@@ -28674,7 +28793,7 @@ function parseParams(pattern, uri) {
 
 function patternToRegExp(pattern) {
   if (pattern) {
-    return new RegExp(pattern.replace(/:[^\s/]+/g, '([\\w\u00C0-\u00D6\u00D8-\u00f6\u00f8-\u00ff-]+)') + '(|/)$');
+    return new RegExp('^(|/)' + pattern.replace(/:[^\s/]+/g, '([\\w\u00C0-\u00D6\u00D8-\u00f6\u00f8-\u00ff-]+)') + '(|/)$');
   } else {
     return new RegExp('(^$|^/$)');
   }
@@ -28732,7 +28851,7 @@ function router(routes, callback) {
           callback(route.name, route.params, route.query, route.data);
         } else {
           route.callback && route.callback('not-authorized', route.params, route.query, route.data);
-          callback('not-authorized', {}, {}, {});
+          callback('not-authorized', route.params, route.query, route.data);
         }
       });
     } else {
@@ -28740,10 +28859,10 @@ function router(routes, callback) {
       callback(route.name, route.params, route.query, route.data);
     }
   } else if (notFoundRoute) {
-    notFoundRoute.callback && notFoundRoute.callback(notFoundRoute.name, {}, {}, {});
-    callback(notFoundRoute.name, {}, {}, {});
+    notFoundRoute.callback && notFoundRoute.callback(notFoundRoute.name, {}, (0, _routerUtility.parseQuery)(querystring), notFoundRoute.data);
+    callback(notFoundRoute.name, {}, (0, _routerUtility.parseQuery)(querystring), notFoundRoute.data);
   } else {
-    callback('not-found', {}, {}, {});
+    callback('not-found', {}, (0, _routerUtility.parseQuery)(querystring), notFoundRoute.data);
   }
 }
 },{"../utility/router-utility":"../node_modules/lit-element-router/utility/router-utility.js"}],"../node_modules/lit-element-router/router-mixin/router-mixin.js":[function(require,module,exports) {
@@ -28804,7 +28923,7 @@ let routerMixin = superclass => class extends superclass {
               callback(route.name, route.params, route.query, route.data);
             } else {
               route.callback && route.callback('not-authorized', route.params, route.query, route.data);
-              callback('not-authorized', {}, {}, {});
+              callback('not-authorized', route.params, route.query, route.data);
             }
           }
         });
@@ -28813,10 +28932,10 @@ let routerMixin = superclass => class extends superclass {
         callback(route.name, route.params, route.query, route.data);
       }
     } else if (notFoundRoute) {
-      notFoundRoute.callback && notFoundRoute.callback(notFoundRoute.name, {}, {}, {});
-      callback(notFoundRoute.name, {}, {}, {});
+      notFoundRoute.callback && notFoundRoute.callback(notFoundRoute.name, {}, (0, _routerUtility.parseQuery)(querystring), notFoundRoute.data);
+      callback(notFoundRoute.name, {}, (0, _routerUtility.parseQuery)(querystring), notFoundRoute.data);
     } else {
-      callback('not-found', {}, {}, {});
+      callback('not-found', {}, (0, _routerUtility.parseQuery)(querystring), notFoundRoute.data);
     }
 
     if (super.router) super.router();
@@ -29032,6 +29151,8 @@ require("./util/notify.ts");
 
 require("./auth/auth-block.ts");
 
+require("./auth/auth-nav-item");
+
 require("./strategies/detail");
 
 require("./strategies/list");
@@ -29044,20 +29165,90 @@ var _litElement = require("lit-element");
 
 var _litElementRouter = require("lit-element-router");
 
-var _notify2 = _interopRequireDefault(require("./util/notify"));
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+var _notify2 = require("./util/notify");
 
 function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = Object.defineProperty && Object.getOwnPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : {}; if (desc.get || desc.set) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } } newObj.default = obj; return newObj; } }
 
-let AppHome = class AppHome extends _litElement.LitElement {
+let AppHome = class AppHome extends _notify2.CustomElement {
   render() {
-    return _litElement.html`Root`;
+    return _litElement.html`
+<div class="row">
+    <div class="col-md-6">
+    <div class="card">
+        <div class="card-header">
+            <h3>Latest evaluations</h3>
+        </div>
+        <div class="card-body">
+            asda
+        </div>
+    </div>
+    </div>
+     <div class="col-md-6">
+    <div class="card">
+        <div class="card-header">
+            <h3>Latest trades</h3>
+        </div>
+        <div class="card-body">
+            asda
+        </div>
+    </div>
+    </div>
+
+</div>
+`;
   }
 
 };
-AppHome = tslib_1.__decorate([(0, _litElement.customElement)("app-home")], AppHome);
-let AppRoot = class AppRoot extends (0, _litElementRouter.routerMixin)(_notify2.default) {
+AppHome = tslib_1.__decorate([(0, _litElement.customElement)("app-home")], AppHome); // @ts-ignore
+
+let AppNav = class AppNav extends _notify2.CustomElement {
+  render() {
+    var clickListener = e => {
+      e.preventDefault(); // @ts-ignore
+
+      (0, _notify2.navigate)(e.target.href);
+    };
+
+    var activeClass = i => {
+      return '';
+    };
+
+    return _litElement.html`
+        <ul class="nav">
+                <li class="nav-item ${activeClass(0)}">
+                    <a class="nav-link" href="/app/" text="Home" @click="${clickListener}">
+                    <i class="material-icons">dashboard</i>
+                        Home
+                    </a>
+                </li>
+                <li class="nav-item ${activeClass(1)}">
+                    <a class="nav-link" href="/app/strategies" @click="${clickListener}">
+                    <i class="material-icons">code</i>
+                        Strategies
+                    </a>
+                </li>
+                <li class="nav-item ${activeClass(2)}">
+                    <a class="nav-link" href="/app/assignments" @click="${clickListener}" >
+                    <i class="material-icons">assignment</i>
+                        Assignments
+                    </a>
+                </li>
+                <li class="nav-item ${activeClass(3)}">
+                    <a class="nav-link" href="/app/traders" @click="${clickListener}" >
+                    <i class="material-icons">account_balance</i>
+                        Trader account
+                    </a>
+                </li>
+                <!-- your sidebar here -->
+            </ul>
+`;
+  }
+
+};
+AppNav = tslib_1.__decorate([(0, _litElement.customElement)("app-nav")], AppNav); // @ts-ignore
+
+let AppRoot = class AppRoot extends (0, _litElementRouter.routerMixin)(_notify2.CustomElement) {
+  // @ts-ignore
   constructor() {
     super(...arguments);
     this.route = '';
@@ -29077,8 +29268,69 @@ let AppRoot = class AppRoot extends (0, _litElementRouter.routerMixin)(_notify2.
   }
 
   render() {
-    return _litElement.html`
-        ${this.elem}
+    return _litElement.html` 
+<div class="wrapper" id="wrapper">
+    <div class="sidebar" data-color="purple" data-background-color="white">
+        <div class="logo">
+            <a href="#" class="simple-text logo-mini">
+                Trader
+            </a>
+
+        </div>
+        <div class="sidebar-wrapper">
+            <app-nav/>
+        </div>
+    </div>
+    <div class="main-panel">
+        <!-- Navbar -->
+        <nav class="navbar navbar-expand-lg navbar-transparent navbar-absolute fixed-top ">
+            <div class="container-fluid">
+
+                <div class="navbar-wrapper">
+                    <a class="navbar-brand" href="#pablo">${this.route}</a>
+                    <!-- todo- auth button here -->
+                </div>
+
+                <button class="navbar-toggler" type="button" data-toggle="collapse" aria-controls="navigation-index"
+                        aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="sr-only">Toggle navigation</span>
+                    <span class="navbar-toggler-icon icon-bar"></span>
+                    <span class="navbar-toggler-icon icon-bar"></span>
+                    <span class="navbar-toggler-icon icon-bar"></span>
+                </button>
+                <div class="collapse navbar-collapse justify-content-end">
+
+                        <ul class="navbar-nav">
+                            <li class="nav-item">
+                                <auth-nav-item/>
+                            </li>
+                        </ul>
+
+                </div>
+            </div>
+        </nav>
+        <!-- End Navbar -->
+        <div class="content">
+            <div class="container-fluid">
+            ${this.elem}
+            </div>
+        </div>
+        <footer class="footer">
+            <div class="container-fluid">
+                <nav class="float-left">
+                    <ul>
+                        <li>
+                            <a href="https://www.creative-tim.com">
+                                Theme by Creative Tim
+                            </a>
+                        </li>
+                    </ul>
+                </nav>
+            </div>
+        </footer>
+    </div>
+</div>
+
         `;
   }
 
@@ -29103,7 +29355,7 @@ AppRoot.routes = [{
   pattern: '/app/traders'
 }];
 AppRoot = tslib_1.__decorate([(0, _litElement.customElement)("app-root")], AppRoot);
-},{"tslib":"../node_modules/tslib/tslib.es6.js","./util/api":"util/api.ts","./util/ace-editor":"util/ace-editor.ts","./util/notify.ts":"util/notify.ts","./auth/auth-block.ts":"auth/auth-block.ts","./strategies/detail":"strategies/detail.ts","./strategies/list":"strategies/list.ts","./assignments/list":"assignments/list.ts","./traders/list":"traders/list.ts","lit-element":"../node_modules/lit-element/lit-element.js","lit-element-router":"../node_modules/lit-element-router/lit-element-router.js","./util/notify":"util/notify.ts"}],"../node_modules/parcel-bundler/src/builtins/hmr-runtime.js":[function(require,module,exports) {
+},{"tslib":"../node_modules/tslib/tslib.es6.js","./util/api":"util/api.ts","./util/ace-editor":"util/ace-editor.ts","./util/notify.ts":"util/notify.ts","./auth/auth-block.ts":"auth/auth-block.ts","./auth/auth-nav-item":"auth/auth-nav-item.ts","./strategies/detail":"strategies/detail.ts","./strategies/list":"strategies/list.ts","./assignments/list":"assignments/list.ts","./traders/list":"traders/list.ts","lit-element":"../node_modules/lit-element/lit-element.js","lit-element-router":"../node_modules/lit-element-router/lit-element-router.js","./util/notify":"util/notify.ts"}],"../node_modules/parcel-bundler/src/builtins/hmr-runtime.js":[function(require,module,exports) {
 var global = arguments[3];
 var OVERLAY_ID = '__parcel__error__overlay__';
 var OldModule = module.bundle.Module;
@@ -29130,7 +29382,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "37053" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "39677" + '/');
 
   ws.onmessage = function (event) {
     var data = JSON.parse(event.data);

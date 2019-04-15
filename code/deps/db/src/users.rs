@@ -6,6 +6,9 @@ use crate::{
     ConnType,
     schema::{self, users, ohlc, traders, User, Trader},
 };
+use crate::schema::Trade;
+
+use validator::Validate;
 
 
 #[derive(Insertable, Validate, Deserialize, Serialize, Debug)]
@@ -105,4 +108,5 @@ impl crate::Database {
             Ok(())
         })
     }
+
 }

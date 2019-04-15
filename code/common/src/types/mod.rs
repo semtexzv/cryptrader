@@ -1,9 +1,10 @@
-pub use ::prelude::*;
+pub use crate::prelude::*;
 
 pub mod auth;
 
 mod ohlc;
 mod spec;
+
 pub mod ticker;
 
 

@@ -14,7 +14,7 @@ pub struct PositionRequest {
 
 pub enum PositionResponse {
     Adjusted {
-        amout : f64,
+        amout: f64,
     },
     Unchanged,
 }
@@ -28,10 +28,12 @@ impl ServiceInfo for PositionService {
 
 use crate::exch::{Exchange, bitfinex::Bitfinex};
 
+/// Component responsible for executing actual trades on the exchange
 pub struct Trader {
     handle: ContextHandle,
     handler: ServiceHandler<PositionService>,
-
+    db: db::Database,
+    /// We store connections to individual exchanges inside an AnyMap, so we can easily add new exchanges
     conns: AnyMap,
 }
 
@@ -45,7 +47,7 @@ impl Trader {
                 let mut res = Self {
                     handle,
                     handler,
-
+                    db,
                     conns: AnyMap::new(),
                 };
 
@@ -55,6 +57,8 @@ impl Trader {
         }).from_err()
     }
 
+    /// Connect to an exchange, denoted by the [E] type parameter
+    /// This will create 2 ServiceConnections, that both utilize single Req socket
     pub fn connect_handlers<E: Exchange>(&mut self, ctx: &mut Context<Self>) {
         let balance = ServiceConnection::<BalanceService<E>>::new(self.handle.clone());
         let balance = wrap_future(balance);
@@ -68,12 +72,17 @@ impl Trader {
 
         ctx.spawn(bfx.drop_err());
     }
+    /// Retrieve connection to BalanceService of  a specific exchange from internal AnyMap
     pub fn balance_handler<E: Exchange>(&mut self) -> ServiceConnection<BalanceService<E>> {
         (*self.conns.get::<ServiceConnection<BalanceService<E>>>().unwrap()).clone()
     }
+
+    /// Retrieve connection to TradeService of a specific exchange from internal AnyMap
     pub fn trade_handler<E: Exchange>(&mut self) -> ServiceConnection<TradeService<E>> {
         (*self.conns.get::<ServiceConnection<TradeService<E>>>().unwrap()).clone()
     }
+
+    /// New PositionRequest was received, and it was dispatched to this exchange implementation
     pub fn new_position<E: Exchange>(&mut self, ctx: &mut Context<Self>, pos: PositionRequest) -> ResponseActFuture<Self, (), ExchangeError> {
         let balancer = self.balance_handler::<E>();
         let trader = self.trade_handler::<E>();
@@ -83,7 +92,9 @@ impl Trader {
             trader: pos.trader_id.clone(),
         });
 
+
         let balance = wrap_future(balance).map_err(|_, _, _| ExchangeError::Internal);
+
 
         let res = balance.and_then(move |bal: Result<BalanceResponse, _>, this: &mut Self, ctx| {
             if let Err(e) = bal {
@@ -112,19 +123,16 @@ impl Trader {
                 None
             };
 
-            let res: ResponseActFuture<Self, (), ExchangeError> = if let Some(fut) = fut {
-                let fut = wrap_future(fut);
-                box fut.then(move |r: Result<Result<(), ExchangeError>, RemoteError>, this: &mut Self, ctx| {
-                    if let Err(e) = r {
-                        return box afut::err(ExchangeError::Internal);
-                    }
-                    return box afut::result(r.unwrap());
-                })
+            let trade = fut.map(|f| wrap_future(f));
+            if let Some(trade) = trade {
+                box trade
+                    .map_err(|_, _, _| ExchangeError::Internal)
+                    .then(|r, _, _| {
+                        afut::result(r.unwrap())
+                    })
             } else {
                 box afut::ok(())
-            };
-
-            box res as ResponseActFuture<_, _, _>
+            }
         });
 
         box res
@@ -207,5 +215,11 @@ pub struct TradeRequest {
     pub pair: TradePair,
     pub amount: f64,
     pub buy: bool,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct TradeResponse {
+    pub amount: f64,
+    pub price : f64,
 }
 

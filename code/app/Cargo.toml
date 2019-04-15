@@ -8,7 +8,7 @@ edition = "2018"
 path = "../common"
 
 [dependencies]
-clap = "*"
+clap = { version = "*", default-features=false }
 serde = "*"
 
 actix-comm = { path = "../deps/actix-comm" }
@@ -18,5 +18,5 @@ strat-eval = { path = "../deps/strat-eval"}
 apis = { path = "../deps/apis" }
 db = { path = "../deps/db" }
 
-radix_trie = "*"
-anymap = "*"
+radix_trie = { version = "*", default-features=false }
+anymap = { version ="*", default-features=false }

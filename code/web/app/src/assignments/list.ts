@@ -1,7 +1,7 @@
 import {customElement, html, LitElement, property, PropertyValues, TemplateResult} from "lit-element";
 
 import * as api from '../util/api';
-import CustomElement from '../util/notify'
+import {CustomElement} from '../util/notify'
 
 @customElement("assignment-item")
 class AssignmentItem extends CustomElement {
@@ -62,6 +62,9 @@ class AssignmentList extends CustomElement {
     }
 
     protected form(): TemplateResult {
+
+        let selectExchange = html`
+        `;
         let pairListener = (e) => {
             let p = e.target.options[e.target.selectedIndex];
             this.newData.exchange = p.dataset.exchange;
@@ -70,7 +73,7 @@ class AssignmentList extends CustomElement {
         };
 
         let selectPair = html`
-        <select @change="${pairListener}" required>
+        <select class="form-control" @change="${pairListener}" required>
            <option value="" disabled selected>Select pair</option>
 ${this.pairs.map(p => html`
 <option data-exchange="${p.exchange}" data-pair="${p.pair}">${p.exchange}/${p.pair}</option>`)}
@@ -83,18 +86,18 @@ ${this.pairs.map(p => html`
             this.requestUpdate('newData');
         };
         let selectPeriod = html`
-<select @change="${periodListener}">
+<select class="form-control" @change="${periodListener}">
 ${this.periods.map(p => html`<option>${p}</option>`)}
 </select>
         `;
 
         let stratListener = (e) => {
-            this.newData.strategy_id =  parseInt(e.target.options[e.target.selectedIndex].dataset.id);
+            this.newData.strategy_id = parseInt(e.target.options[e.target.selectedIndex].dataset.id);
             this.requestUpdate('newData');
         };
 
         let selectStrat = html`
-        <select @change="${stratListener}">
+        <select class="form-control" @change="${stratListener}">
            <option value="" disabled selected>Select Strategy</option>
         ${this.strategies.map(s => html`<option data-id="${s.id}" >${s.name}</option>`)}
         </select>
@@ -106,7 +109,7 @@ ${this.periods.map(p => html`<option>${p}</option>`)}
         };
 
         let selectTrader = html`
-        <select @change="${traderListener}">
+        <select class="form-control" @change="${traderListener}">
            <option value="" disabled selected>Select trader</option>
            <option value="" >None</option>
         ${this.traders
@@ -115,20 +118,18 @@ ${this.periods.map(p => html`<option>${p}</option>`)}
         </select>
         `;
         return html`
-        <div style="display: inline-block;">
-        ${selectPair}
-        ${selectPeriod}
-        ${selectStrat}
-        ${selectTrader}
-        <button @click="${this.createNew}" ?disabled="${this.newData.pair == null || this.newData.strategy_id == null}">Create new</button>
-        </div>
+        <td colspan="2">${selectPair}</td>
+        <td>${selectPeriod}</td>
+        <td>${selectStrat}</td>
+        <td>${selectTrader}</td>
+        <td><button class="btn btn-primary" @click="${this.createNew}" ?disabled="${this.newData.pair == null || this.newData.strategy_id == null}">Create new</button></td>
         
         `
     }
 
     protected header(): TemplateResult {
         return html`
-          <thead>
+          <thead class="thead-default">
         <tr>
         <th>Exchange</th>
         <th>Pair</th>
@@ -149,7 +150,7 @@ ${this.periods.map(p => html`<option>${p}</option>`)}
         <td>${a.period}</td>
         <td>${this.strategies.find(s => s.id == a.strategy_id).name}</td>
         <td>${this.trader_name(a.trader_id)}</td>
-        <td><button @click="${e => this.delete(a)}">Delete</button></td>
+        <td><button class="btn btn-danger" @click="${e => this.delete(a)}">Delete</button></td>
 </tr>
         
         `
@@ -161,13 +162,22 @@ ${this.periods.map(p => html`<option>${p}</option>`)}
 
     protected ok(): TemplateResult {
         return html`
-        ${this.form()}
-<table id="assignments" class="table">
+<div class="card">
+<div class="card-header">
+    <h3>Strategy assignments</h3>
+</div>
+<div class="card-body">
+    <table id="assignments" class="table">
     ${this.header()}  
     <tbody>
+    ${this.form()}
     ${this.assignments.map(a => this.row(a))}
     </tbody>
 </table>
+</div>
+</div>
+
+
         `
     }
 

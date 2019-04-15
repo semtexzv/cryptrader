@@ -4,7 +4,7 @@ pub mod wallets;
 pub mod order;
 
 
-use ::prelude::*;
+use crate::prelude::*;
 use json;
 
 pub use self::auth::*;
@@ -170,7 +170,7 @@ pub struct Resp {
 }
 
 use serde::de::Error;
-use bitfinex::rest::types::SymbolDetail;
+use crate::bitfinex::rest::types::SymbolDetail;
 
 pub fn nonce() -> u64 {
     return ::common::unixtime_millis() as u64;
@@ -209,9 +209,7 @@ impl<'de> Deserialize<'de> for Resp {
 
 
 pub fn get_available_symbols() -> impl Future<Item=Vec<SymbolDetail>, Error=failure::Error> {
-    use std::io::Read;
-
-    use ::common::{
+    use common::{
         actix_web,
         actix_web::*,
     };

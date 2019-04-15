@@ -1,8 +1,12 @@
 use crate::prelude::*;
 use crate::schema::{self, ohlc, Pair};
 
-#[table_name = "ohlc"]
+
+use cdrs::frame::IntoBytes;
+use cdrs::types::prelude::{Value,TryFromRow};
+
 #[derive(PartialEq, Debug, Clone, Queryable, QueryableByName)]
+#[table_name = "ohlc"]
 pub struct LoadOhlc {
     pub time: i64,
     pub open: f64,

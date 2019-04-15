@@ -1,4 +1,4 @@
-use prelude::*;
+use crate::prelude::*;
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, PartialOrd)]
 pub struct Ohlc {

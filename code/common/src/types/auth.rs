@@ -1,4 +1,4 @@
-use ::prelude::*;
+use crate::prelude::*;
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct AuthInfo {

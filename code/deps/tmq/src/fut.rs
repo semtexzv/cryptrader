@@ -81,7 +81,6 @@ impl Sink for SocketSink {
     }
 
     fn poll_complete(&mut self) -> Result<Async<()>, Self::SinkError> {
-        debug!("Poll complete");
         while let Some(msg) = self.buffer.pop_front() {
             match self.sock.0.send_msg(&msg, self.buffer.is_empty())? {
                 Async::NotReady => {

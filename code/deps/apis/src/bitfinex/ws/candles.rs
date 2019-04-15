@@ -1,4 +1,4 @@
-use ::prelude::*;
+use crate::prelude::*;
 use json;
 
 pub struct CandleSpec(pub String, pub String, pub String);

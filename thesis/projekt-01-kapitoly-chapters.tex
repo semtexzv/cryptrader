@@ -748,18 +748,9 @@ Then, the kubernetes horizontal pod autoscaler\footnote{\url{https://kubernetes.
 the Google Kubernetes Engine also supports automatic node provisioning, meaning we can automate every part of scaling the system
 compute capabilities.
 
-\chapter{Current state of the project}
-The project, as designed in previous chapter is currrently under heavy development. The kubernetes architecture is already implemented,
-and there are several rudimentary services running on this architecture. Thise are Exchange service connecting to the
-Bitfinex exchange, the persistence service storing financial data into PostgreSQL database, and a web service
-that serves basic web site with authentication. There are several issues with current implementation, most important one
-being the usage of single PosgreSQL database in the persistence service. This database will almost certainly become a bottleneck
-in the future, and for the actual implementation will have to be changed to a database that supports horizontal scaling.
+\chapter{Implementation}
 
-These components communicate by using an incomplete implementation of \verb|actix-net| library. In current state, this library supports
-request-reply style of communication between actors on different virtual machines.
-
-The whole project is managed by a single Makefile, making deployments of new versions quick and easy.
+\chapter{Testing and evaluation}
 
 \chapter{Conclusion \& Future work}
 The title of this thesis is a Design and development of distributed system that would perform a specific function.

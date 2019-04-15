@@ -5,7 +5,9 @@ use ::apis::bitfinex as api;
 
 
 use crate::ingest;
-use crate::trader::{BalanceService, TradeService, BalanceRequest, BalanceResponse, TradeRequest, ExchangeError};
+use crate::trader::{BalanceService, TradeService, BalanceRequest, BalanceResponse, TradeRequest,
+                    TradeResponse,
+                    ExchangeError};
 
 use time::PreciseTime;
 use std::time::Duration;
@@ -48,21 +50,34 @@ impl Actor for BitfinexClient {
         info!("Starting bitfinex ohlc source");
     }
 
-    fn stopped(&mut self, ctx: &mut <Self as Actor>::Context) {
+    fn stopping(&mut self, ctx: &mut Self::Context) -> Running {
         info!("Stopping bitfinex ohlc source");
+        Running::Stop
+    }
+
+
+    fn stopped(&mut self, ctx: &mut <Self as Actor>::Context) {
+        info!("Stopped bitfinex ohlc source");
     }
 }
 
 
 impl BitfinexClient {
     pub fn new(handle: ContextHandle) -> impl Future<Item=Addr<Self>, Error=Error> {
-        let client = ws::Client::new("wss://api.bitfinex.com/ws/2").connect().from_err();
+        info!("Connecting to websocket");
+        let client = ws::Client::new("wss://api.bitfinex.com/ws/2").connect()
+            .map_err(|e| {
+                println!("Connection error : {:?}", e);
+                e.into()
+            });
+
         let symbols = api::ws::get_available_symbols();
         let publ = Publisher::new(handle.clone()).map_err(Into::into);
 
         let balance = ServiceHandler::new(handle.clone());
 
         let h = handle.clone();
+
         let svcs = balance.map(|b| {
             let trade = ServiceHandler::from_other(h, &b);
             (b, trade)

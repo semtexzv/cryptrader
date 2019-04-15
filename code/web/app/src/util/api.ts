@@ -25,6 +25,20 @@ export class Trader {
     api_secret: String = null;
 }
 
+export class Evaluation {
+    strategy_id : Number = null;
+    exchange: String = null;
+    pair: String = null;
+
+    period : String = null;
+
+    time : String = null;
+
+    status : Boolean = null;
+    ok : String = null;
+    error : String = null;
+}
+
 export async function getAll(base: String): Promise<any[]> {
 
     let data = await fetch(`/api/${base}`, {

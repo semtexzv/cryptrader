@@ -17,7 +17,7 @@ LOAD_VARS = $(foreach v,$(DOCKER_FILES) ./ops/additional.env, env $$( cat $(v) )
 deploy: build-k8s $(DOCKER_FILES)
 	kubectl apply -f $(K8S_BUILD_DIR)
 
-./target/docker/%: phony
+./target/docker/%: .PHONY
 	APP_NAME=$* $(MAKE) -C . -f ./ops/make/App.mk ./target/docker/$*
 
 $(K8S_BUILD_DIR):

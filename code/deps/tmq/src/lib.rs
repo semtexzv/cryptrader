@@ -36,7 +36,6 @@ impl From<zmq::Error> for Error {
     }
 }
 
-
 pub struct EventedSocket(pub(crate) zmq::Socket);
 
 impl Debug for EventedSocket {
@@ -52,7 +51,6 @@ unsafe impl Sync for Socket {}
 
 impl Socket {
     pub fn from_raw(sock: zmq::Socket) -> Self {
-        sock.kee
         return Socket(PollEvented2::new(EventedSocket(sock)));
     }
     pub(crate) fn zmq_sock(&self) -> &zmq::Socket {

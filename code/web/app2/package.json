@@ -1,0 +1,40 @@
+{
+  "name": "app2",
+  "version": "0.1.0",
+  "private": true,
+  "devDependencies": {
+    "@babel/core": "^7.4.3",
+    "@babel/plugin-proposal-class-properties": "^7.4.0",
+    "parcel-bundler": "=1.11"
+  },
+  "dependencies": {
+    "@material-ui/core": "^3.9.3",
+    "@material-ui/icons": "^3.0.2",
+    "@material-ui/styles": "^3.0.0-alpha.10",
+    "brace": "^0.11.1",
+    "connected-react-router": "^6.3.2",
+    "history": "^4.9.0",
+    "normalizr": "^3.3.0",
+    "prop-types": "15.6.0",
+    "react": ">=15",
+    "react-ace": "^6.4.0",
+    "react-dom": "^16.3.0",
+    "react-redux": "^6.0.0",
+    "react-router": "^4.3.1",
+    "react-router-dom": "^4.3.1",
+    "redux": "^4.0.1",
+    "redux-logger": "^3.0.6",
+    "redux-thunk": "^2.3.0"
+  },
+  "scripts": {
+    "build": "parcel src/index.html build --public-url='/static' --no-autoinstall",
+    "start": "parcel src/index.html --public-url='/static' --no-autoinstall",
+    "watch": "parcel watch src/index.html --public-url='/static' --no-autoinstall"
+  },
+  "browserslist": [
+    ">0.2%",
+    "not dead",
+    "not ie <= 11",
+    "not op_mini all"
+  ]
+}
