@@ -11,6 +11,7 @@
 \chapter*{Abstract}
 \label{abstract}
 
+
 \chapter{Introduction}
 \label{chapter:introduction}
 Financial markets are complex systems, in which, market players interact with each other to determine
@@ -122,7 +123,7 @@ more effective ways of performing trading decisions, and executing resulting tra
 is a culmination of the automated trading arms race.
 
 \subsubsection{High frequency trading}
-This form of trading is characterized by high turnover and order-to-trade ratios(number of created orders  compared to executed trades).
+This form of trading is characterized by high turnover and order-to-trade ratios(number of created orders compared to executed trades).
 It utilizes highly specialized order types, co-location of trading equipment as close as possible to exchange.
 In 2010, only 2\% of US based trading firms specialized in HFT, but these 2\% accounted for more than 73\% of all
 trading volume\cite{article:computerized_trading}.
@@ -588,6 +589,61 @@ Basic used primitives are:
 \end{itemize}
 
 
+\section{Web applications}
+\todo{Low level details ?}
+Another aspect of the designed system is user access to this system. Because the system will be distributed, and will run
+in cloud environment, there is only one usable approach for implementig user facing part of the system. The system will have
+to provide a web interface. There are several possible approaches for implementing such interfaces. The primary
+distinction between them is the location of the main application logic.
+
+We could implement the whole application as a set of static html pages with some templating and minmal javascript,
+however, this approach would requir ea lot of time, work duplication, and result would leave very poor impression
+on system users.
+
+We could supplant the drawbacks of static site approach by introducing some dynamic behavior with minimal javascript.
+
+But the state of the art approach for creating web applications is the Single-page application approach. In this approach,
+the application is implemented almost entirely in javascript, and most of its logic runs in the browser. Then, the
+server serves as a simple repository of information, which provides a REST(\todo{Footnote}) API.
+
+\subsection{Single-page application libraries}
+Because of the popularity of this approach, there are many libraries, and frameworks for development of single page applications.
+For the purposes of this thesis, these few of them were evaluated:
+
+\subsubsection{Polymer}
+Is a library developed by Google. It utilizes custom webcomponents\todo{Cite}, Shadow DOM \todo{Cite} and HTML Templating\todo{Cite} technologies
+to achieve remarkable set of functionality with only a small extension build upon common web standards, that all major
+browsers implement. This technology is based on the \verb|lit-html| library, which can be used for creating HTML templates directly from
+javascript. However, using polymer requires custom command line tool, in order to build applications made with this technology.
+
+\subsubsection{Angular}
+One of the most popular web frameworks, provides large amount of functionality. It does not use webcomponents or shadow dom,
+due to the fact that these advances came after it was created, since its predecessor was first of these kinds of libraries.
+It provides two-way databinding, utilizes MVC architecture and should be considered to be a framework instead of a library
+due to opinionated nature of this library. It uses Typescript instead of Javascript as main application implementation language.
+
+\subsubsection{React}
+Is is component based user interface library, with one of its targets being the web browser DOM. Other targets
+include Android , iOS, UWP , and are implemented in React-native branch of this library. React uses
+JSX indstead of plain javascript. This language is an extension to javascript, that allows programmer to write inline
+HTML inside normal javascript code, improving readability. React does not attempt to provide general application framework,
+its only targeted at building user interfaces.It is based on its virtual-DOM architecture. In this approach
+the entire application is rendered into memory representation of the resulting DOM, that is then compared to actual rendered
+DOM tree, and only changes are applied. This reduces number of updates that must be performed, increasing rendering performance
+at the cost of memory usage.
+
+\subsubsection{Flux \& Redux}
+One of most important concepts used in React is the uni-directional data flow. Data flows
+from components to their children, and notifications from children to parents.
+To support this paradigm, the Flux architecture. In this architecture there are \textit{actions}, that flow through the
+central \textit{dispatcher} to a \textit{store}, and changes in the store are propagated back to view. In react,
+this propagation is performed through component properties. This approach is similar to observer pattern\todo{Footnote}
+With this architecture, the properties passed to a components are immutable. Only way the application state can be affected is
+through sending \textit{actions} to dispatcher.
+
+Redux is the most well known implementation of this pattern. It features a single store, and dispatchers are
+called reducers. The reducers are pure functions, that respond to actions, and based on the modify this single source of truth.
+
 \chapter{Design}
 \label{chapter:design}
 
@@ -627,12 +683,12 @@ defined later in this chapter, here we are interested in more conceptual approac
 
 Application is divided into several components:
 \begin{itemize}
-    \item Web component - Provides a web interface for users' inetraction with the system, and interacts with Core service
+    \item Web component - Provides a web interface for users' inetraction with the system, and interacts with the database
     \item Core component - Accepts input from users, incoming data from exchanges, decides when to evaluate strategies, and when to create orders on exchanges
     \item Evaluation component - Evaluates strategies based on requests from Core service
     \item Persistence component - Stores tick data and user data upon provided by core service, and provides this data to all services if necessary
     \item Exchange components - Each of these components serves as an adapter, that connects to external exchange API, and
-        maps its specific API onto internal communication channels.
+    maps its specific API onto internal communication channels.
 \end{itemize}
 
 \begin{figure}[H]
@@ -701,19 +757,157 @@ socket for each connection to another component. The requests will be sent over 
 In \autoref{img:actix_comm} you can see simple sequence diagram showing types of most common interactions with the library. The \actor{Communicator}
 actor serves as a entry point into the library. By creating and sending \msg{Connect} message to this actor, the \actor{Node} actor is created,
 and the address of created node is retruned into user code. User can use the \actor{Node} actor for sending messages to
-and the address of created node is retruned into user code. User can use the \actor{Node} actor for sending messages to
 remote nodes. User can register global handlers for specific message type
 using the \msg{RegisterRecipient} message, and specific actors using the \msg{RegisterActor} message. The response to \msg{RegisterActor}
 message is global actor address, which can be sent to other nodes, and used to send messages to specific actor on local node.
 
 
 \subsection{Actix-arch}
-\todo{Service \& Endpoint abvstraction}
-\todo{Load balancing}
-\todo{Mention proxy}
+Is a library that was built on top of \verb|actix-comm| simplify development of individual components. It contains implementations
+from commpon communication patterns, and components to support the development of communicating applications.
 
+\subsubsection{Service abstraction}
+Since most common communication pattern is Request-Response, this component was created to support this type of communication.
+It consists of 3 parts. The \trait{ServiceInfo} trait, that is used for declaring crucial information about the service, like
+hostname, on which the service is available, and types of request and response.
 
-\subsection{Storage}
+%@formatter:off
+\begin{code}[language=rust,label={svcinfo_trait},caption={ServiceInfo trait definition}]
+pub trait ServiceInfo: 'static + Debug {
+    type RequestType: Remotable + Debug;
+    type ResponseType: Remotable + Debug;
+    const ENDPOINT: &'static str;
+}
+\end{code}
+%@formatter:on
+
+Two other components are the \type{ServiceHandler}and \type{ServiceConnection} actors, which are generic over type paramenter
+S, that must implement \trait{ServiceInfo} trait, that describes the service that component handles or connects to.
+The \type{ServiceHandler} struct has a register method, which can be used to register a handler of service messages.
+Both of these structs internally use ZeroMQ actors defined in \verb|actix-comm| library, namely the Request and Reply actors.
+
+\subsubsection{Publish - subscribe abstraction}
+Is an apstraction for implementing Publish-Subscribe data flows.
+Is analogous to Service abstraction, utilizing 3 parts. The \trait{EndpointInfo} trait defines the hostname, on which
+the binding endpoint can be found, its associated type \type{FanType} can be either \type{FanOut} or \type{FanIn},
+and defines, which part of the communication channels binds to an address, and which connects to it.
+With \type{FanIn}, the subscriber binds to a port, and multiple publishers connect to it (used for receving tick
+data from multiple exchange adapters), and with \type{FanOut}, the publisher binds to a socket, and subsribers connect
+to it.
+
+%@formatter:off
+\begin{code}[language=rust,label={endpointinfo_trait},caption={EndpointInfo trait definition}]
+pub trait EndpointInfo {
+    type MsgType: RemoteMessage<Result=()> + Remotable;
+    type FanType: FanType = FanOut;
+    const ENDPOINT: &'static str;
+}
+\end{code}
+%@formatter:on
+
+The \type{Publisher} and \type{Subscriber} actors are generic over type paramenter E, that must implement the \trait{EndpointInfo}
+trait, and contain methods for publishing and subscriving to updates respectively.
+
+\subsubsection{Service load balancing}
+Other component necessary for our designed system was a way to perform load balancing for Service handlers.
+This will be mainly used in the strategy evaluation component, since this component will probably result in most
+of the computing load.
+
+This component is implemented as 2 actors: the \actor{LoadBalancer} and \actor{WorkerProxy}, which botha have one type
+parameter S that must implement ServiceInfo. Then, the LoadBalancer binds 2 ServiceHandlers to single port.
+The first one is used for receiving service requests from client, and the second one is used for receiving message for workers.
+
+The workerProxy internally contains a \type{ServiceConnection}, that connects to \actor{LoadBalancer}, and periodically subscribes
+for work. If \actor{LoadBalancer} does not have any work available, it sends an empty response to \actor{WorkerProxy},
+or, if available, it sends a work unit to this worker. The \actor{WorkerProxy} then sends received work to internal
+worker implementation, and after finishing, sends result to \actor{LoadBalancer} as a separate request, that is also used
+for requesting more work units.
+
+The \actor{LoadBalancer} therefore serves as a load balancing broker, which performs rendezvous between available workers
+and work units, communication using 2 service handlers.
+
+\section{Data storage}
+Another crucial aspect of designed system is the storage of both the financial data and general system data.
+These 2 types of data have different storage requirements.
+
+\subsection{Financial data}
+\todo{Move this earlier ?}
+Financial data received from exchanges is in the form of several prices and volume that is aggregated over a time interval.
+These prices are:
+\begin{itemize}
+\item{Open - } Price, that was used in first transaction in this time interval
+\item{High - } Highest price that was used in transaction in this time interval
+\item{Low - }  Lowest price that was used in transaction in this interval
+\item{Close -} Price, that was used in last transaction in this time interval
+\end{itemize}
+In adition the these price, each interval is associated with its starting timestamp, and cumulative volume
+of executed trades. We will refer to this type of data as OHLC data, based on the OHLC chart which is used for displaying
+these datasets (\todo{Footnote https://www.investopedia.com/terms/o/ohlcchart.asp}).
+
+There are several requirements put on storage solution that will be used for storing the OHLC data, mainly stemming from
+amount of this data, and operations that must be performed on it.
+
+The chosen storage solution will have to support large ingest rates. For most basic implementation, supporting bitfinex exchange,
+we will have to store OHLC data for almost 100 assets, most of which are updated every 10 seconds. This would mean
+the insert rate of 10 rows per second.
+
+Another aspect is periodic retrieval of latest data for evaluation of strategies. This retrieval is not a simple load from database,
+the stored data will have to be cleaned up,
+\todo{Insert missing mpoints}
+
+\subsection{Application data}
+For storing application data, we have to store data that conforms to relational model.
+\todo{ERD HERE}
+This ERD diagram shows basic data model of the system. This data model utilizes several foreign keys, and will require
+a relational database for storage.
+
+\subsection{Evaluated storage solutions}
+In order to store application data, we just have to use a relational database. These databases are most common types of databases used,
+and have extensive tooling built to support them. For the purposes of this application the \textbf{PostgreSQL} databases was chosen.
+This is an open source database which supports most of the modern SQL, and probably the only competitor to Oracles offering
+in terms of functionality. One of the most exciting features of this database is support of extensions, that transform
+this simple relational database into general purpose storage solution. Some of the database extensions are
+\begin{itemize}
+    \item Citus - Adds support for clustered deployments, in which several instances of PostgreSQL databases store
+        data - improving redundancy and performance
+    \item TimescaleDB - Improves upon built-in table partitioning, and adds custom storage engine optimized
+        for time-series datasets.
+    \item Cstore - Adds columnar store, which can be used for storing data in ORC format.
+\end{itemize}
+Thanks to these features, the \textbf{PostgreSQL} was chosen as a database for storing application data.
+
+However, the storage solution for storing OHLC data has different requirements. The chosen solution will have
+to support large insert rates mentioned earlier, fast retrieval of newly inserted subset of data, and preservation
+of these properties over time, when amount of stored data grows past the amount that could be stored in memory.
+
+These requirements are common among the applications that deal with a steady stream of time-dependent data, also called
+time-series data.
+
+There are several approaches to storing time-series data. We could store it as a normal postgresql table.
+This would ensure avaiability of analytical functions for working with data in the database engine, removing the
+need to implement it in application. But the drawback of this approach is scalability. While \textbf{PostgreSQL} is
+among the most peroformant database today, its performance quicky degrades with large tables\todo{Cite timescaledb research on
+ingest rates}. Most common solution to this problem is table partitioning, that creates sub-tables for our time-series
+data table, and divides data into these subtables based on the temporal dimension. However, this requires additional
+tooling and management.
+
+Another approach is to use a distributed database with multiple nodes. Then, the data would be partitioned across multiple nodes,
+with some degree of redundancy. Therefore, inserts and reads both can be easily parallelized, and we would gain redundancy,
+preserving data in case of node failure. Drawback of this approach is the overhead, that will use of multiple nodes incur.
+\textbf{ScyllaDB} was evaluated as an alternative, that utilizes the distriubuted approach.
+
+But, after considering these multiple approaches, we have decided to use \textbf{PostgreSQL} with the \textbf{TimescaleDB}
+extension for storing OHLC data. The \textbf{TimescaleDB} extension targets time-series data storage, making it ideal for our needs.
+It creates a \textit{hypertable} concept, that is an abstraction over standard table, perfrorming automatic partitioning over
+temporal dimension, and optionally over several hash dimensions. It also provides to analytical functions for working with time
+series data (eg. \verb|time_bucket| that allows working with data over different timescales). Thanks to the
+customized storage engine and automatic partitioning, this extension solves the main problem of reduced performance
+for large databases.
+
+However, if this approach fails, there is experimental \textbf{ScyllaDB} storage layer for storing OHLC data,
+that seems to provide same performance as current \textbf{PostgreSQL} storage layer.
+
+\todo {ERD}
 \todo{Postgresql with timescaledb}
 \todo{Hypertable - sharding}
 \todo{Currently more htan enough, we'll see about future}
@@ -722,6 +916,7 @@ message is global actor address, which can be sent to other nodes, and used to s
 \todo{Not in production, postgresql more than enough}
 
 \subsection{Web}
+
 \todo{Classing Client-Server SPA Design}
 \todo{Usage of actix-web for Rest API}
 \todo{React for frontend with material-ui}
@@ -758,13 +953,13 @@ Ultimately, the Lua language was chosen as a primary language for implementing u
 key properties, which caused this decision.
 
 \begin{itemize}
-    \item Embeddability - Lua runtime is smaller than 256Kb, has virtually no start up time and can be embedded in application.
-    as a simple library. In comparison, neither Python nor JavaScript runtimes can be embedded in the application, and both
-    require large standard libraries
-    \item Extendability - Basic lua standard library can be easily extended with code written in host language.
-    \item Expressive power - While extremely simple, lua provides tools to model virtually any programming paradigm with ease
-    \item Speed - While lua is a scripting language, that can't possibly compete with compiled language in this space,
-    it is one of the fastest scripting languages available.
+\item Embeddability - Lua runtime is smaller than 256Kb, has virtually no start up time and can be embedded in application.
+as a simple library. In comparison, neither Python nor JavaScript runtimes can be embedded in the application, and both
+require large standard libraries
+\item Extendability - Basic lua standard library can be easily extended with code written in host language.
+\item Expressive power - While extremely simple, lua provides tools to model virtually any programming paradigm with ease
+\item Speed - While lua is a scripting language, that can't possibly compete with compiled language in this space,
+it is one of the fastest scripting languages available.
 \end{itemize}
 
 \subsection{Safety}
@@ -841,7 +1036,12 @@ compute capabilities.
 
 
 \section{Web component}
-\todo{}
+\todo{Backend - Actix web with diesel entities }
+\todo{Simple Crud - Usage of Database actor - the invoke method}
+
+\subsection{Frontend}
+\todo{React - basics}
+\todo{Redux for state management}
 
 \section{Deployment and Management}
 \todo{Describe ops}
@@ -857,6 +1057,11 @@ compute capabilities.
 \todo{Debugging using telepresence and local components}
 
 
+\section{Evaluation}
+\todo{A few strategies - latency}
+\todo{Grow strategies - latency}
+\todo{Add more nodes - latency}
+\todo{should be at most logarithmic - DB will be problem}
 
 
 \chapter{Conclusion \& Future work}
@@ -869,12 +1074,12 @@ After issues with this part of the system are resolved, the next step will be im
 and implementation of order execution functionality into exchange service. These 2 changes will make the system able to perform its
 primary function, that being automatic trading based on a strategy.
 
-Next step  will be the implementation
+Next step will be the implementation
 of the web application that will make the system implemented in previous step accessible to users. This involves the implementation of user management,
 and inclusion of user data into the rest of the system.
 
 After the web application implementation is complete, the performance of implemented system will be measured. The target of the measurements
-will be the latency between system receiving new financial data, and system being able to  execute orders resulting from
+will be the latency between system receiving new financial data, and system being able to execute orders resulting from
 evaluation of strategies using this new data. The measurements will be performed with different amount of
 load on the system, but the system configuration will not be changed. The expected result of these measurements is the
 invariance of system latency based on system load.
