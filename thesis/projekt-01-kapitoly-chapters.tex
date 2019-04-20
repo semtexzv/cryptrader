@@ -142,7 +142,8 @@ There are four key categories of HFT strategies\cite{wiki:hft}:
 
 Our system will mainly support strategies, that would fall into \textbf{Tick data market making} category. This is due
 to simplicity of these strategies, and the fact that the information provided by the cryptocurrency exchanges is best suited
-for these strategies.
+for these strategies. However, we should clarify, that this system does not aim to achieve extremely low latencies.
+The general goal is to have latency between receiving of data, and executing trads below one second.
 \todo{Reword}
 Strategies will be used to create trading decisions for multiple assets. The fact that
 there are multiple different strategies evaluated for multiple currencies means that the total number of strategy evaluations is
@@ -603,46 +604,10 @@ on system users.
 We could supplant the drawbacks of static site approach by introducing some dynamic behavior with minimal javascript.
 
 But the state of the art approach for creating web applications is the Single-page application approach. In this approach,
-the application is implemented almost entirely in javascript, and most of its logic runs in the browser. Then, the
-server serves as a simple repository of information, which provides a REST(\todo{Footnote}) API.
-
-\subsection{Single-page application libraries}
-Because of the popularity of this approach, there are many libraries, and frameworks for development of single page applications.
-For the purposes of this thesis, these few of them were evaluated:
-
-\subsubsection{Polymer}
-Is a library developed by Google. It utilizes custom webcomponents\todo{Cite}, Shadow DOM \todo{Cite} and HTML Templating\todo{Cite} technologies
-to achieve remarkable set of functionality with only a small extension build upon common web standards, that all major
-browsers implement. This technology is based on the \verb|lit-html| library, which can be used for creating HTML templates directly from
-javascript. However, using polymer requires custom command line tool, in order to build applications made with this technology.
-
-\subsubsection{Angular}
-One of the most popular web frameworks, provides large amount of functionality. It does not use webcomponents or shadow dom,
-due to the fact that these advances came after it was created, since its predecessor was first of these kinds of libraries.
-It provides two-way databinding, utilizes MVC architecture and should be considered to be a framework instead of a library
-due to opinionated nature of this library. It uses Typescript instead of Javascript as main application implementation language.
-
-\subsubsection{React}
-Is is component based user interface library, with one of its targets being the web browser DOM. Other targets
-include Android , iOS, UWP , and are implemented in React-native branch of this library. React uses
-JSX indstead of plain javascript. This language is an extension to javascript, that allows programmer to write inline
-HTML inside normal javascript code, improving readability. React does not attempt to provide general application framework,
-its only targeted at building user interfaces.It is based on its virtual-DOM architecture. In this approach
-the entire application is rendered into memory representation of the resulting DOM, that is then compared to actual rendered
-DOM tree, and only changes are applied. This reduces number of updates that must be performed, increasing rendering performance
-at the cost of memory usage.
-
-\subsubsection{Flux \& Redux}
-One of most important concepts used in React is the uni-directional data flow. Data flows
-from components to their children, and notifications from children to parents.
-To support this paradigm, the Flux architecture. In this architecture there are \textit{actions}, that flow through the
-central \textit{dispatcher} to a \textit{store}, and changes in the store are propagated back to view. In react,
-this propagation is performed through component properties. This approach is similar to observer pattern\todo{Footnote}
-With this architecture, the properties passed to a components are immutable. Only way the application state can be affected is
-through sending \textit{actions} to dispatcher.
-
-Redux is the most well known implementation of this pattern. It features a single store, and dispatchers are
-called reducers. The reducers are pure functions, that respond to actions, and based on the modify this single source of truth.
+the application consists of 2 parts, the \textit{frontend} part runs in browser, and it connects to the \textit{backed}
+that is running on the server. The fronend is implemented in javascript, and its primary functions include interpreting system
+data for user consumption, accepting user inputs and communicating with the \textit{backend}. The \textit{Backend} then
+runs on the server, connects to the database, and usually provides some kind of a API, most commonly REST(\todo{Footnote})
 
 \chapter{Design}
 \label{chapter:design}
@@ -907,6 +872,7 @@ for large databases.
 However, if this approach fails, there is experimental \textbf{ScyllaDB} storage layer for storing OHLC data,
 that seems to provide same performance as current \textbf{PostgreSQL} storage layer.
 
+\todo{SCYLLADB DOES NOT HAVE PROPER SQL - }
 \todo {ERD}
 \todo{Postgresql with timescaledb}
 \todo{Hypertable - sharding}
@@ -915,17 +881,77 @@ that seems to provide same performance as current \textbf{PostgreSQL} storage la
 \todo{Experimental Scylladb backend}
 \todo{Not in production, postgresql more than enough}
 
-\subsection{Web}
+\section{Web}
+\todo{Some text, dont know}
+\subsection{Frontend technologies}
+As mentioned earlier, in order to create optimal user experience, the Single-page web application approach for creating
+web applications. For creating the web application that woud be serve as user interface for the system, several
+libraries and frameworks were evaluated:
 
-\todo{Classing Client-Server SPA Design}
-\todo{Usage of actix-web for Rest API}
-\todo{React for frontend with material-ui}
-\todo{Ace editor for editing code}
-\todo{Future enhancement - websocket with live notifications}
+\subsubsection{Polymer}
+Is a library developed by Google. It utilizes custom webcomponents\todo{Cite}, Shadow DOM \todo{Cite} and HTML Templating\todo{Cite} technologies
+to achieve remarkable set of functionality with only a small extension build upon common web standards, that all major
+browsers implement. This technology is based on the \verb|lit-html| library, which can be used for creating HTML templates directly from
+javascript. However, using polymer requires custom command line tool, in order to build applications made with this technology.
 
-\subsection{Exchange adapters}
-\todo{Connecting to websocket}
-\todo{Mapping to core using Fan-In topology}
+\subsubsection{Angular}
+One of the most popular web frameworks, provides large amount of functionality. It does not use webcomponents or shadow dom,
+due to the fact that these advances came after it was created, since its predecessor was first of these kinds of libraries.
+It provides two-way databinding, utilizes MVC architecture and should be considered to be a framework instead of a library
+due to opinionated nature of this library. It uses Typescript instead of Javascript as main application implementation language.
+
+\subsubsection{React}
+Is is component based user interface library, with one of its targets being the web browser DOM. Other targets
+include Android , iOS, UWP , and are implemented in React-native branch of this library. React uses
+JSX indstead of plain javascript. This language is an extension to javascript, that allows programmer to write inline
+HTML inside normal javascript code, improving readability. React does not attempt to provide general application framework,
+its only targeted at building user interfaces.It is based on its virtual-DOM architecture. In this approach
+the entire application is rendered into memory representation of the resulting DOM, that is then compared to actual rendered
+DOM tree, and only changes are applied. This reduces number of updates that must be performed, increasing rendering performance
+at the cost of memory usage.
+
+\subsubsection{Flux \& Redux}
+One of most important concepts used in React is the uni-directional data flow. Data flows
+from components to their children, and notifications from children to parents.
+To support this paradigm, the Flux architecture. In this architecture there are \textit{actions}, that flow through the
+central \textit{dispatcher} to a \textit{store}, and changes in the store are propagated back to view. In react,
+this propagation is performed through component properties. This approach is similar to observer pattern\todo{Footnote}
+With this architecture, the properties passed to a components are immutable. Only way the application state can be affected is
+through sending \textit{actions} to dispatcher.
+
+Redux is the most well known implementation of this pattern. It features a single store, and dispatchers are
+called reducers. The reducers are pure functions, that respond to actions, and based on the modify this single source of truth.
+
+
+\subsection{Frontend application}
+After experimenting with each of these technologies, the \textbf{React} library with \textbf{Redux} was chosen ast the most suited technology for creating the \textit{frontend}
+part of the web application.
+Another aspect of the \textit{frontend} part of the application to consider is the user experience. The user
+must be able to:
+\begin{itemize}
+    \item Create an account
+    \item Login \& Log out
+    \item Create \& edit strategies and exchange trading accounts
+    \item Assign strategies and trading accounts to assets
+    \item VIsualize the results of strategy evaluation and executed trades
+\end{itemize}
+
+\subsection{Backend}
+The backend part of the web application is implemented in \verb|actix-web| library, which, like many other parts of this project,
+is built upon \verb|actix| and its implementation of the actor model. This library provides several REST endpoints
+for working with system resources like strategies, trader accounts, or strategy assignments. Internally,
+these endpoints  should perform validation of input data, and execute database queries, which modify the state of the system
+
+\section{Exchange adapters}
+While all cryptocurrency exchanges use similar technologies to implement their APIs, each of them is different. To reduce
+complexity of the system, these differences must be resolved at the edge of our system, and should not permeate into other
+components. To brdige the gap between external APIs, and internal communication, the system contains adapter component
+for each exchange.
+
+This component connects to real-time websocket API in order to receive notifications about market updates,
+then translates this data into OHLC format, and sends it to the \kubecomp{core} component.
+It also exposes a service endpoint for querying account state (wallet balances), and executing trades, to which the
+\kubecomp{core}'s trader actor connects.
 
 \section{Strategies}
 In \autoref{chapter:current_state} we have described several implementations of automatic trading systems. Each one of them
@@ -988,58 +1014,278 @@ The control layer will also perform load balancing, ensuring that no single work
 \todo{TA library used to provide basic indicatiors (optimized) - Otherwise an iterator over raw values is available,
 user can manuall implement his logic}
 
-Then, the kubernetes horizontal pod autoscaler\footnote{\url{https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/}} will be used to dynamically adjust number of pods. In addition to that,
-the Google Kubernetes Engine also supports automatic node provisioning, meaning we can automate every part of scaling the system
-compute capabilities.
 
 \chapter{Implementation}
-\todo{Implemented using rust}
-\todo{Rust version - Features used}
-\todo{Global architecture - Packages - Common, deps and app/web}
 
-\todo{Persistence - ERD}
-\todo{Needs to be first do better understand other components}
+In this chapter, we aim to present current state of the implementation, outline the problems faced when trying to satisfy the
+reuqirements outlined in previous chapters, what methodologies and approaches were taken to solve them, and also
+point out some interesting aspects of the implementation. Another goal of this chapter is to present the operations
+side of this project, meaning the processes used for building and deploying this project, since that was another
+important part of the implementation
 
-\section{Bitfinex adapter}
+\section{Project structure}
+Like any other larger project, this project is also structured into several subdirectories. The main subdirectory is \verb|code|,
+which contains the code for all components, contains the \verb|common| project and several other
+projects in the \verb|deps| directory. The \verb|common| project groups all the dependencies that
+are shared by all components, and re-exports them for easier upgrading. The \verb|deps| subdirectory contains
+projects for \verb|actix-arch|, \verb|actix-comm|, \verb|db| projects and other dependencies.
+
+Then, the second core directory is the \verb|ops| directory, that contains scripts and configuration files
+needed for deploying and managing the system.
+
+The main directory contains \verb|Cargo.toml| file, that is used by the \textbf|cargo| tool. This root file
+defines a workspace, and some configuration profiles for rust compilation. Thanks to the existence of workspace,
+the \textbf|cargo| build tool does not create separate target directory for each sub-project, but creates
+a single \verb|target| directory in project root, which contains all the build artifacts and intermediate files.
+
+The \verb|target| directory is also used to store intermediate files produced by our custom build scripts, that
+will be described in the following section.
+
+\section{Building and deploying}
+Thanks to the distributed architecture, the building and deployment processes also had to be modified with this choice in mind.
+
+The rust language utilizes custom tool named \textbf{cargo} for building rust projects, and managing their dependencies.
+Having single tool manage both build process and dependency managment is extremely useful, but its not without drawbacks.
+\textbf{Cargo} cannot be used for building anything else than rust projects, and while it allows to customization
+of the build process by runing pre-build custom scripts, it does not support custimizing the build process with
+any kind of post-build steps.
+
+Therefore, to solve these drawbacks, we have to wrap cargo in a meta-build system, that would manage building
+individual rust projects using \textbf{cargo}, and perform any additional steps that would be necessary.
+
+\subsection{Makefile meta-build managment}
+This meta-build system, does not have to do anything particularly complex, it only needs to track what projects
+were changed, and depending on that information re-build, and re-deploy them.
+
+These requirements are perfectly satisfied by the ancient \textbf{make} unix tool. So, with make, comes
+the usage of Makefiles, and this project contains 3 of them.
+
+The first make file is global, it loads custom macros and environment configuration from \verb|ops/make/Macros.mk|.
+It contains the \verb|deploy| target, that builds all custom components, creates new docker images from them,
+re-evaluates the kubernetes configuration templates, and finally applies this configuration to currently active kubernetes cluster.
+
+\subsubsection{Building a component}
+One build component roughly corresponds to a \textbf{cargo} project, that produces an executable, and a docker container
+that contains this executable. Implementation of this build process is in \verb|ops/make/App.mk| makefile. This makefile
+invokes cargo in an appropriate subdirectory, it then creates adocker container according to \verb|ops/docker/app.Dockerfile|,
+and emits container name and container tag into  a file in \verb|target/docker/| directory, in a format
+that will later be loaded into an environment variable, and used for substitution when building kubernetes
+configuration templates.
+
+\subsection{Kuberentes configuration templating}
+This is very well known drawback of kubernetes. It does not support any kind of templating out of the box.
+There are existing solutions, that solve this issue, but many of them do so with opionated approach, that is coupled
+with some kind of package management.
+
+We elected to perform this templating manually, inside the makefiles implenting the build process. For this purpose,
+build of each component emits built docker image tag in the format of \verb|{COMPONENT}_IMAGE={IMAGE TAG}|.
+This is then loaded into make environment using the \verb|env| directive. Then, for each file in the \verb|ops/k8s| directory
+the main makefile loads it, performs environment variable substitution using the \verb|envsubst| tool, and saves modified
+file to \verb|target/k8s| directory. There are dependencies between these steps, which are also listed in the makefile, and
+therefore it does not re-build components that were not modified.
+
+Each image of a component is tagged with a special unique information pertaining to applicaiton version. Currently,
+this is the first 10 characters of the sha256 hash of the binary, but in the future, this should be changed to current
+git commit hash.
+
+\subsection{Build targets}
+Currently, the application is divided into 2 build targets. The \verb|web| build target contains the implementation
+of the web application(both frontend and backend), and the \verb|app| build target contains the implementation
+of every other component that in the system. This grouping is an artifact of how the system was developed, and in the
+future should be resolved by moving each system component into separate build target.
+
+\section{Component implementation}
+Most of the application is written in pure rust, with the exception of the frontend part of the web application, which
+is written in javascript. The project uses multiple advanced features of rust, that have not yet been stabilized, and
+therefore requires a nightly toolchain. Currently, the project uses nigthly toolchain from 2019-04-07.
+
+This requirement is mainly due to usage of async/await feature, that allows writing asynchronous code, with the
+appearance of synchronous code, greatly improving readability. \todo{Example here}.
+
+The usage of asynchronous code is prevalent throughout the codebase. Almost every actix actor is written in a way, that requires
+it to send and wait for message response when responding to a message itself. With synchronous code, this would mean, that
+the throughput of the system would be very low. With asynchronous code, the actor will perform some synchronous actions,
+will send messages other actors, and will then asynchronously wait for these messages. During this waiting, the actor
+can respond to other messages, greatly imrpoving throughput.
+
+\subsection{Core component}
+Core component is comprised of 3 main actors. As its name suggests, it implementes the core system logic, and
+other systems connect to it.
+
+\subsubsection{Ingest}
+The \actor{Ingest} actor binds a \actor{Subscriber} to a known port, and waits for publishers to connect to it.
+The publishers are created by exchange adapters, and the ingest actor uses this socket\todo{or use actor ?} to receive
+messages that cointains newest OHLC data. The ingest actor then discards old data, and publishes new, valid updates
+to a proxy actor, that then sends it to \actor{Rescaler} actor
+
+\subsubsection{Rescaler}
+This actor is responsible for creating aggregate data streams, that are not provided
+by the exchange adapter, but nonetheless are supported for trading by our system. In order
+to perform this task, the actor must have at least 12 hours of data available in memory. This data is loaded upon
+actor creation from the database, and the oldest data is periodically discarded during the normal operation of the actor.
+
+The incoming data is then published along with the virtual aggregate data over proxy actor to the \actor{Decision} actor.
+
+\subsubsection{Decision}
+This actor is responsible for deciding when a strategy should be evaluated. It periodically loads whole
+\textit{assignments} table into memory. This table contains all assingments of strategies and trading accounts
+to individual accounts. It stores this information into B-Tree map with the asset as a
+key, and a vector of assignments as a value.
+
+Then, upon receiving update from \actor{Rescaler} actor, the \actor{Decider} actor traverses its internal
+assignment map, and request strategy evaluation for each applicable strategy. This request is sent using
+the \textbf{ServiceConnection} to \textbf{eval} component. These requests are asynchronous, and therefore
+this actor can spawn hundreds of them without blocking the rest of the system.
+
+Then, after receiving result from evaluation, the actor can send a request to \textbf{Trader} actor,
+but this is only possible, if the assignment used had a trading account associated with it.
+
+\subsubsection{Trader}
+This actor is responsible for executing trades on individal exchanges. It receives position change requests from the \actor{Decision}
+actor. Then, it sends a request to get account balances to exchange adapter. After receiving a response, the
+\textbf{Trader} actor decides if the trading account has any available funds that could be used to strengthen
+the selected positon, and possibly executes a trade by sending a new request to the same exchange adapter.
+
+Internally, the trader uses the \verb|anymap| crate to store \actor{ServiceConnections} to each exchange
+adapter, since each adapter has its separate \textbf{ServiceInfo}. The \verb|anymap| crate allows
+this actor to store type-erased values, and then retrieve them on demand.
+
+\subsection{Eval component}
+This component is responsible for evaluation of user strategies. As mentioned earlier, this component consists
+of load balancing broker and a dynamic set of workers.
+
+\subsubsection{Load balancing broker}
+This broker is implemented by the \actor{LoadBalancer} component described in previous chapter. In itself,
+it is not extremely interesting. It runs in separate kubernetes deployment, and is exposed by kubernetes service.
+
+\subsubsection{Workers}
+The evaluation workers are implemented by the \actor{EvalWorker} actor. This actor uses a \actor{WorkerProxy}
+actor to connect to the load balancer. The proxy actor handles communication with the balancer, and
+communicates with \actor{EvalWorker}. The \actor{EvalWorker} is written as a service handler, that accepts requests
+for strategy evalution. Each request contains the identifier of the strategy used, an asset identifier,
+and some additional information like the timestamp that denotes the point in the data stream, on which
+the strategy should be evaluated. The worker currently always reads the strategy, and the OHLC data from the
+persistent storage. Adding some kind of cache could be an easy optimization.
+
+After receiving the strategy and OHLC data from the database, the worker creates a new LUA VM. It then
+initializes this VM by creating a technical analysis library and attaching OHLC Data.
+
+It then executes the strategy in a sandbox, that removes any functions that could be used to access or modify
+system information from the environment. The execution is also timed, and if the script executes for too long, it is
+automatically killed.
+
+After the strategy evaluation, the \actor{EvalWorker} returns the result to the load balancer, and it in turn returns it
+to the original request source, which was the \actor{Decision} actor in the \kubecomp{core} component.
+
+The actual strategy evaluation is implemented in \verb|strat-eval| library. This library could be extended to support other types of
+strategies.
+
+
+\subsection{Bitfinex adapter}
+This component consists of single actor. This actor currently performs several tasks at once, and should be
+divided into multiple actors in the future. During creation, it connects to Bitfinex websocket API,
+requests a list of available assets, and then subscribes for notifications for each asset.
+
+After subscribing, the actor starts to receive notifications, that are then promptly translated into OHLC data
+and published to the \actor{Ingest} actor in the \kubecomp{core} component.
+
+Another task, that is performed by this actor, is the serving of wallet balance and trade requests from the
+trader actor. These request are translated into REST API calls, that are performed by the http client implemented
+in \verb|actix-web| library.
+
+The bitfinex adapter actor is also implemented in an asynchronous way, increasing throughput.
+
+Future adapters will follow similar design to the bitfinex adapter, therefore
+extending the system to support additional exchange should be extremely easy.
+
+The bitfinex adapter is also managed ky kubernetes deployment and exposed by a service.
+
 \todo{Implemented in deps library - apis }
 \todo{Other exchanges similar}
 
 
-\section{Core component}
-\todo{Ingest - Cleanup }
-\todo{Rescaler - Generation of virtual ohlc values}
-\todo{Decision - Loads assignemnts from database, }
+\subsection{Persistence}
+This component is responsible for storing OHLC and user data. As mentioned earlier, we elected to use PostgreSQL
+with the TimescaleDB extension as the primary storage solution. This currently runs in a single large docker
+container, that is also managed by kubernetes deployment and exposed by a service. This could pose a problem,
+since usage of only one database instance provides a single point of failure. This issue could by fixed by sharding the
+database with simple streaming replication, but that approach would only ensure readability of data during issue
+with the masterserver, and would not allow writing of new data.
 
-\section{Eval}
-\todo{Balancing broker - Implementation in actix-arch - detail }
-\todo{Worker - Connects to broker, internally a ServiceHandler}
-\todo{Upon request - Loads OHLC + Strategy data from db}
-\todo{Ohlc - Complex query - performs backfilling - rescaling}
-\todo{Instantiates Lua VM, executes}
-\todo{TA library}
+Probbly the only solution to this issue is the usage of distributed database, in the form of PostgreSQL with the
+citus extension, or using another database, like scyllaDb
 
-\section{Trader component}
-\todo{Receives requests for trades }
-\todo{Forwards to individual exchanges}
-\todo{Generic positionService provided by exhcnages}
-\todo{First the balanceServicea to get wallet balances}
-\todo{THen TradeService to execute trades and ensure target position}
+\subsubsection{Access}
+The access to the database, is implemented by the \verb|db| library
 
-\todo{Everything logged into}
 
-\section{Persistence component}
+\todo{Persistence - ERD}
+\todo{Needs to be first do better understand other components}
+
 \todo{Implemented in the DB library}
 \todo{Uses diesel for query generation}
 \todo{Synchronous - uses R2d2 for connection pooling and SyncActors for concurrent access to DB}
+\todo{Describe the Database wrapper struct}
 
-\todo{Experimental storage of OHLC data in ScyllaDB}
+
+\subsection{Web component}
+This system component implements the REST API neccesary to acces the system. This API is then
+in turn used by the frontend web application. In theory, this API could be published for consumption by
+other developers, that wish to extend our system.
+
+The API is implemented using the \verb|actix-web| library, that utilizes the actor model to its fullest,
+being one of the fastest HTTP library in the world\todo{Cite techempower benchmark}. This library
+allows programmer to attach individual functions to HTTP URIs, and these funcitons are then invoked by a
+set of worker actors, whenever they receive a request matching said URI. The library also performas automatic parsing
+of path and query parameters and request bodies. Another core part of the library interface is the programmer defined
+state, that can be attached to a running web server. This state can be then retrieved inside every handler function.
+
+Our implementation uses it to store handle to database acces actors, which are then used for retrieving data.
+This is implemented using the \textbf{Database} wrapper struct, that was described earlier.
+
+Most of the implemented endpoints act as a simple interface to the database, that performs some validation, but there
+are some custom logic\todo{Describe assignments}
+
+This part of the system heavily relies upon the async-await style of programming, that requires the nightly compiler.
+Every single handler method is implemented as an async function, that internally calls several other async functions.
 
 
-\section{Web component}
-\todo{Backend - Actix web with diesel entities }
-\todo{Simple Crud - Usage of Database actor - the invoke method}
+%@formatter:off
+\begin{code}[language=rust,label={web_handler},caption={Example web handler function}]
+async fn api_detail((req, id): (HttpRequest<State>, Path<i32>))
+        -> Result<impl Responder> {
+    let db: Database = req.state().db.clone();
+    let base = await_compat!(BaseTemplateInfo::from_request(&req))?;
+    require_login!(base);
 
-\subsection{Frontend}
+    let (strat, user) = await_compat!(db.strategy_data(id.into_inner()))?;
+    let evals = await_compat!(db.get_evals(strat.id))?;
+    require_cond!(strat.owner_id == base.auth.uid, "Not authorized");
+
+    Ok(Json(strat).respond_to(&req).unwrap())
+}
+\end{code}
+%@formatter:on
+
+The \autoref{web_handler} code sample shows an example of a handler method, that is used for retrieving a strategy from the database.
+First important aspect is the method argument, which is a tuple of the request and a path parameter, that is automatically extracted by
+the library.
+
+The function first clones a handle to the database wrapper, and then retrieves basic info from the request.
+The \textbf{BaseTemplateInfo} struct primarily contains the authorization information. This retrieval must be asynchronous,
+since it might require a database access. This asynchronous operation is then wrapped in a \verb|await_compat| macro, which internally wraps
+the \verb|await| macro.
+
+Then, the strategy is retrieved from database, and \verb|require_cond| macro is used for ensuring that user can only access strategies that he owns.
+
+Finally, the strategy is serialized wrapped in the \verb|Json| struct, that marks performs serialization into Json in the
+\verb|respond_to| method.
+
+\section{Web application frontend}
+As mentioned earlier, the frontend application is implemented as a react single page application.
+
+\todo{History - used Server side templating, worked but was ugly and full of hacks}
+\todo{Decided to move to React, re-implementation took 3 days compared to 2 or more weeks for sever side}
 \todo{React - basics}
 \todo{Redux for state management}
 

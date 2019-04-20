@@ -38,8 +38,8 @@ items:
           command: ["/app", "ingest"]
           env: *env
           resources:
-            requests: { cpu: 50m, memory: 80M }
-            limits: { cpu: 80m, memory: 100M }
+            requests: { cpu: 50m, memory: 120M }
+            limits: { cpu: 80m, memory: 130M }
 
         - name: trader
           image: ${APP_IMAGE}

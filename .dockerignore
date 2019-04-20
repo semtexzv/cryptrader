@@ -5,3 +5,6 @@ target/**/incremental
 target/rls
 thesis/*
 code/*
+article/*
+cryptrader/*
+EXCEL/*

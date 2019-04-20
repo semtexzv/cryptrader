@@ -29,6 +29,7 @@ pub use actix::{
     fut::{self as afut, wrap_future, wrap_stream}};
 
 pub use actix_web;
+pub use actix_async_await::{self, Compat, await as compat_await};
 
 pub use url::Url;
 pub use log::{log, trace, debug, info, warn, error};
@@ -39,7 +40,7 @@ pub use bytes::{Bytes, BytesMut};
 pub use failure::{self, bail, format_err, Error};
 pub use failure_derive::{self, Fail};
 
-pub use tokio::{self,util::FutureExt as _};
+pub use tokio::{self, util::FutureExt as _};
 
 pub use base64;
 

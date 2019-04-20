@@ -1,4 +1,3 @@
-
 use crate::prelude::*;
 use crate::svc::ServiceInfo;
 use actix_comm::msg::RemoteError;
@@ -52,10 +51,7 @@ pub trait Distributable: Remotable {
 }
 
 
-
-
 pub struct LoadBalancer<S: ServiceInfo> {
-
     handler: ServiceHandler<S>,
     worker_handler: ServiceHandler<WorkerServiceInfo<S>>,
 
@@ -67,28 +63,25 @@ pub struct LoadBalancer<S: ServiceInfo> {
 impl<S: ServiceInfo> Actor for LoadBalancer<S> { type Context = Context<Self>; }
 
 impl<S: ServiceInfo> LoadBalancer<S> {
-    pub fn new(handle: ContextHandle) -> BoxFuture<Addr<Self>> {
-        let handler = ServiceHandler::new(handle.clone());
+    pub async fn new(handle: ContextHandle) -> Result<Addr<Self>> {
+        let handler = compat_await!(ServiceHandler::new(handle.clone()))?;
 
 
-        return box handler.map(move |handler: ServiceHandler<S>| {
-            let worker_handler: ServiceHandler<WorkerServiceInfo<S>> = ServiceHandler::from_other(handle.clone(), &handler.clone());
+        let worker_handler: ServiceHandler<WorkerServiceInfo<S>> = ServiceHandler::from_other(handle.clone(), &handler.clone());
 
-            Actor::create(move |ctx| {
-                handler.register(ctx.address().recipient());
-                worker_handler.register(ctx.address().recipient());
+        Ok(Actor::create(move |ctx| {
+            handler.register(ctx.address().recipient());
+            worker_handler.register(ctx.address().recipient());
 
-                LoadBalancer {
+            LoadBalancer {
+                handler,
+                worker_handler,
 
-                    handler,
-                    worker_handler,
-
-                    workers: BTreeMap::new(),
-                    running: BTreeMap::new(),
-                    waiting: VecDeque::new(),
-                }
-            })
-        }).map_err(Into::into);
+                workers: BTreeMap::new(),
+                running: BTreeMap::new(),
+                waiting: VecDeque::new(),
+            }
+        }))
     }
 
     fn new_work_id(&self) -> u64 {
@@ -114,7 +107,7 @@ impl<S: ServiceInfo> LoadBalancer<S> {
             self.workers.insert(worker_id, tx);
 
             let fut = wrap_future(rx.timeout(Duration::from_secs(3)));
-            let fut = fut.then(move |res, this : &mut Self, _ctx| {
+            let fut = fut.then(move |res, this: &mut Self, _ctx| {
                 let next = match res {
                     Ok(a) => Ok(a),
                     Err(ref e) if e.is_inner() => {
@@ -152,7 +145,6 @@ impl<S: ServiceInfo> Handler<ServiceRequest<WorkerServiceInfo<S>>> for LoadBalan
                 return self.worker_available();
             }
         }
-
     }
 }
 
@@ -164,7 +156,7 @@ impl<S: ServiceInfo> Handler<ServiceRequest<S>> for LoadBalancer<S> {
         let id = self.new_work_id();
         let (tx, rx) = oneshot::<S::ResponseType>();
 
-        if let Some((_,worker)) = self.workers.pop_first() {
+        if let Some((_, worker)) = self.workers.pop_first() {
             debug!("Dispatching immediately");
             worker.send(WorkerReply::Work(id, msg.0)).unwrap();
             self.running.insert(id, tx);

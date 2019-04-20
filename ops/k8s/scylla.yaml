@@ -68,11 +68,11 @@ items:
                   name: cql
               resources:
                 limits:
-                  cpu: 500m
-                  memory: 500Mi
+                  cpu: 300m
+                  memory: 450Mi
                 requests:
-                  cpu: 500m
-                  memory: 500Mi
+                  cpu: 300m
+                  memory: 440Mi
               securityContext:
                 capabilities:
                   add:

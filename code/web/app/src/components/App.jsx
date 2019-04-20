@@ -14,7 +14,7 @@ import StrategyList from "./StrategyList";
 import StrategyDetail from "./StrategyDetail";
 import AssignmentList from "./AssignmentList";
 import TraderList from "./TraderList";
-import Login from "./Login";
+import Login from "./Auth";
 
 import {createBrowserHistory} from "history";
 import {TYPE_STRATEGY} from "../api/baseApi";
@@ -41,7 +41,7 @@ export default class App extends Component {
                 <div className="App">
                     <ConnectedRouter history={history}>
                         <Switch>
-                            <Route exact path="/app/login" component={Login}/>
+                            <Route exact path="/app/auth" component={Login}/>
                             <Route path="/app" render={props => (
                                 <Dashboard>
                                     <Route exact path="/app/dashboard" component={Home}/>

@@ -1,4 +1,5 @@
 #![feature(box_syntax, associated_type_defaults)]
+#![feature(await_macro, futures_api, async_await)]
 #![feature(impl_trait_in_bindings)]
 #![allow(dead_code, unused_variables, unused_imports, unreachable_code, deprecated)]
 
@@ -23,6 +24,11 @@ fn main() {
     use common::actix::spawn as arb_spawn;
     env::set_var("RUST_BACKTRACE", "1");
 
+    fn execute<I, E: Debug, F: 'static  + std::future::Future<Output=Result<I, E>>>(f: F) {
+        let res = Compat::new(f);
+        common::actix::spawn(res.unwrap_err().drop_item());
+    }
+
     env_logger::Builder::from_default_env().init();
 
     let matches = App::new("Trader")
@@ -46,29 +52,21 @@ fn main() {
                 let rescaler = ingest::rescaler::Rescaler::new(ctx.clone(), db.clone(), i2r.clone(), r2d.clone().recipient());
                 let ingest = ingest::Ingest::new(ctx.clone(), db.clone(), i2r.clone().recipient());
 
-
-                arb_spawn(ingest.unwrap_err().drop_item());
-                arb_spawn(rescaler.unwrap_err().drop_item());
-                arb_spawn(decider.unwrap_err().drop_item());
+                execute(ingest);
+                execute(rescaler);
+                execute(decider);
             }
             "bitfinex" => {
-                common::actix::Arbiter::spawn(exch::bitfinex::BitfinexClient::new(ctx.clone())
-                    .then(|v| {
-                        if let Err(e) = v {
-                            panic!("Smth happened : {:?}", e);
-                        }
-                        result(Ok(()))
-                    })
-                );
+                execute(exch::bitfinex::BitfinexClient::new(ctx.clone()));
             }
             "trader" => {
                 let trader = crate::trader::Trader::new(ctx.clone(), db.clone());
-                arb_spawn(trader.unwrap_err().drop_item())
+                execute(trader);
             }
 
             "eval-balancer" => {
                 let balancer = actix_arch::balancing::LoadBalancer::<EvalService>::new(ctx.clone());
-                arb_spawn(balancer.unwrap_err().drop_item())
+                execute(balancer)
             }
 
             "eval-worker" => {

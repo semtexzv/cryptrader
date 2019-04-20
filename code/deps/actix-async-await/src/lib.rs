@@ -1,13 +1,17 @@
-#![feature(await_macro,async_await,futures_api, pin)]
+#![feature(await_macro, async_await, futures_api, box_syntax, specialization)]
 
 
 use std::future::Future;
-use tokio_async_await::compat::backward::Compat;
+pub use tokio_async_await::compat::backward::Compat;
 use futures::Future as Future01;
 use actix_web::{FutureResponse, error::Error};
 
 // Re-export `tokio::await` for ease-of-use
 pub use tokio_async_await::await;
+use actix::{Actor, Addr, Message, Handler, SpawnHandle, AsyncContext, Context};
+use std::marker::PhantomData;
+use actix::fut::wrap_future;
+
 
 macro_rules! define_compat {
     ($name:ident($($arg:ident),+: $($ty:ident),+)) => (
@@ -30,18 +34,56 @@ define_compat!(compat4(arg1, arg2, arg3, arg4: Arg1, Arg2, Arg3, Arg4));
 define_compat!(compat5(arg1, arg2, arg3, arg4, arg5: Arg1, Arg2, Arg3, Arg4, Arg5));
 define_compat!(compat6(arg1, arg2, arg3, arg4, arg5, arg6: Arg1, Arg2, Arg3, Arg4, Arg5, Arg6));
 
-
 /*
-use actix::dev::*;
-use actix::prelude::*;
 
-pub trait AsyncResponse<M: Message> {}
+#[macro_export]
+macro_rules! suspend {
+    ($self: ident, $ctx : ident, $f: expr) => {
+        {
 
-pub trait AsyncHandler<M: Message>: Actor<Context=Context<Self>> {
-    type Result: AsyncResponse<M>;
-    fn handle(&mut self, msg: M, ctx: &mut Context<Self>) -> Self::Result {
+        pub struct AsyncCtx<A: Actor> {
+            a: *mut A,
+            ctx: *mut A::Context,
+        }
 
+        impl<A: Actor<Context=Context<A>>> AsyncCtx<A> {
+            pub fn new(act: &mut A, ctx: &mut A::Context) -> Self {
+                unsafe {
+                    return Self {
+                        a: act as *mut _,
+                        ctx: ctx as *mut _,
+                    };
+                }
+            }
+            pub fn refs(&mut self) -> (&mut A, &mut A::Context) {
+                unsafe {
+                    return (&mut *self.a, &mut *self.ctx);
+                }
+            }
+        }
+            let mut c = AsyncCtx::new($self,$ctx);
+            let res = $crate::await!($f);
+            let (this,ctx) = c.refs();
+            $self = this;
+            $ctx = ctx;
+            res
+        }
 
+    };
+}
+trait AsyncContextExt {
+    fn spawn_async<F: Future<Output=()> + 'static>(&mut self, f: F) -> SpawnHandle;
+}
+
+impl<A: Actor<Context=Self>> AsyncContextExt for Context<A> {
+    fn spawn_async<F: Future<Output=()> + 'static>(&mut self, f: F) -> SpawnHandle {
+        let res2 = async move {
+            await!(f);
+            Ok(())
+        };
+
+        self.spawn(wrap_future(Compat::new(res2)))
     }
 }
+
 */

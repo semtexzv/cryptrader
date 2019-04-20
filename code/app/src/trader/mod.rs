@@ -38,23 +38,21 @@ pub struct Trader {
 }
 
 impl Trader {
-    pub fn new(handle: ContextHandle, db: db::Database) -> BoxFuture<Addr<Self>> {
-        let handler = ServiceHandler::new(handle.clone());
+    pub async fn new(handle: ContextHandle, db: db::Database) -> Result<Addr<Self>> {
+        let handler = compat_await!(ServiceHandler::new(handle.clone()))?;
 
-        box handler.map(|handler| {
-            Actor::create(|ctx| {
-                handler.register(ctx.address().recipient());
-                let mut res = Self {
-                    handle,
-                    handler,
-                    db,
-                    conns: AnyMap::new(),
-                };
+        Ok(Actor::create(|ctx| {
+            handler.register(ctx.address().recipient());
+            let mut res = Self {
+                handle,
+                handler,
+                db,
+                conns: AnyMap::new(),
+            };
 
-                res.connect_handlers::<Bitfinex>(ctx);
-                res
-            })
-        }).from_err()
+            res.connect_handlers::<Bitfinex>(ctx);
+            res
+        }))
     }
 
     /// Connect to an exchange, denoted by the [E] type parameter
@@ -220,6 +218,6 @@ pub struct TradeRequest {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TradeResponse {
     pub amount: f64,
-    pub price : f64,
+    pub price: f64,
 }
 

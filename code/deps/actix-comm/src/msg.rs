@@ -58,7 +58,7 @@ pub struct SendRequest<M>(pub M)
 
 /// Is similar to `MailboxError` but contains more variants, which are suited for reporting protocol errors
 /// since remote commuincation is much more dynamic
-#[derive(Debug, Fail, Serialize, Deserialize)]
+#[derive(Debug, Clone, Fail, Serialize, Deserialize)]
 pub enum RemoteError {
     #[fail(display = "Remote mailbox closed")]
     MailboxClosed,

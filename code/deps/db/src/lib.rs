@@ -19,6 +19,8 @@ use diesel_migrations::*;
 embed_migrations!("./migrations");
 
 mod prelude;
+mod scylla;
+
 mod schema;
 mod ohlc;
 mod users;
@@ -62,57 +64,66 @@ pub fn start() -> Database {
         .build(manager)
         .expect("Failed to create connection pool");
 
-    return Database(SyncArbiter::start(4, move || DbWorker(pool.clone())));
+    return Database(SyncArbiter::start(4, move || DbWorker(pool.clone())),scylla::connect());
 }
 
-impl Actor for DbWorker {
-    type Context = SyncContext<Self>;
-}
-
-pub struct Invoke<F, R, E> (pub F)
-    where F: FnOnce(&mut DbWorker, &mut <DbWorker as Actor>::Context) -> Result<R, E> + Send + 'static,
-          R: Send + 'static,
-          E: Send + 'static;
-
-impl<F, R, E> Message for Invoke<F, R, E>
-    where F: FnOnce(&mut DbWorker, &mut <DbWorker as Actor>::Context) -> Result<R, E> + Send + 'static,
-          R: Send + 'static,
-          E: Send + 'static {
-    type Result = Result<R, E>;
-}
-
-impl<F, R, E> Handler<Invoke<F, R, E>> for DbWorker
-    where F: FnOnce(&mut DbWorker, &mut <DbWorker as Actor>::Context) -> Result<R, E> + Send + 'static,
-          R: Send + 'static,
-          E: Send + 'static {
-    type Result = Result<R, E>;
-
-    fn handle(&mut self, msg: Invoke<F, R, E>, ctx: &mut Self::Context) -> Self::Result {
-        return msg.0(self, ctx);
-    }
-}
+impl Actor for DbWorker { type Context = SyncContext<Self>; }
 
 #[derive(Clone)]
-pub struct Database(Addr<DbWorker>);
+pub struct Database(Addr<DbWorker>, scylla::Scylla);
 
-impl Database {
-    pub fn invoke<F, R, E>(&self, f: F) -> BoxFuture<R, E>
-        where F: FnOnce(&mut DbWorker, &mut <DbWorker as Actor>::Context) -> Result<R, E> + Send + 'static,
-              R: Send + 'static,
-              E: Send + 'static + Debug
-    {
-        let req = self.0.send(Invoke(f));
-        let req: BoxFuture<R, E> = box req.then(|r| r.unwrap());
-        req
-    }
+impl_invoke!(Database,DbWorker);
 
-    pub fn do_invoke<F, R, E>(&self, f: F)
-        where F: FnOnce(&mut DbWorker, &mut <DbWorker as Actor>::Context) -> Result<R, E> + Send + 'static,
-              R: Send + 'static,
-              E: Send + 'static + Debug
-    {
-        self.0.do_send(Invoke(f));
-    }
+#[macro_export]
+macro_rules! impl_invoke {
+    ($wrap:ty, $ty:ty) => {
+
+        use std::result::Result;
+        pub struct Invoke<F, R, E> (pub F)
+            where F: FnOnce(&mut $ty, &mut <$ty as Actor>::Context) -> Result<R, E> + Send + 'static,
+                  R: Send + 'static,
+                  E: Send + 'static;
+
+        impl<F, R, E> Message for Invoke<F, R, E>
+            where F: FnOnce(&mut $ty, &mut <$ty as Actor>::Context) -> Result<R, E> + Send + 'static,
+                  R: Send + 'static,
+                  E: Send + 'static {
+            type Result = Result<R, E>;
+        }
+
+        impl<F, R, E> Handler<Invoke<F, R, E>> for $ty
+            where F: FnOnce(&mut $ty, &mut <$ty as Actor>::Context) -> Result<R, E> + Send + 'static,
+                  R: Send + 'static,
+                  E: Send + 'static {
+            type Result = Result<R, E>;
+
+            fn handle(&mut self, msg: Invoke<F, R, E>, ctx: &mut Self::Context) -> Self::Result {
+                return msg.0(self, ctx);
+            }
+        }
+
+        impl $wrap {
+            #![allow(dead_code)]
+            pub fn invoke<F, R, E>(&self, f: F) -> BoxFuture<R, E>
+                where F: FnOnce(&mut $ty, &mut <$ty as Actor>::Context) -> Result<R, E> + Send + 'static,
+                      R: Send + 'static,
+                      E: Send + 'static + Debug
+            {
+                let req = self.0.send(Invoke(f));
+                let req: BoxFuture<R, E> = box req.then(|r| r.unwrap());
+                req
+            }
+
+            pub fn do_invoke<F, R, E>(&self, f: F)
+                where F: FnOnce(&mut $ty, &mut <$ty as Actor>::Context) -> Result<R, E> + Send + 'static,
+                      R: Send + 'static,
+                      E: Send + 'static + Debug
+            {
+                self.0.do_send(Invoke(f));
+            }
+        }
+
+    };
 }
 
 

@@ -16,19 +16,17 @@ impl Actor for Rescaler {
 }
 
 impl Rescaler {
-    pub fn new(handle: ContextHandle, db : Database, input: Addr<Proxy<OhlcUpdate>>, out: Recipient<OhlcUpdate>) -> BoxFuture<Addr<Self>, failure::Error> {
-        box future::ok(
-            Arbiter::start(move |ctx : &mut Context<Self>| {
-                let rec = ctx.address().recipient();
-                input.do_send(Subscribe::forever(rec));
-                Rescaler {
-                    handle,
-                    db,
-                    cache: BTreeMap::new(),
-                    out,
-                }
-            })
-        )
+    pub async fn new(handle: ContextHandle, db: Database, input: Addr<Proxy<OhlcUpdate>>, out: Recipient<OhlcUpdate>) -> Result<Addr<Self>, failure::Error> {
+        Ok(Arbiter::start(move |ctx: &mut Context<Self>| {
+            let rec = ctx.address().recipient();
+            input.do_send(Subscribe::forever(rec));
+            Rescaler {
+                handle,
+                db,
+                cache: BTreeMap::new(),
+                out,
+            }
+        }))
     }
 }
 
@@ -42,7 +40,7 @@ impl Handler<OhlcUpdate> for Rescaler {
                 if self.cache.get(&msg.spec.pair_id()).is_none() {
                     let msg = msg.clone();
                     let time = unixtime() - 60 * 60 * 6;
-                    box wrap_future(self.db.ohlc_history(msg.spec.pair_id().clone(),time as _))
+                    box wrap_future(self.db.ohlc_history(msg.spec.pair_id().clone(), time as _))
                         .map(move |v, this: &mut Self, ctx| {
                             this.cache.insert(msg.spec.pair_id().clone(), v);
                         })

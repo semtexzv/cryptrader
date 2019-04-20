@@ -208,18 +208,15 @@ impl<'de> Deserialize<'de> for Resp {
 }
 
 
-pub fn get_available_symbols() -> impl Future<Item=Vec<SymbolDetail>, Error=failure::Error> {
+pub async fn get_available_symbols() -> Result<Vec<SymbolDetail>, failure::Error> {
     use common::{
         actix_web,
         actix_web::*,
     };
 
-    client::get("https://api.bitfinex.com/v1/symbols_details")
-        .finish()
-        .unwrap()
-        .send()
-        .from_err()
-        .and_then(|resp| {
-            resp.json::<Vec<SymbolDetail>>().from_err()
-        })
+    let req = client::get("https://api.bitfinex.com/v1/symbols_details").finish().unwrap();
+    let res = comp_await!(req.send())?;
+    let body: Vec<SymbolDetail> = comp_await!(res.json())?;
+
+    Ok(body)
 }

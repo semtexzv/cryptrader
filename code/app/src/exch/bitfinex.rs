@@ -63,87 +63,76 @@ impl Actor for BitfinexClient {
 
 
 impl BitfinexClient {
-    pub fn new(handle: ContextHandle) -> impl Future<Item=Addr<Self>, Error=Error> {
+    pub async fn new(handle: ContextHandle) -> Result<Addr<Self>, Error> {
         info!("Connecting to websocket");
-        let client = ws::Client::new("wss://api.bitfinex.com/ws/2").connect()
-            .map_err(|e| {
-                println!("Connection error : {:?}", e);
-                e.into()
-            });
 
-        let symbols = api::ws::get_available_symbols();
-        let publ = Publisher::new(handle.clone()).map_err(Into::into);
+        let client = compat_await!(ws::Client::new("wss://api.bitfinex.com/ws/2").connect())?;
+        let (rx, mut tx) = client.into();
 
-        let balance = ServiceHandler::new(handle.clone());
+        let symbols = compat_await!(api::ws::get_available_symbols())?;
+        let publ: Publisher<_> = compat_await!(Publisher::new(handle.clone()))?;
+        let balance_handler = compat_await!(ServiceHandler::new(handle.clone()))?;
 
-        let h = handle.clone();
+        let trade_handler = ServiceHandler::from_other(handle.clone(), &balance_handler);
 
-        let svcs = balance.map(|b| {
-            let trade = ServiceHandler::from_other(h, &b);
-            (b, trade)
-        }).map_err(Into::into);
+        let interval = OhlcPeriod::Min1;
+        let interval_secs = interval.seconds();
 
-        Future::join4(client, symbols, publ, svcs)
-            .map(|((rx, mut tx), symbols, publ, (balance_handler, trade_handler))| {
-                let interval = OhlcPeriod::Min1;
-                let interval_secs = interval.seconds();
+        info!("Bitfinex: Connected");
+        let pairs: BTreeMap<TradePair, SymbolDetail> = symbols.into_iter().map(|s| {
+            (TradePair::from_bfx_pair(&s.pair.to_uppercase()), s)
+        }).collect();
 
-                info!("Bitfinex: Connected");
-                let pairs: BTreeMap<TradePair, SymbolDetail> = symbols.into_iter().map(|s| {
-                    (TradePair::from_bfx_pair(&s.pair.to_uppercase()), s)
-                }).collect();
-
-                for (pair, symbol) in pairs.iter() {
-                    let trade_sym = pair.bfx_trade_sym();
-                    let ohlc_sub = json!({
+        for (pair, symbol) in pairs.iter() {
+            let trade_sym = pair.bfx_trade_sym();
+            let ohlc_sub = json!({
                         "event" : "subscribe",
                         "channel" : "candles",
                         "key" : format!("trade:{}:{}", interval.bfx_str() ,trade_sym),
                     });
 
-                    let ticker_sub = json!({
+            let ticker_sub = json!({
                         "event" : "subscribe",
                         "channel" : "ticker",
                         "symbol" : pair.to_bfx_pair(),
                     });
-                    tx.text(json::to_string(&ohlc_sub).unwrap());
-                    tx.text(json::to_string(&ticker_sub).unwrap());
+            tx.text(json::to_string(&ohlc_sub).unwrap());
+            tx.text(json::to_string(&ticker_sub).unwrap());
+        }
+
+        debug!("Send {} pair requests", pairs.len());
+
+
+        Ok(Actor::create(|ctx| {
+            BitfinexClient::add_stream(rx, ctx);
+
+            ctx.run_interval(Duration::from_secs(20), |this, ctx| {
+                let now = PreciseTime::now();
+
+                if this.last.to(now).num_seconds() > 20 {
+                    panic!("Timeout")
                 }
-
-                debug!("Send {} pair requests", pairs.len());
-
-
-                Actor::create(|ctx| {
-                    BitfinexClient::add_stream(rx, ctx);
-
-                    ctx.run_interval(Duration::from_secs(20), |this, ctx| {
-                        let now = PreciseTime::now();
-
-                        if this.last.to(now).num_seconds() > 20 {
-                            panic!("Timeout")
-                        }
-                    });
+            });
 
 
-                    balance_handler.register(ctx.address().recipient());
-                    trade_handler.register(ctx.address().recipient());
+            balance_handler.register(ctx.address().recipient());
+            trade_handler.register(ctx.address().recipient());
 
-                    BitfinexClient {
-                        handle,
-                        ingest: publ,
-                        ws: tx,
+            BitfinexClient {
+                handle,
+                ingest: publ,
+                ws: tx,
 
-                        pairs,
-                        balance_handler,
-                        trade_handler,
+                pairs,
+                balance_handler,
+                trade_handler,
 
-                        ohlc_ids: BTreeMap::new(),
-                        ticker_ids: BTreeMap::new(),
-                        last: PreciseTime::now(),
-                        nonce: unixtime_millis(),
-                    }
-                })
-            })
+                ohlc_ids: BTreeMap::new(),
+                ticker_ids: BTreeMap::new(),
+                last: PreciseTime::now(),
+                nonce: unixtime_millis(),
+            }
+        }))
     }
 }
 

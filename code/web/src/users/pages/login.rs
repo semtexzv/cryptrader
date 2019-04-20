@@ -13,10 +13,6 @@ pub async fn post_async((request, login): (HttpRequest<State>, Form<UserLogin>))
 
     let url = request.url_for("homepage", &[""; 0]).unwrap();
     let homepage = Ok(redirect(url.as_str()));
-    error!("Homepage is on : {:?}", url);
-    if request.is_authenticated() {
-        return homepage;
-    }
 
     let login = login.into_inner();
     if let Err(e) = login.validate() {

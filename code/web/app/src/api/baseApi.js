@@ -1,20 +1,24 @@
-
 class ApiObj {
     static field = "";
     static path = this.field;
 }
+
 class Strategy extends ApiObj {
     static field = "strategies";
 }
+
 class Trader extends ApiObj {
     static field = "traders";
 }
+
 class Assignment extends ApiObj {
     static field = "assignments";
 }
+
 class Pair extends ApiObj {
     static field = "pairs";
 }
+
 class Evaluation extends ApiObj {
     static field = "evaluations";
 }
@@ -31,8 +35,8 @@ export const TYPE_TRADER = {
 };
 
 export const TYPE_ASSIGNMENT = {
-    path : "assignments",
-    field : "assignments",
+    path: "assignments",
+    field: "assignments",
 };
 
 export const TYPE_PAIR = {
@@ -49,7 +53,7 @@ export const TYPE_EVALUATIONS = {
 export default class Api {
     static getAll(type) {
         return fetch(`/api/${type.path}`).then(response => {
-            if(response.status == 401) {
+            if (response.status == 401) {
                 throw response
             }
             return response.json();
@@ -67,7 +71,7 @@ export default class Api {
             },
             body: JSON.stringify(v),
         }).then(response => {
-            if(response.status == 401) {
+            if (response.status == 401) {
                 throw response
             }
             return response.json();
@@ -84,7 +88,19 @@ export default class Api {
                 'Content-Type': 'application/json',
             },
         }).then(response => {
-            if(response.status == 401) {
+            if (response.status == 401) {
+                throw response
+            }
+            return response.json();
+        })
+    }
+
+    static logout() {
+        return fetch("/api/logout", {
+            credentials: 'include',
+            method: 'post',
+        }).then(response => {
+            if (response.status == 401) {
                 throw response
             }
             return response.json();

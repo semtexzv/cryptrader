@@ -7,7 +7,10 @@ edition = "2018"
 [dependencies]
 
 actix = { version = "0.7", default-features=false }
-actix-web = {version = "*"}
+actix-web = {version = "*", default-features=false }
 
-futures = "0.1"
 tokio-async-await = { version = "0.1", features = [ "async-await-preview" ] }
+futures = "0.1"
+
+#futures-core-preview = { version = "=0.3.0-alpha.13",  default-features=false}
+#futures-util-preview = { version = "=0.3.0-alpha.13", default-features=false, features=["compat"]}

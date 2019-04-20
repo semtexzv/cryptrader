@@ -29,7 +29,7 @@ pub fn configure(app: App<State>) -> App<State> {
         r.method(Method::GET).with(compat(dispatch))
     }).resource("/users/signup/", |r| {
         r.method(Method::POST).with(compat(pages::signup::post));
-    }).resource("/users/login/", |r| {
+    }).resource("/users/signin/", |r| {
         r.method(Method::POST).with(compat(pages::login::post_async));
     }).resource("/users/logout/", |r| {
         r.method(Method::POST).with(pages::logout);

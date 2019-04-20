@@ -37,43 +37,43 @@ impl TradingRequestSpec {
 pub struct Decider {
     handle: ContextHandle,
     db: Database,
-    requests: Trie<String, TradingRequestSpec>,
+    requests: BTreeMap<String, Vec<TradingRequestSpec>>,
     eval_svc: ServiceConnection<crate::eval::EvalService>,
     pos_svc: ServiceConnection<crate::trader::PositionService>,
 }
 
 impl Decider {
-    pub fn new(handle: ContextHandle, db: db::Database, input: Addr<Proxy<OhlcUpdate>>) -> BoxFuture<Addr<Self>, failure::Error> {
-        let eval = ServiceConnection::new(handle.clone());
-        let pos = ServiceConnection::new(handle.clone());
+    pub async fn new(handle: ContextHandle, db: db::Database, input: Addr<Proxy<OhlcUpdate>>) -> Result<Addr<Self>, failure::Error> {
+        let eval_svc = compat_await!(ServiceConnection::new(handle.clone()))?;
+        let pos_svc = compat_await!(ServiceConnection::new(handle.clone()))?;
 
-        let fut = Future::join(eval, pos);
 
-        box fut.map(|(eval_svc, pos_svc)| {
-            Arbiter::start(move |ctx: &mut Context<Self>| {
-                input.do_send(Subscribe::forever(ctx.address().recipient()));
-                ctx.run_interval(Duration::from_secs(5), |this, ctx| {
-                    this.reload(ctx);
-                });
-                Decider {
-                    handle,
-                    db,
-                    eval_svc,
-                    pos_svc,
-                    requests: Trie::new(),
-                }
-            })
-        }).from_err()
+        Ok(Arbiter::start(move |ctx: &mut Context<Self>| {
+            input.do_send(Subscribe::forever(ctx.address().recipient()));
+            ctx.run_interval(Duration::from_secs(5), |this, ctx| {
+                this.reload(ctx);
+            });
+            Decider {
+                handle,
+                db,
+                eval_svc,
+                pos_svc,
+                requests: BTreeMap::new(),
+            }
+        })
+        )
     }
 
     pub fn reload(&mut self, ctx: &mut Context<Self>) {
         let f = wrap_future(self.db.all_assignments_with_traders())
             .and_then(|req, this: &mut Self, ctx| {
                 info!("Eval requests reloaded");
-                this.requests = Trie::new();
+                this.requests = BTreeMap::new();
                 for (r, t) in req.iter() {
                     let spec = TradingRequestSpec::from_db(r, t.clone());
-                    this.requests.insert(spec.search_prefix(), spec);
+
+                    let strats = this.requests.entry(spec.search_prefix()).or_insert(Vec::new());
+                    strats.push(spec);
                 }
 
 
@@ -94,9 +94,9 @@ impl Handler<OhlcUpdate> for Decider {
             return ();
         }
         use radix_trie::TrieCommon;
-        let sub = self.requests.subtrie(&msg.search_prefix());
+        let sub = self.requests.get(&msg.search_prefix());
         if let Some(sub) = sub {
-            for spec in sub.values() {
+            for spec in sub.iter() {
                 let spec: &TradingRequestSpec = spec;
                 info!("Should eval {:?} on {:?}", spec, msg.spec);
                 let req = EvalRequest {

@@ -69,7 +69,6 @@ pub struct Ingest {
     input: Subscriber<IngestEndpoint>,
 
     db: Database,
-    csdb: csdb::CsDb,
     out: Recipient<OhlcUpdate>,
 
     last: BTreeMap<PairId, Ohlc>,
@@ -94,27 +93,21 @@ impl Handler<IngestUpdate> for Ingest {
 }
 
 impl Ingest {
-    pub fn new(handle: ContextHandle, db: db::Database, out: Recipient<OhlcUpdate>) -> BoxFuture<Addr<Self>, failure::Error> {
-        let input = Subscriber::new(handle.clone());
-        let values = db.last_ohlc_values();
+    pub async fn new(handle: ContextHandle, db: Database, out: Recipient<OhlcUpdate>) -> Result<Addr<Self>, failure::Error> {
+        let input = compat_await!(Subscriber::new(handle.clone()))?;
+        let last = compat_await!(db.last_ohlc_values())?;
 
-        let res = Future::join(input.from_err(), values);
-
-        return box res.map(|(input, last)| {
-            Arbiter::start(move |ctx: &mut Context<Self>| {
-                input.register(ctx.address().recipient());
-                Ingest {
-                    handle,
-                    input,
-                    csdb: csdb::connect(),
-                    db,
-                    out,
-                    last,
-                }
-            })
-        }).map_err(Into::into);
+        Ok(Arbiter::start(move |ctx: &mut Context<Self>| {
+            input.register(ctx.address().recipient());
+            Ingest {
+                handle,
+                input,
+                db,
+                out,
+                last,
+            }
+        }))
     }
-
     fn get_last(&mut self, id: &PairId) -> Option<Ohlc> {
         let cached = self.last.entry(id.clone());
         match cached {
@@ -172,9 +165,6 @@ impl Ingest {
             .collect();
 
         filtered.sort_by_key(|x| x.time);
-
-        self.csdb.save(data.spec.pair_id().clone(), data.ohlc.clone());
-
 
         let f = self.db.do_save_ohlc(data.spec.pair_id().clone(), data.ohlc.clone());
 

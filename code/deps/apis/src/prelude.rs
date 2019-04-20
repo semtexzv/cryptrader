@@ -6,6 +6,8 @@ pub use common::{
     },
 };
 
+pub use actix_async_await::await as comp_await;
+
 pub use std::str::FromStr;
 pub use std::fmt::Write;
 

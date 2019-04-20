@@ -99,6 +99,11 @@ macro_rules! require_cond {
             return Ok(actix_web::error::ErrorUnauthorized("").into());
         }
     };
+    ($cond: expr, $txt : expr) => {
+        if !$cond {
+            return Ok(actix_web::error::ErrorUnauthorized($txr).into());
+        }
+    };
 }
 
 

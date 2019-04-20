@@ -31,7 +31,7 @@ items:
               imagePullPolicy: Always
               command: ["/app", "eval-balancer"]
               env: *env
-              resources: { requests: { cpu: 100m }, limits: { cpu: 200m } }
+              resources: { requests: { cpu: 100m, memory: 50M }, limits: { cpu: 120m, memory: 70M } }
 
   - kind: Deployment
     apiVersion: apps/v1
@@ -50,4 +50,4 @@ items:
               imagePullPolicy: Always
               command: ["/app", "eval-worker"]
               env: *env
-              resources: { requests: { cpu: 200m }, limits: { cpu: 200m } }
+              resources: { requests: { cpu: 150m, memory: 50M }, limits: { cpu: 160m, memory: 55M } }
