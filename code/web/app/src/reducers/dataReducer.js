@@ -1,46 +1,45 @@
 import * as types from '../actions/actionTypes';
+import orm, {Strategy} from '../data'
 
-import {schema, normalize} from 'normalizr';
-
-const strategy = new schema.Entity('strategies', {});
-
-const trader = new schema.Entity('traders', {});
-
-const assignment = new schema.Entity('assignment', {
-    strategy_id: strategy,
-    trader_id: trader,
-});
-
-const schemas = {
-    assignments: assignment,
-    strategies: strategy,
-    traders: trader
+const emptyState = orm.getEmptyState();
+const defaultState = () => {
+    let sess = orm.session(emptyState);
+    let periods = ["1m", "5m", "15m"];
+    periods.forEach(p => sess.Period.upsert({text: p}));
+    return sess.state
 };
 
 const initial = {
-    strategies: [],
-    assignments: [],
-    traders: [],
-    pairs: [],
-    periods: ["1m", "5m", "15m"],
+    db: defaultState(),
     evaluations: [],
 };
 
 export default function dataReducer(state = initial, action) {
+
+    let sess = orm.mutableSession(state.db);
     let _state = Object.assign({}, state);
+
     switch (action.type) {
         case types.LOAD_ALL_SUCCESS:
-            var normalized = normalize(action.data, new schema.Array(schemas[action.dataType.field]));
-            _state[action.dataType.field] = action.data;
+            action.data.forEach(elem => {
+                elem['id'] = action.dataType.id(elem);
+                sess[action.dataType.modelName].upsert(elem)
+            });
+            _state.db = sess.state;
             return _state;
         case types.POST_ONE_SUCCESS:
-            var normalized = normalize(action.data, schemas[action.dataType.field]);
-            _state[action.dataType.field] = [...state[action.dataType.field], action.data];
+            action.data['id'] = action.dataType.id(action.data);
+            sess[action.dataType.modelName].upsert(action.data);
+            _state.db = sess.state;
             return _state;
         case types.DELETE_ONE_SUCCESS:
-            _state[action.dataType.field] = _state[action.dataType.field].filter(i => i.id != action.id);
+            let x = sess[action.dataType.modelName].withId(action.data);
+            if (x) {
+                x.delete()
+            }
+            _state.db = sess.state;
             return _state;
         default:
-            return state;
     }
+    return _state;
 }

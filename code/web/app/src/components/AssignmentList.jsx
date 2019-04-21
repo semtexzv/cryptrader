@@ -19,7 +19,8 @@ import {Link} from "react-router-dom";
 import {withStyles} from "@material-ui/styles";
 import {TYPE_ASSIGNMENT, TYPE_PAIR, TYPE_STRATEGY, TYPE_TRADER} from "../api/baseApi";
 import InputLabel from "@material-ui/core/InputLabel";
-
+import orm from '../data'
+import EditDialog from "./EditDialog";
 
 const styles = (theme) => ({
     newButton: {
@@ -110,7 +111,8 @@ class AssignmentList extends Component {
     }
 
     render() {
-        let {classes, assignments, strategies, pairs, periods, traders} = this.props;
+        let {classes, assignments, strategies, pairs, periods, traders, dispatch} = this.props;
+        console.log()
         return (<div>
             <Paper>
                 <Table>
@@ -148,94 +150,92 @@ class AssignmentList extends Component {
                         )}</TableBody>
                 </Table>
             </Paper>
-            <Dialog open={this.state.open}>
-                <DialogTitle id="form-dialog-title">Create Assignment</DialogTitle>
-                <DialogContent>
-                    <DialogContentText>
-                        Please create a new assignment
-                    </DialogContentText>
-                    <FormControl>
-                        <InputLabel htmlFor="assignment-pair">Pair</InputLabel>
-                        <Select
-                            native
-                            onChange={this.handleChangePair}
-                            inputProps={{
-                                name: 'pair',
-                                id: 'assignment-pair'
-                            }}
-                        >
-                            <option value=""/>
-                            {pairs.map(p => (
-                                <option data-exchange={p.exchange} data-pair={p.pair}>{p.exchange}/{p.pair}</option>))}
+            <EditDialog
+                open={this.state.open}
+                title="Assignment"
+                text="Create new assignment"
+                data={this.state.newData}
+                onData={d => {
 
-                        </Select>
-                    </FormControl>
-                    <FormControl>
-                        <InputLabel htmlFor="assignment-period">Period</InputLabel>
-                        <Select
-                            native
-                            onChange={this.handleChangeText('period')}
-                            inputProps={{
-                                name: 'period',
-                                id: 'assignment-period'
-                            }}
-                        >
-                            <option value=""/>
-                            {periods.map(p => (<option value={p}>{p}</option>))}
+                    this.setState({newData: d})
+                }}
+                onDismiss={save => {
+                    if (save) {
+                        dispatch(postOne(TYPE_ASSIGNMENT, this.state.newData)).then(() => {
+                            this.setState({open: false})
+                        })
+                    }
+                }}
+                attrs={[
+                    {
+                        name: "asset",
+                        title: "Asset",
+                        type: "select",
+                        values: pairs,
+                        text: (e) => e.exchange + "/" + e.pair,
+                        isSelected: (data, e) => {
+                            return data.exchange == e.exchange && data.pair == e.pair
+                        },
+                        select: (e) => {
+                            this.setState({newData: {...this.state.newData, pair: e.pair, exchange: e.exchange}})
+                        }
+                    },
+                    {
+                        name: "period",
+                        title: "Period",
+                        type: "select",
+                        values: periods,
+                        text: (i) => i.text,
+                        isSelected: (data, e) => {
+                            return data.period == e.text
+                        },
+                        select: (e) => {
+                            this.setState({newData: {...this.state.newData, period: e.text}})
+                        }
+                    },
+                    {
+                        name: "strategy_id",
+                        title: "Strategy",
+                        type: "select",
+                        values: strategies,
+                        text: (e) => e.name,
+                        isSelected: (data, e) => {
+                            return data.strategy_id == e.id
+                        },
+                        select: (e) => {
+                            this.setState({newData: {...this.state.newData, strategy_id: e.id}})
+                        }
+                    },
+                    {
+                        name: "trader_id",
+                        title: "Trader",
+                        type: "select",
+                        values: traders,
+                        text: (e) => e.name,
+                        isSelected: (data, e) => {
+                            return data.trader_id == e.id
+                        },
+                        select: (e) => {
+                            this.setState({newData: {...this.state.newData, trader_id: e.id}})
+                        }
+                    }
+                ]}
+            />
 
-                        </Select>
-                    </FormControl>
-                    <FormControl>
-                        <InputLabel htmlFor="assignment-strategy">Strategy</InputLabel>
-                        <Select
-                            native
-                            onChange={this.handleChangeNum('strategy_id')}
-                            inputProps={{
-                                name: 'strategy',
-                                id: 'assignment-strategy'
-                            }}
-                        >
-                            <option value=""/>
-                            {strategies.map(p => (<option value={p.id}>{p.name}</option>))}
-
-                        </Select>
-                    </FormControl>
-                    <FormControl>
-                        <InputLabel htmlFor="assignment-trader">Trader</InputLabel>
-                        <Select
-                            native
-                            onChange={this.handleChangeNum('trader_id')}
-                            inputProps={{
-                                name: 'trader',
-                                id: 'assignment-trader'
-                            }}
-                        >
-
-                            <option value=""/>
-                            {traders
-                                .filter(t => assignments.find(a => a.trader_id == t.id) == null)
-                                .map(p => (<option value={p.id}>{p.name}</option>))
-                            }
-
-                        </Select>
-                    </FormControl>
-                </DialogContent>
-                <DialogActions>
-                    <Button color="primary" onClick={this.handleClose}>Cancel</Button>
-                    <Button color="primary" onClick={this.handleOk}>Ok</Button>
-                </DialogActions>
-            </Dialog>
         </div>)
     }
 }
 
 function mapStoreToProps(state, props) {
+
+    let sess = orm.session(state.data.db);
+
     return {
-        assignments: state.data.assignments,
-        strategies: state.data.strategies,
-        pairs: state.data.pairs,
-        periods: state.data.periods,
-        traders: state.data.traders,
+        assignments: sess.Assignment.all().toRefArray(),
+        strategies: sess.Strategy.all().toRefArray(),
+        pairs: sess.Pair.all().toRefArray(),
+        periods: sess.Period.all().toRefArray(),
+        traders: sess.Trader.all().toRefArray(),
     };
 }
 

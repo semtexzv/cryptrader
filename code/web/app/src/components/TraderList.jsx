@@ -1,7 +1,7 @@
 import React, {Component} from "react";
 import {connect} from "react-redux";
 import PropTypes from "prop-types";
-import {loadAll, postOne} from "../actions/apiActions";
+import {deleteOne, loadAll, postOne} from "../actions/apiActions";
 import {
     Dialog, DialogActions,
     DialogContent,
@@ -18,6 +18,8 @@ import Button from "@material-ui/core/Button";
 import {Link} from "react-router-dom";
 import {TYPE_STRATEGY, TYPE_TRADER} from "../api/baseApi";
 import {withStyles} from "@material-ui/styles";
+import EditDialog from "./EditDialog";
+import orm from "../data";
 
 const styles = (theme) => ({
     newButton: {
@@ -27,7 +29,8 @@ const styles = (theme) => ({
 
 class TraderList extends Component {
     state = {
-        open: false
+        open: false,
+        newTrader: {}
     };
 
     static propTypes = {
@@ -51,19 +54,12 @@ class TraderList extends Component {
         this.setState({open: false});
     };
 
-    handleOk = () => {
-        let {dispatch} = this.props;
-        dispatch(postOne(TYPE_STRATEGY, this.state.newStrat)).then(() => {
-            this.handleClose();
-        })
-    };
-
 
     render() {
-        let {classes} = this.props;
+        let {classes, dispatch} = this.props;
+        let values = ["bitfinex"];
         return (
             <div>
-
                 <Paper>
                     <Table>
 
@@ -84,56 +80,66 @@ class TraderList extends Component {
                             </TableRow>
                             {this.props.traders.map(
                                 row => (
-                                    <TableRow>
+                                    <TableRow key={row.id}>
                                         <TableCell>{row.name}</TableCell>
                                         <TableCell>{row.exchange}</TableCell>
                                         <TableCell>{row.api_key}</TableCell>
-                                        <TableCell align="right" ><Button color="primary">Delete</Button></TableCell>
+                                        <TableCell align="right">
+                                            <Button color="primary"
+                                                    onClick={e => dispatch(deleteOne(TYPE_TRADER, row.id))}
+                                            >Delete</Button>
+                                            <Button color="primary"
+                                                    onClick={e => {
+                                                        this.setState({newTrader: row, open: true})
+                                                    }}
+                                            >Edit</Button>
+                                        </TableCell>
                                     </TableRow>
                                 )
                             )}</TableBody>
                     </Table>
                 </Paper>
-                <Dialog open={this.state.open}
+                <EditDialog
+                    open={this.state.open}
+                    data={this.state.newTrader}
+                    title="New trader"
+                    text="Create a new trading account"
+                    onData={(d) => {
+                        this.setState({newTrader: d})
+                    }}
+                    attrs={[
+                        {name: "name", title: "Name", type: "text"},
+                        {name: "api_key", title: "Api key", type: "text"},
+                        {name: "api_secret", title: "Api secret", type: "text"},
+                        {
+                            name: "exchange", title: "Exchange", type: "select",
+                            values: values,
+                            text: (e) => e,
+                        }
+                    ]}
+                    onDismiss={(save) => {
+                        this.setState({open: false});
+                        if (save) {
+                            dispatch(postOne(TYPE_TRADER, this.state.newTrader)).then(() => {
+                                this.handleClose();
+                                this.forceUpdate()
+                            })
+                        }
+                    }}
 
-                        aria-labelledby="form-dialog-title"
-                >
-                    <DialogTitle id="form-dialog-title">Create strategy</DialogTitle>
-                    <DialogContent>
-                        <DialogContentText>
-                            Please enter the name of newly created strategy
-                        </DialogContentText>
-                        <FormControl>
-                            <TextField
-                                label="Name"
-                                fullWidth
-                                onChange={(e) => (
-                                    this.setState({
-                                        ...this.state,
-                                        newStrat: {
-                                            ...this.state.newStrat,
-                                            name: e.target.value
-                                        }
-                                    })
-                                )}
-                            >
-                                asdsa
-                            </TextField>
-                        </FormControl>
-                    </DialogContent>
-                    <DialogActions>
-                        <Button color="primary" onClick={this.handleClose}>Cancel</Button>
-                        <Button color="primary" onClick={this.handleOk}>Ok</Button>
-                    </DialogActions>
-                </Dialog>
+                />
+
+
             </div>)
     }
 }
 
 
 function mapStoreToProps(state, props) {
+    let sess = orm.session(state.data.db);
+    console.log("Mapping traderlist");
     return {
-        traders: state.data.traders
+        traders: sess.Trader.all().toRefArray()
     };
 }
 

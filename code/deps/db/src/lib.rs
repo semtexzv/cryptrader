@@ -24,6 +24,7 @@ mod scylla;
 mod schema;
 mod ohlc;
 mod users;
+mod traders;
 mod strategies;
 
 use crate::prelude::*;
@@ -31,6 +32,7 @@ use crate::prelude::*;
 pub use crate::schema::*;
 pub use crate::ohlc::*;
 pub use crate::users::*;
+pub use crate::traders::*;
 pub use crate::strategies::*;
 
 fn db_url() -> String {
@@ -60,7 +62,7 @@ pub fn start() -> Database {
 
     let manager = r2d2_diesel::ConnectionManager::new(url);
     let pool = diesel::r2d2::Pool::builder()
-        .max_size(8)
+        .max_size(4)
         .build(manager)
         .expect("Failed to create connection pool");
 

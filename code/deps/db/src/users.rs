@@ -27,15 +27,6 @@ pub struct UserLogin {
     pub password: String,
 }
 
-#[derive(Insertable, AsChangeset, Validate, Deserialize, Serialize, Debug)]
-#[table_name = "traders"]
-pub struct NewTrader {
-    pub user_id: i32,
-    pub name: String,
-    pub exchange: String,
-    pub api_key: String,
-    pub api_secret: String,
-}
 
 impl Into<common::types::auth::AuthInfo> for Trader {
     fn into(self) -> common::types::auth::AuthInfo {
@@ -72,41 +63,4 @@ impl crate::Database {
             Ok(r)
         })
     }
-
-
-    pub fn user_traders(&self, uid: i32) -> BoxFuture<Vec<Trader>> {
-        self.invoke(move |this, ctx| {
-            use crate::schema::traders::dsl::*;
-            let conn: &ConnType = &this.0.get().unwrap();
-            let q = traders.filter(user_id.eq(uid)).get_results(conn)?;
-            Ok(q)
-        })
-    }
-
-    pub fn add_trader(&self, trader: NewTrader) -> BoxFuture<Trader> {
-        self.invoke(move |this, ctx| {
-            use crate::schema::traders::dsl::*;
-            let conn: &ConnType = &this.0.get().unwrap();
-            let q = diesel::insert_into(traders)
-                .values(&trader)
-                .on_conflict(id)
-                .do_update()
-                .set(&trader)
-                .get_result::<Trader>(conn)?;
-            Ok(q)
-        })
-    }
-
-    pub fn delete_trader(&self, trader: Trader) -> BoxFuture<()> {
-        self.invoke(move |this, ctx| {
-            use crate::schema::traders::dsl::*;
-            let conn: &ConnType = &this.0.get().unwrap();
-            let q = diesel::delete(traders)
-                .filter(id.eq(trader.id));
-
-            q.execute(conn)?;
-            Ok(())
-        })
-    }
-
 }

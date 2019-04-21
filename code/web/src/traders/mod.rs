@@ -9,19 +9,16 @@ use db::Database;
 use actix_web::Json;
 
 
-pub struct TraderData {
-
-}
 
 
-pub async fn api_post((req, form): (HttpRequest<State>, Json<db::NewTrader>)) -> Result<impl Responder> {
+pub async fn api_post((req, form): (HttpRequest<State>, Json<db::NewTraderData>)) -> Result<impl Responder> {
     let db: Database = req.state().db.clone();
     let mut form = form.into_inner();
     let base = await_compat!(BaseTemplateInfo::from_request(&req))?;
     form.user_id = base.auth.uid;
     require_login!(base);
 
-    let trader = await_compat!(db.add_trader(form))?;
+    let trader = await_compat!(db.save_trader(form))?;
 
     Ok(see_other("/api/traders"))
 }

@@ -1,6 +1,6 @@
 use crate::prelude::*;
 use diesel::query_dsl::InternalJoinDsl;
-use schema::strategies;
+use schema::{strategies, traders};
 
 use validator::Validate;
 
@@ -23,7 +23,6 @@ pub struct SaveStrategy {
 
 
 impl crate::Database {
-
     pub fn strategy_data(&self, sid: i32) -> BoxFuture<(crate::Strategy, crate::User)> {
         return self.invoke(move |this, ctx| {
             debug!("Receiving strategy data");
@@ -36,7 +35,7 @@ impl crate::Database {
         });
     }
 
-    pub fn single_strategy(&self, sid : i32) -> BoxFuture<crate::Strategy> {
+    pub fn single_strategy(&self, sid: i32) -> BoxFuture<crate::Strategy> {
         return self.invoke(move |this, ctx| {
             debug!("Receiving strategy source : {:?}", sid);
             use schema::strategies::dsl::*;

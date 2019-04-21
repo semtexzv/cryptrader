@@ -1,52 +1,46 @@
-class ApiObj {
-    static field = "";
-    static path = this.field;
-}
-
-class Strategy extends ApiObj {
-    static field = "strategies";
-}
-
-class Trader extends ApiObj {
-    static field = "traders";
-}
-
-class Assignment extends ApiObj {
-    static field = "assignments";
-}
-
-class Pair extends ApiObj {
-    static field = "pairs";
-}
-
-class Evaluation extends ApiObj {
-    static field = "evaluations";
-}
-
-
 export const TYPE_STRATEGY = {
     path: "strategies",
-    field: "strategies"
+    field: "strategies",
+    modelName: "Strategy",
+    id: (e) => {
+        return e.id
+    }
 };
 
 export const TYPE_TRADER = {
     path: "traders",
-    field: "traders"
+    field: "traders",
+    modelName: "Trader",
+    id: (e) => {
+        return e.id
+    }
 };
 
 export const TYPE_ASSIGNMENT = {
     path: "assignments",
     field: "assignments",
+    modelName: "Assignment",
+    id: (e) => {
+        return e.pair
+    }
 };
 
 export const TYPE_PAIR = {
     path: "pairs",
-    field: "pairs"
+    field: "pairs",
+    modelName: "Pair",
+    id: (e) => {
+        return e
+    }
 };
 
 export const TYPE_EVALUATIONS = {
     path: "evaluations",
     field: "evaluations",
+    modelName: "Evaluation",
+    id: (e) => {
+        return e.pair
+    }
 };
 
 
