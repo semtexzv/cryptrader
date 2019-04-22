@@ -7,9 +7,10 @@ edition = "2018"
 [dependencies]
 common = {path = "../../common"}
 
+
 serde = "*"
 serde_derive = "*"
 serde_json = "*"
 
-hmac = {version = "*", default-features = false}
+hmac = "*"
 sha2 = "*"

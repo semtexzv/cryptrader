@@ -21,12 +21,13 @@ import {
     TableRow, Typography
 } from "@material-ui/core";
 import Card from "@material-ui/core/Card";
-import {postOne, loadAll, deleteOne} from "../../actions/apiActions";
+import {postOne, loadAll, deleteOne, loadOne} from "../../actions/apiActions";
 import {TYPE_ASSIGNMENT, TYPE_EVALUATIONS, TYPE_STRATEGY} from "../../api/baseApi";
 import Table from "@material-ui/core/Table";
 import TableHead from "@material-ui/core/TableHead";
 import {Link} from "react-router-dom";
 import {orm, getStrategySelector} from "../../data";
+import List from "@material-ui/core/List";
 
 const styles = (theme) => ({
 
@@ -35,6 +36,9 @@ const styles = (theme) => ({
     },
     actions: {
         float: 'right'
+    },
+    card: {
+        marginBottom: '24px'
     }
 });
 
@@ -61,6 +65,9 @@ class StrategyDetail extends Component {
 
     componentDidMount() {
         let {dispatch} = this.props;
+        if (!this.props.strategy) {
+            dispatch(loadOne(TYPE_STRATEGY, this.props.match.params.id));
+        }
         dispatch(loadAll(TYPE_ASSIGNMENT));
         dispatch(loadAll(TYPE_EVALUATIONS))
     }
@@ -68,86 +75,101 @@ class StrategyDetail extends Component {
     render() {
         const {dispatch, classes, match: {params}, strategy} = this.props;
         if (strategy == null) {
-            return (<div>Loadingf</div>);
+            return (<div>Loading</div>);
         }
         return (
-            <Card>
-                <CardContent>
-                    <AceEditor
-                        placeholder="Placeholder Text"
-                        mode="lua"
-                        theme="dreamweaver"
-                        name="Code"
-                        onLoad={this.onLoad}
-                        onChange={this.onChange}
-                        fontSize={14}
-                        showPrintMargin={true}
-                        showGutter={true}
-                        highlightActiveLine={true}
-                        value={strategy.body}
-                        className={classes.editor}
-                        style={{width: '100%'}}
+            <div>
+                <Card className={classes.card}>
+                    <CardContent>
+                        <Typography variant="title" gutterBottom align="left">Strategy script:</Typography>
+                        <AceEditor
+                            placeholder="Placeholder Text"
+                            mode="lua"
+                            theme="dreamweaver"
+                            name="Code"
+                            onLoad={this.onLoad}
+                            onChange={this.onChange}
+                            fontSize={14}
+                            showPrintMargin={true}
+                            showGutter={true}
+                            highlightActiveLine={true}
+                            value={strategy.body}
+                            className={classes.editor}
+                            style={{width: '100%'}}
 
-                        setOptions={{
-                            enableBasicAutocompletion: true,
-                            enableLiveAutocompletion: true,
-                            enableSnippets: true,
-                            showLineNumbers: true,
-                            tabSize: 2,
-                        }}/>
-                    <CardActions className={classes.actions}>
-                        <Button color="primary"
-                                onClick={() => dispatch(deleteOne(TYPE_STRATEGY, this.props.strategy.id))}>Delete</Button>
-                        <Button color="primary"
-                                onClick={() => dispatch(postOne(TYPE_STRATEGY, this.props.strategy.ref))}>Save</Button>
-                    </CardActions>
-                    <Typography variant="title" gutterBottom align="left">Assignments:</Typography>
-                    <Table>
-                        <TableHead>
-                            <TableRow>
-                                <TableCell>Pair</TableCell>
-                            </TableRow>
-                        </TableHead>
-                        <TableBody>
-                            {this.props.assignments.map(
-                                s => (
-                                    <TableRow>
-                                        <TableCell>{s.pair}</TableCell>
-                                    </TableRow>
-                                )
-                            )}
-                        </TableBody>
-                    </Table>
+                            setOptions={{
+                                enableBasicAutocompletion: true,
+                                enableLiveAutocompletion: true,
+                                enableSnippets: true,
+                                showLineNumbers: true,
+                                tabSize: 2,
+                            }}/>
+                        <CardActions className={classes.actions}>
+                            <Button color="primary"
+                                    onClick={() => dispatch(deleteOne(TYPE_STRATEGY, this.props.strategy.id))}>Delete</Button>
+                            <Button color="primary"
+                                    onClick={() => dispatch(postOne(TYPE_STRATEGY, this.props.strategy.ref))}>Save</Button>
+                        </CardActions>
+                    </CardContent>
+                </Card>
+                <Card className={classes.card}>
+                    <CardContent>
+                        <Typography variant="title" gutterBottom align="left">Assignments:</Typography>
+                        <Table>
+                            <TableHead>
+                                <TableRow>
+                                    <TableCell>Exchange</TableCell>
+                                    <TableCell>Pair</TableCell>
+                                    <TableCell>Period</TableCell>
+                                </TableRow>
+                            </TableHead>
+                            <TableBody>
+                                {this.props.assignments.map(
+                                    s => (
+                                        <TableRow key={s.id}>
+                                            <TableCell>{s.exchange}</TableCell>
+                                            <TableCell>{s.pair}</TableCell>
+                                            <TableCell>{s.period}</TableCell>
+                                        </TableRow>
+                                    )
+                                )}
+                            </TableBody>
+                        </Table>
+                    </CardContent>
+                </Card>
+                <Card className={classes.card}>
+                    <CardContent>
 
-                    <Typography variant="title" gutterBottom align="left">Evaluations:</Typography>
-                    <Table>
-                        <TableHead>
-                            <TableRow>
-                                <TableCell>Output</TableCell>
-                                <TableCell>Exchange</TableCell>
-                                <TableCell>Pair</TableCell>
-                                <TableCell>Time</TableCell>
-                                <TableCell>Duration</TableCell>
-                            </TableRow>
-                        </TableHead>
-                        <TableBody>
-                            {this.props.evaluations.map(
-                                s => (
-                                    <TableRow>
-                                        <TableCell>{s.ok || s.error}</TableCell>
-                                        <TableCell>{s.exchange}</TableCell>
-                                        <TableCell>{s.pair}</TableCell>
-                                        <TableCell>{s.time}</TableCell>
-                                        <TableCell>{s.duration}</TableCell>
-                                    </TableRow>
-                                )
-                            )}
-                        </TableBody>
-                    </Table>
+                        <Typography variant="title" gutterBottom align="left">Evaluations:</Typography>
+                        <Table>
+                            <TableHead>
+                                <TableRow>
+                                    <TableCell>Output</TableCell>
+                                    <TableCell>Exchange</TableCell>
+                                    <TableCell>Pair</TableCell>
+                                    <TableCell>Time</TableCell>
+                                    <TableCell>Duration</TableCell>
+                                </TableRow>
+                            </TableHead>
+                            <TableBody>
+                                {this.props.evaluations.map(
+                                    s => (
+                                        <TableRow>
+                                            <TableCell>{s.ok || s.error}</TableCell>
+                                            <TableCell>{s.exchange}</TableCell>
+                                            <TableCell>{s.pair}</TableCell>
+                                            <TableCell>{s.time}</TableCell>
+                                            <TableCell>{s.duration}</TableCell>
+                                        </TableRow>
+                                    )
+                                )}
+                            </TableBody>
+                        </Table>
 
 
-                </CardContent>
-            </Card>
+                    </CardContent>
+                </Card>
+            </div>
         )
     }
 }
@@ -157,7 +179,7 @@ function mapStoreToProps(state, props) {
     let id = props.match.params.id;
     return {
         ...props,
-        strategy:  getStrategySelector(id)(state.data),
+        strategy: getStrategySelector(id)(state.data),
         evaluations: sess.Evaluation.all().toRefArray(),
         assignments: sess.Assignment.all().toRefArray(),
     };

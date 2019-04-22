@@ -1,7 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import classNames from 'classnames';
-import { withStyles } from '@material-ui/core/styles/index';
+import {withStyles} from '@material-ui/core/styles/index';
 import CssBaseline from '@material-ui/core/CssBaseline/index';
 import Drawer from '@material-ui/core/Drawer/index';
 import AppBar from '@material-ui/core/AppBar/index';
@@ -18,6 +18,8 @@ import LogoutIcon from '@material-ui/icons/ExitToApp'
 import MainListItems from "./listitems";
 import {withRouter} from "react-router";
 import {connect} from "react-redux";
+
+import {logout} from '../../actions/authActions'
 
 
 const drawerWidth = 240;
@@ -108,19 +110,19 @@ class Dashboard extends React.Component {
     };
 
     handleDrawerOpen = () => {
-        this.setState({ open: true });
+        this.setState({open: true});
     };
 
     handleDrawerClose = () => {
-        this.setState({ open: false });
+        this.setState({open: false});
     };
 
     render() {
-        const { classes, children } = this.props;
+        const {dispatch, classes, children} = this.props;
 
         return (
             <div className={classes.root}>
-                <CssBaseline />
+                <CssBaseline/>
                 <AppBar
                     position="absolute"
                     className={classNames(classes.appBar, this.state.open && classes.appBarShift)}
@@ -135,7 +137,7 @@ class Dashboard extends React.Component {
                                 this.state.open && classes.menuButtonHidden,
                             )}
                         >
-                            <MenuIcon />
+                            <MenuIcon/>
                         </IconButton>
                         <Typography
                             component="h1"
@@ -147,9 +149,10 @@ class Dashboard extends React.Component {
                             Dashboard
                         </Typography>
                         <IconButton color="inherit" onClick={(e) => {
+                            dispatch(logout());
                             console.log("Logout")
                         }}>
-                            <LogoutIcon />
+                            <LogoutIcon/>
                         </IconButton>
                     </Toolbar>
                 </AppBar>
@@ -162,15 +165,15 @@ class Dashboard extends React.Component {
                 >
                     <div className={classes.toolbarIcon}>
                         <IconButton onClick={this.handleDrawerClose}>
-                            <ChevronLeftIcon />
+                            <ChevronLeftIcon/>
                         </IconButton>
                     </div>
-                    <Divider />
+                    <Divider/>
                     <List><MainListItems/></List>
-                    <Divider />
+                    <Divider/>
                 </Drawer>
                 <main className={classes.content}>
-                    <div className={classes.appBarSpacer} />
+                    <div className={classes.appBarSpacer}/>
                     {children}
                     <div className={classes.tableContainer}>
                     </div>

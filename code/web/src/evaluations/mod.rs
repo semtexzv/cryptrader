@@ -8,7 +8,7 @@ use common::types::OhlcPeriod;
 use db::Database;
 use actix_web::Json;
 
-pub async fn api_list(req: HttpRequest<State>) -> Result<impl Responder, actix_web::Error> {
+pub async fn api_list(req: HttpRequest<State>) -> Result<impl Responder> {
     let db: Database = req.state().db.clone();
     let base = await_compat!(BaseTemplateInfo::from_request(&req))?;
     require_login!(base);
@@ -23,7 +23,7 @@ pub async fn api_list(req: HttpRequest<State>) -> Result<impl Responder, actix_w
     Ok(Json(items).respond_to(&req)?)
 }
 
-pub async fn api_list_evals((req, id) : (HttpRequest<State>, Path<i32>)) -> Result<impl Responder, actix_web::Error> {
+pub async fn api_list_evals((req, id): (HttpRequest<State>, Path<i32>)) -> Result<impl Responder> {
     let db: Database = req.state().db.clone();
     let base = await_compat!(BaseTemplateInfo::from_request(&req))?;
     require_login!(base);

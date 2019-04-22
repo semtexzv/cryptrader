@@ -16,13 +16,13 @@ const attrShape = PropTypes.shape({
     type: PropTypes.string,
     title: PropTypes.string,
     name: PropTypes.string,
-
 });
 
 class EditDialog extends React.Component {
 
     static defaultProps = {
         open: false,
+        valid: true,
         title: "Edit",
         text: "Edit dialog",
         data: {},
@@ -32,6 +32,9 @@ class EditDialog extends React.Component {
         },
         onData: () => {
 
+        },
+        validate: (d) => {
+            return true
         }
     };
 
@@ -45,9 +48,11 @@ class EditDialog extends React.Component {
         onData: PropTypes.func,
     };
 
-    handleElemSelect(attr, event) {
+
+    handleElemSelect = (attr, event) => {
         let {data, onData} = this.props;
-        let val = attr.values[event.target.selectedIndex - 1];
+        let index = event.target.selectedIndex;
+        let val = attr.values[index - 1];
 
         if (attr.select) {
             attr.select(val)
@@ -55,7 +60,7 @@ class EditDialog extends React.Component {
             data[attr.name] = val;
             onData(data);
         }
-    }
+    };
 
 
     render() {
@@ -67,6 +72,7 @@ class EditDialog extends React.Component {
                 {attrs.map(attr => {
                     if (attr.type == "text") {
                         return (<FormControl
+                            key={attr.name}
                             fullWidth
                             margin="dense"
                         >
@@ -74,30 +80,36 @@ class EditDialog extends React.Component {
                                 label={attr.title}
                                 onChange={(e) => {
                                     data[attr.name] = e.target.value;
-                                    onData(data);
+                                    onData(data)
                                 }}
                                 value={data[attr.name]}
                             />
                         </FormControl>)
                     } else if (attr.type == "select") {
-                        return (<FormControl fullWidth>
-                            <InputLabel>{attr.title}</InputLabel>
-                            <Select
-                                native
-                                onChange={e => this.handleElemSelect(attr, e)}
+                        return (
+                            <FormControl
+                                key={attr.name}
+                                fullWidth
+                                margin='dense'
                             >
-                                <option value=""/>
+                                <InputLabel>{attr.title}</InputLabel>
+                                <Select
+                                    native
+                                    onChange={e => this.handleElemSelect(attr, e)}
+                                    defaultValue={attr.values.filter(v => data[attr.name] == v || (attr.isSelected ? attr.isSelected(data, v) : false))[0]}
+                                >
+                                    <option value=""/>
 
-                                {attr.values.map(v => {
-                                    let selected = data[attr.name] == v;
-                                    if (attr.isSelected != null && attr.isSelected(data, v)) {
-                                        selected = true;
-                                    }
-                                    return (<option selected={selected} value={v}>{attr.text(v)}</option>)
-                                })}
-                            </Select>
+                                    {attr.values.map(v => {
+                                        let selected = data[attr.name] == v;
+                                        if (attr.isSelected != null && attr.isSelected(data, v)) {
+                                            selected = true;
+                                        }
+                                        return (<option value={v}>{attr.text(v)}</option>)
+                                    })}
+                                </Select>
 
-                        </FormControl>)
+                            </FormControl>)
                     } else {
                         return (<div>Invalid type</div>)
                     }
@@ -106,7 +118,7 @@ class EditDialog extends React.Component {
             </DialogContent>
             <DialogActions>
                 <Button color="primary" onClick={e => onDismiss(false)}>Cancel</Button>
-                <Button color="primary" onClick={e => onDismiss(true)}>Ok</Button>
+                <Button color="primary" onClick={e => onDismiss(true)} disabled={!this.props.valid}>Ok</Button>
             </DialogActions>
         </Dialog>
         </div>);

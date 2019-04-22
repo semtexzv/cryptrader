@@ -1,1 +1,0 @@
-drop TABLE IF EXISTS ohlc_rollups;

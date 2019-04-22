@@ -27,6 +27,7 @@ impl ServiceInfo for PositionService {
 
 
 use crate::exch::{Exchange, bitfinex::Bitfinex};
+use db::NewTradeData;
 
 /// Component responsible for executing actual trades on the exchange
 pub struct Trader {
@@ -99,9 +100,11 @@ impl Trader {
                 return (box afut::err(e)) as ResponseActFuture<_, _, _>;
             }
             let bal = bal.unwrap();
+            let mut buy = false;
 
             let fut = if bal.target > bal.min_buy && pos.position == TradingPosition::Long {
                 info!("Can go longer");
+                buy = true;
                 Some(trader.send(TradeRequest {
                     trader: pos.trader_id.clone(),
                     pair: pos.pair.pair().clone(),
@@ -110,6 +113,7 @@ impl Trader {
                 }))
             } else if bal.source > bal.min_sell && pos.position == TradingPosition::Short {
                 info!("Can go shorter");
+                buy = false;
                 Some(trader.send(TradeRequest {
                     trader: pos.trader_id.clone(),
                     pair: pos.pair.pair().clone(),
@@ -124,9 +128,28 @@ impl Trader {
             let trade = fut.map(|f| wrap_future(f));
             if let Some(trade) = trade {
                 box trade
+                    // Map Msg delivery error to internal error
                     .map_err(|_, _, _| ExchangeError::Internal)
+                    // Flatten the error hierarchy
                     .then(|r, _, _| {
-                        afut::result(r.unwrap())
+                        afut::result(r.and_then(|r| r))
+                    })
+                    .then(move |r, this: &mut Self, ctx| {
+                        wrap_future(this.db.log_trade(NewTradeData {
+                            user_id: pos.trader_id.user_id,
+                            trader_id: pos.trader_id.id,
+                            exchange: pos.pair.exchange().into(),
+                            pair: pos.pair.pair().to_string(),
+
+                            buy,
+                            amount: 0.0,
+                            price: 0.0,
+                            status: r.is_ok(),
+                            ok: r.as_ref().map(|r| "".to_string()).ok(),
+                            error: r.as_ref().map_err(|e| e.to_string()).err(),
+                        }))
+                            .map_err(|e, _, _| ExchangeError::Internal)
+                            .map(|_, _, _| ())
                     })
             } else {
                 box afut::ok(())

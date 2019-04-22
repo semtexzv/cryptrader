@@ -30,7 +30,6 @@ pub struct AuthTemplateInfo {
 #[derive(Debug, Serialize)]
 pub struct BaseTemplateInfo {
     pub auth: AuthTemplateInfo,
-    pub errors: Option<Vec<String>>,
 }
 
 impl BaseTemplateInfo {
@@ -41,7 +40,6 @@ impl BaseTemplateInfo {
                 email: req.session().get("email").unwrap().unwrap_or("".into()),
                 uid: req.session().get("uid").unwrap().unwrap_or(0),
             },
-            errors: None,
         })
     }
 }

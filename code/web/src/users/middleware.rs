@@ -1,6 +1,6 @@
 use crate::prelude::*;
 use db::{
-    User, UserLogin,
+    User, UserAuthInfo,
 };
 
 pub type UserAuthenticationResult = Box<Future<Item=User, Error=actix_web::Error>>;

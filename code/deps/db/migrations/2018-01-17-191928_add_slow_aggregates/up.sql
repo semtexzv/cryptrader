@@ -8,7 +8,7 @@ SELECT $1;
 $$;
 
 -- And then wrap an aggregate around it
-CREATE AGGREGATE public.first_slow (
+CREATE AGGREGATE  public.first_slow (
     SFUNC = PUBLIC.first_agg_slow,
     BASETYPE = ANYELEMENT,
     STYPE = ANYELEMENT

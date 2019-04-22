@@ -107,12 +107,12 @@ class AssignmentList extends Component {
         dispatch(loadAll(TYPE_ASSIGNMENT));
         dispatch(loadAll(TYPE_STRATEGY));
         dispatch(loadAll(TYPE_TRADER));
-        dispatch(loadAll(TYPE_PAIR));
     }
 
     render() {
         let {classes, assignments, strategies, pairs, periods, traders, dispatch} = this.props;
-        console.log()
+        let valid = Boolean(this.state.newData.exchange && this.state.newData.pair && this.state.newData.period
+            && this.state.newData.strategy_id);
         return (<div>
             <Paper>
                 <Table>
@@ -136,14 +136,16 @@ class AssignmentList extends Component {
                         </TableRow>
                         {assignments.map(
                             row => (
-                                <TableRow>
+                                <TableRow key={row.id}>
                                     <TableCell>{row.exchange}</TableCell>
                                     <TableCell>{row.pair}</TableCell>
                                     <TableCell>{row.period}</TableCell>
                                     <TableCell>{row.strategy_id}</TableCell>
                                     <TableCell>{row.trader_id}</TableCell>
                                     <TableCell align="right">
-                                        <Button color="primary">Remove</Button>
+                                        <Button color="primary" onClick={() => {
+                                            dispatch(deleteOne(TYPE_ASSIGNMENT,row))
+                                        }}>Remove</Button>
                                     </TableCell>
                                 </TableRow>
                             )
@@ -152,18 +154,20 @@ class AssignmentList extends Component {
             </Paper>
             <EditDialog
                 open={this.state.open}
+                valid={valid}
                 title="Assignment"
                 text="Create new assignment"
                 data={this.state.newData}
                 onData={d => {
-
-                    this.setState({newData: d})
+                    this.setState({newData: d});
                 }}
                 onDismiss={save => {
                     if (save) {
                         dispatch(postOne(TYPE_ASSIGNMENT, this.state.newData)).then(() => {
                             this.setState({open: false})
                         })
+                    } else {
+                        this.setState({open: false})
                     }
                 }}
                 attrs={[
@@ -177,7 +181,13 @@ class AssignmentList extends Component {
                             return data.exchange == e.exchange && data.pair == e.pair
                         },
                         select: (e) => {
-                            this.setState({newData: {...this.state.newData, pair: e.pair, exchange: e.exchange}})
+                            this.setState({
+                                newData: {
+                                    ...this.state.newData,
+                                    pair: e ? e.pair : null,
+                                    exchange: e ? e.exchange : null
+                                }
+                            })
                         }
                     },
                     {
@@ -190,7 +200,12 @@ class AssignmentList extends Component {
                             return data.period == e.text
                         },
                         select: (e) => {
-                            this.setState({newData: {...this.state.newData, period: e.text}})
+                            this.setState({
+                                newData: {
+                                    ...this.state.newData,
+                                    period: e ? e.text : null
+                                }
+                            })
                         }
                     },
                     {
@@ -203,7 +218,12 @@ class AssignmentList extends Component {
                             return data.strategy_id == e.id
                         },
                         select: (e) => {
-                            this.setState({newData: {...this.state.newData, strategy_id: e.id}})
+                            this.setState({
+                                newData: {
+                                    ...this.state.newData,
+                                    strategy_id: e ? e.id : null
+                                }
+                            })
                         }
                     },
                     {
@@ -216,7 +236,12 @@ class AssignmentList extends Component {
                             return data.trader_id == e.id
                         },
                         select: (e) => {
-                            this.setState({newData: {...this.state.newData, trader_id: e.id}})
+                            this.setState({
+                                newData: {
+                                    ...this.state.newData,
+                                    trader_id: e ? e.id : null
+                                }
+                            })
                         }
                     }
                 ]}

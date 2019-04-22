@@ -22,18 +22,24 @@ mod prelude;
 mod scylla;
 
 mod schema;
+
+
 mod ohlc;
 mod users;
 mod traders;
 mod strategies;
+mod assignments;
 
 use crate::prelude::*;
 
 pub use crate::schema::*;
+
+
 pub use crate::ohlc::*;
 pub use crate::users::*;
 pub use crate::traders::*;
 pub use crate::strategies::*;
+pub use crate::assignments::*;
 
 fn db_url() -> String {
     format!("postgres://{}:{}@postgres.default.svc:5432/{}", "trader", "trader", "trader")

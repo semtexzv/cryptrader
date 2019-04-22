@@ -4,14 +4,11 @@ import orm, {Strategy} from '../data'
 const emptyState = orm.getEmptyState();
 const defaultState = () => {
     let sess = orm.session(emptyState);
-    let periods = ["1m", "5m", "15m"];
-    periods.forEach(p => sess.Period.upsert({text: p}));
     return sess.state
 };
 
 const initial = {
     db: defaultState(),
-    evaluations: [],
 };
 
 export default function dataReducer(state = initial, action) {
@@ -27,13 +24,18 @@ export default function dataReducer(state = initial, action) {
             });
             _state.db = sess.state;
             return _state;
+        case types.LOAD_ONE_SUCCESS:
+            action.data['id'] = action.dataType.id(action.data);
+            sess[action.dataType.modelName].upsert(action.data);
+            _state.db = sess.state;
+            return _state;
         case types.POST_ONE_SUCCESS:
             action.data['id'] = action.dataType.id(action.data);
             sess[action.dataType.modelName].upsert(action.data);
             _state.db = sess.state;
             return _state;
         case types.DELETE_ONE_SUCCESS:
-            let x = sess[action.dataType.modelName].withId(action.data);
+            let x = sess[action.dataType.modelName].withId(action.id);
             if (x) {
                 x.delete()
             }

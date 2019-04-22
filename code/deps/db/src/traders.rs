@@ -1,15 +1,11 @@
 use crate::prelude::*;
-use common::prelude::*;
 use diesel::prelude::*;
 
 use crate::{
     DbWorker,
     ConnType,
-    schema::{self, users, ohlc, traders, User, Trader},
+    schema::{self, users, ohlc, traders, User, Trader, trades, Trade},
 };
-use crate::schema::Trade;
-
-use validator::Validate;
 
 #[derive(Insertable, AsChangeset, Deserialize, Serialize, Debug)]
 #[table_name = "traders"]
@@ -20,6 +16,27 @@ pub struct NewTraderData {
     pub exchange: String,
     pub api_key: String,
     pub api_secret: String,
+}
+
+#[derive(PartialEq, Deserialize, Serialize, Debug, Clone)]
+#[derive( Insertable, AsChangeset)]
+#[table_name = "trades"]
+pub struct NewTradeData {
+
+    #[serde(skip_deserializing, skip_serializing)]
+    pub user_id: i32,
+    pub trader_id: i32,
+
+    pub exchange: String,
+    pub pair: String,
+
+    pub buy: bool,
+    pub amount: f64,
+    pub price: f64,
+
+    pub status: bool,
+    pub ok: Option<String>,
+    pub error: Option<String>,
 }
 
 
@@ -56,6 +73,22 @@ impl crate::Database {
 
             q.execute(conn)?;
             Ok(())
+        })
+    }
+
+    pub fn log_trade(&self, trade: NewTradeData) -> BoxFuture<Trade> {
+        self.invoke(move |this, ctx| {
+            use self::trades::dsl::*;
+
+            let conn: &ConnType = &this.0.get().unwrap();
+
+            let r = diesel::insert_into(trades)
+                .values(&trade)
+                .on_conflict(id)
+                .do_nothing()
+                .get_result::<Trade>(conn)?;
+
+            Ok(r)
         })
     }
 }

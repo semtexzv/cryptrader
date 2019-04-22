@@ -27,7 +27,7 @@ impl AssignmentItem {
         db::Assignment {
             exchange: self.exchange,
             pair: self.pair,
-            owner_id: oid,
+            user_id: oid,
             period: self.period.unwrap_or("1m".into()),
             strategy_id: self.strategy_id.unwrap_or(0),
             trader_id: self.trader_id,
@@ -35,7 +35,7 @@ impl AssignmentItem {
     }
 }
 
-pub async fn pairs(req: HttpRequest<State>) -> Result<impl Responder, actix_web::Error> {
+pub async fn pairs(req: HttpRequest<State>) -> Result<impl Responder> {
     let db: Database = req.state().db.clone();
     let base = await_compat!(BaseTemplateInfo::from_request(&req))?;
     let pairs: Vec<db::Pair> = await_compat!(db.pairs())?;
@@ -43,8 +43,16 @@ pub async fn pairs(req: HttpRequest<State>) -> Result<impl Responder, actix_web:
     Ok(Json(pairs).respond_to(&req)?)
 }
 
+pub  async fn periods(req: HttpRequest<State>) -> Result<impl Responder> {
+    #[derive(Serialize)]
+    struct P {
+        text: &'static str
+    }
+    Ok(Json(OhlcPeriod::NAMES.iter().map(|p| P { text: p }).collect::<Vec<_>>()))
+}
 
-pub async fn api_list(req: HttpRequest<State>) -> Result<impl Responder, actix_web::Error> {
+
+pub async fn api_list(req: HttpRequest<State>) -> Result<impl Responder> {
     let db: Database = req.state().db.clone();
     let base = await_compat!(BaseTemplateInfo::from_request(&req))?;
     require_login!(base);
@@ -65,9 +73,9 @@ pub async fn api_post((req, data): (HttpRequest<State>, Json<AssignmentItem>)) -
     if data.strategy_id.is_none() || data.period.is_none() {
         await_compat!(db.delete_assignment(internal_data))?;
     } else {
-        await_compat!(db.save_assignment(internal_data))?;
+        return Ok(Json(await_compat!(db.save_assignment(internal_data))?).respond_to(&req)?);
     }
-    Ok(see_other("/app/assignments"))
+    return Ok(HttpResponse::new(http::StatusCode::OK));
 }
 
 
@@ -85,13 +93,13 @@ pub async fn post_one((req, path, data): (HttpRequest<State>, Path<(String, Stri
     let db: Database = req.state().db.clone();
     let base = await_compat!(BaseTemplateInfo::from_request(&req))?;
     require_login!(base);
-    let assign = Assignment{
-        exchange : exch,
+    let assign = Assignment {
+        exchange: exch,
         pair: pair,
         period: period,
-        owner_id : base.auth.uid,
-        strategy_id : data.strategy_id,
-        trader_id : data.trader_id,
+        user_id: base.auth.uid,
+        strategy_id: data.strategy_id,
+        trader_id: data.trader_id,
     };
     let res = await_compat!(db.save_assignment(assign))?;
     return Ok(Json(res).respond_to(&req).unwrap());
@@ -102,22 +110,25 @@ pub async fn delete_one((req, path): (HttpRequest<State>, Path<(String, String, 
     let db: Database = req.state().db.clone();
     let base = await_compat!(BaseTemplateInfo::from_request(&req))?;
     require_login!(base);
-    let assign = Assignment{
-        exchange : exch,
+    let assign = Assignment {
+        exchange: exch,
         pair: pair,
         period: period,
-        owner_id : base.auth.uid,
-        strategy_id : 0,
-        trader_id : None,
+        user_id: base.auth.uid,
+        strategy_id: 0,
+        trader_id: None,
     };
     await_compat!(db.delete_assignment(assign))?;
-    Ok(see_other("/app/assignments"))
+    return Ok(HttpResponse::new(http::StatusCode::OK));
 }
 
 pub fn configure(application: App<State>) -> App<State> {
     application
         .resource("/api/pairs", |r| {
             r.method(Method::GET).with(compat(pairs));
+        })
+        .resource("/api/periods", |r| {
+            r.method(Method::GET).with(compat(periods));
         })
         .resource("/api/assignments/{exch}/{pair}/{period}", |r| {
             r.method(Method::POST).with(compat(post_one));

@@ -6,6 +6,7 @@ use crate::eval::EvalRequest;
 use std::time::Duration;
 use chrono::NaiveDateTime;
 use time::precise_time_s;
+use uuid::Uuid;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct TradingRequestSpec {
@@ -24,7 +25,7 @@ impl TradingRequestSpec {
         */
         TradingRequestSpec {
             ohlc: OhlcSpec::new(d.exchange.clone(), TradePair::from_str(&d.pair).unwrap(), OhlcPeriod::from_str(&d.period).unwrap()),
-            user_id: d.owner_id,
+            user_id: d.user_id,
             strat_id: d.strategy_id,
             trader: t,
         }
@@ -105,7 +106,7 @@ impl Handler<OhlcUpdate> for Decider {
                     last: msg.ohlc.time,
                 };
                 let strategy_id = spec.strat_id;
-                let owner_id = spec.user_id;
+                let user_id = spec.user_id;
                 let pair_id = spec.ohlc.pair_id().clone();
 
                 let exchange = spec.ohlc.exchange().to_string();
@@ -148,11 +149,12 @@ impl Handler<OhlcUpdate> for Decider {
                     let t2 = PreciseTime::now();
 
                     let evaluation = db::Evaluation {
+                        id : Uuid::new_v4(),
                         strategy_id,
                         exchange,
                         pair,
                         period,
-                        owner_id,
+                        user_id,
                         status: res.is_ok(),
                         time: common::chrono::Utc::now().naive_utc(),
                         ok,

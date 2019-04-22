@@ -58,6 +58,12 @@ class TraderList extends Component {
     render() {
         let {classes, dispatch} = this.props;
         let values = ["bitfinex"];
+
+        let valid = Boolean(this.state.newTrader.name
+            && this.state.newTrader.exchange
+            && this.state.newTrader.api_key
+            && this.state.newTrader.api_secret);
+
         return (
             <div>
                 <Paper>
@@ -101,7 +107,9 @@ class TraderList extends Component {
                 </Paper>
                 <EditDialog
                     open={this.state.open}
+                    valid={valid}
                     data={this.state.newTrader}
+
                     title="New trader"
                     text="Create a new trading account"
                     onData={(d) => {
@@ -122,7 +130,6 @@ class TraderList extends Component {
                         if (save) {
                             dispatch(postOne(TYPE_TRADER, this.state.newTrader)).then(() => {
                                 this.handleClose();
-                                this.forceUpdate()
                             })
                         }
                     }}

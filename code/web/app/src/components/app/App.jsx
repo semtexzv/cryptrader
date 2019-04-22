@@ -17,20 +17,14 @@ import TraderList from "./../TraderList";
 import Login from "../Auth";
 
 import {createBrowserHistory} from "history";
-import {TYPE_STRATEGY} from "../../api/baseApi";
-import {Paper} from "@material-ui/core";
+import {TYPE_PAIR, TYPE_PERIOD} from "../../api/baseApi";
+import Home from "./Home";
 
 export const history = createBrowserHistory();
 const store = configureStore(history);
 
-store.dispatch(loadAll(TYPE_STRATEGY));
-
-class Home extends Component {
-    render() {
-        return (<div>
-            <Paper>Home info</Paper></div>)
-    }
-}
+store.dispatch(loadAll(TYPE_PAIR));
+store.dispatch(loadAll(TYPE_PERIOD));
 
 export default class App extends Component {
     render() {
@@ -42,11 +36,13 @@ export default class App extends Component {
                             <Route exact path="/app/auth" component={Login}/>
                             <Route path="/app" render={props => (
                                 <Dashboard>
-                                    <Route exact path="/app/dashboard" component={Home}/>
-                                    <Route exact path="/app/strategies" component={StrategyList}/>
-                                    <Route exact path="/app/strategies/:id" component={StrategyDetail}/>
-                                    <Route exact path="/app/assignments" component={AssignmentList}/>
-                                    <Route exact path="/app/traders" component={TraderList}/>
+                                    <Switch>
+                                        <Route exact path="/app/" component={Home}/>
+                                        <Route exact path="/app/strategies" component={StrategyList}/>
+                                        <Route exact path="/app/strategies/:id" component={StrategyDetail}/>
+                                        <Route exact path="/app/assignments" component={AssignmentList}/>
+                                        <Route exact path="/app/traders" component={TraderList}/>
+                                    </Switch>
                                 </Dashboard>
                             )}/>
                         </Switch>

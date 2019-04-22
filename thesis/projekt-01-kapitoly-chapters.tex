@@ -800,10 +800,10 @@ These 2 types of data have different storage requirements.
 Financial data received from exchanges is in the form of several prices and volume that is aggregated over a time interval.
 These prices are:
 \begin{itemize}
-\item{Open - } Price, that was used in first transaction in this time interval
-\item{High - } Highest price that was used in transaction in this time interval
-\item{Low - }  Lowest price that was used in transaction in this interval
-\item{Close -} Price, that was used in last transaction in this time interval
+    \item{Open - } Price, that was used in first transaction in this time interval
+    \item{High - } Highest price that was used in transaction in this time interval
+    \item{Low - }  Lowest price that was used in transaction in this interval
+    \item{Close -} Price, that was used in last transaction in this time interval
 \end{itemize}
 In adition the these price, each interval is associated with its starting timestamp, and cumulative volume
 of executed trades. We will refer to this type of data as OHLC data, based on the OHLC chart which is used for displaying
@@ -834,9 +834,9 @@ in terms of functionality. One of the most exciting features of this database is
 this simple relational database into general purpose storage solution. Some of the database extensions are
 \begin{itemize}
     \item Citus - Adds support for clustered deployments, in which several instances of PostgreSQL databases store
-        data - improving redundancy and performance
+    data - improving redundancy and performance
     \item TimescaleDB - Improves upon built-in table partitioning, and adds custom storage engine optimized
-        for time-series datasets.
+    for time-series datasets.
     \item Cstore - Adds columnar store, which can be used for storing data in ORC format.
 \end{itemize}
 Thanks to these features, the \textbf{PostgreSQL} was chosen as a database for storing application data.
@@ -940,7 +940,7 @@ must be able to:
 The backend part of the web application is implemented in \verb|actix-web| library, which, like many other parts of this project,
 is built upon \verb|actix| and its implementation of the actor model. This library provides several REST endpoints
 for working with system resources like strategies, trader accounts, or strategy assignments. Internally,
-these endpoints  should perform validation of input data, and execute database queries, which modify the state of the system
+these endpoints should perform validation of input data, and execute database queries, which modify the state of the system
 
 \section{Exchange adapters}
 While all cryptocurrency exchanges use similar technologies to implement their APIs, each of them is different. To reduce
@@ -979,13 +979,13 @@ Ultimately, the Lua language was chosen as a primary language for implementing u
 key properties, which caused this decision.
 
 \begin{itemize}
-\item Embeddability - Lua runtime is smaller than 256Kb, has virtually no start up time and can be embedded in application.
-as a simple library. In comparison, neither Python nor JavaScript runtimes can be embedded in the application, and both
-require large standard libraries
-\item Extendability - Basic lua standard library can be easily extended with code written in host language.
-\item Expressive power - While extremely simple, lua provides tools to model virtually any programming paradigm with ease
-\item Speed - While lua is a scripting language, that can't possibly compete with compiled language in this space,
-it is one of the fastest scripting languages available.
+    \item Embeddability - Lua runtime is smaller than 256Kb, has virtually no start up time and can be embedded in application.
+    as a simple library. In comparison, neither Python nor JavaScript runtimes can be embedded in the application, and both
+    require large standard libraries
+    \item Extendability - Basic lua standard library can be easily extended with code written in host language.
+    \item Expressive power - While extremely simple, lua provides tools to model virtually any programming paradigm with ease
+    \item Speed - While lua is a scripting language, that can't possibly compete with compiled language in this space,
+    it is one of the fastest scripting languages available.
 \end{itemize}
 
 \subsection{Safety}
@@ -1068,7 +1068,7 @@ re-evaluates the kubernetes configuration templates, and finally applies this co
 One build component roughly corresponds to a \textbf{cargo} project, that produces an executable, and a docker container
 that contains this executable. Implementation of this build process is in \verb|ops/make/App.mk| makefile. This makefile
 invokes cargo in an appropriate subdirectory, it then creates adocker container according to \verb|ops/docker/app.Dockerfile|,
-and emits container name and container tag into  a file in \verb|target/docker/| directory, in a format
+and emits container name and container tag into a file in \verb|target/docker/| directory, in a format
 that will later be loaded into an environment variable, and used for substitution when building kubernetes
 configuration templates.
 
@@ -1252,15 +1252,15 @@ Every single handler method is implemented as an async function, that internally
 
 %@formatter:off
 \begin{code}[language=rust,label={web_handler},caption={Example web handler function}]
-async fn api_detail((req, id): (HttpRequest<State>, Path<i32>))
+async fn api_detail((req, id): (HttpRequest, Path<i32>))
         -> Result<impl Responder> {
-    let db: Database = req.state().db.clone();
-    let base = await_compat!(BaseTemplateInfo::from_request(&req))?;
+    let db: Database = base.state.db.clone();
+    let base = await_compat!(BaseReqInfo::from_request(&req))?;
     require_login!(base);
 
     let (strat, user) = await_compat!(db.strategy_data(id.into_inner()))?;
     let evals = await_compat!(db.get_evals(strat.id))?;
-    require_cond!(strat.owner_id == base.auth.uid, "Not authorized");
+    require_cond!(strat.user_id == base.auth.uid, "Not authorized");
 
     Ok(Json(strat).respond_to(&req).unwrap())
 }
@@ -1272,7 +1272,7 @@ First important aspect is the method argument, which is a tuple of the request a
 the library.
 
 The function first clones a handle to the database wrapper, and then retrieves basic info from the request.
-The \textbf{BaseTemplateInfo} struct primarily contains the authorization information. This retrieval must be asynchronous,
+The \textbf{BaseReqInfo} struct primarily contains the authorization information. This retrieval must be asynchronous,
 since it might require a database access. This asynchronous operation is then wrapped in a \verb|await_compat| macro, which internally wraps
 the \verb|await| macro.
 
@@ -1283,19 +1283,158 @@ Finally, the strategy is serialized wrapped in the \verb|Json| struct, that mark
 
 \section{Web application frontend}
 As mentioned earlier, the frontend application is implemented as a react single page application.
+This approach was chosen after a long series of experiments with multiple approaches to web applications.
 
-\todo{History - used Server side templating, worked but was ugly and full of hacks}
-\todo{Decided to move to React, re-implementation took 3 days compared to 2 or more weeks for sever side}
-\todo{React - basics}
-\todo{Redux for state management}
+The first tried approach was completely server-side rendered site that utilizes static html forms for
+submitting data. While this approach did work, the problem was extremely poor UX, and convoluted
+very complex generated forms that utilized hidden fields in order to preserve information
+for form submission.
 
-\section{Deployment and Management}
-\todo{Describe ops}
-\todo{Deployment process using opnmly makefiles and kubernetes config}
-\todo{Docker image creation}
-\todo{Tagging by hash for debug, by git for release}
+The completely server-side generated site was then progressively rewritten into combined
+application, that used forms for submitting data, but utilized custom web components
+based \verb|LitElement| library to reduce complexity and provide some amount of dynamic behavior, improving
+user experience. However, there were problems with this approach too. The user experience still did not meet the
+standards expected by modern users, and the application logic was now in 2 languages distributed accros 2 codebases,
+greatly reducing speed of development.
 
-\todo{Monitoring using kubernetes dashboard}
+After both of these approaches failed, we elected to rewrite the web interface part of the system from scratch.
+This time, the backend was rewritten to the form of a REST API described earlier, and the frontend application
+was rewritten in React. We also decided to use Redux\todo{Footnote} to manage applicaton state,
+and Material-UI library to provide set of base components, foregoing any kind of complex template.
+
+\subsection{React}
+As mentioned earlier, React is javascript library for writing user interfaces, that utilizes custom JSX syntax.
+The web applciation code resides in \verb|code/web/app| and during compilation of the web component, the
+compiled web application is bundled inside the \verb|web| binary using \verb|includeddir| library.
+
+This web applicaiton is then provided on the \verb|/app| prefixed URI routes, while the \verb|api| prefix
+contains all the REST endoints. The web server provides the same \verb|index.html| page for every subroute under
+the \verb|app| prefix, and this generated index file imports resources from the \verb|/static| prefix, that
+refers to individual files of compiled react application.
+
+\subsection{Components \& Routing}
+The application is divided into several components, each root component roughly corresponding to single
+'page' of the application. Because the server provides \verb|index.html| for every URI under the \verb|/app| prefix, the
+routing between indivudual components that reside under this prefix is performed in the browser using the
+\verb|react-router| library. This library switches rendered component based on current path.
+Follwoing example shows the JSX for the root of the application.
+
+%@formatter:off
+\begin{code}[language=html,label={react_routing},caption={React application routing JSX}]
+<div className="App">
+    <ConnectedRouter history={history}>
+        <Switch>
+            <Route exact path="/app/auth" component={Login}/>
+            <Route path="/app" render={props => (
+            <Dashboard>
+                <Switch>
+                    <Route exact path="/app/" component={Home}/>
+                    <Route exact path="/app/strategies" component={StrategyList}/>
+                    <Route exact path="/app/strategies/:id" component={StrategyDetail}/>
+                    <Route exact path="/app/assignments" component={AssignmentList}/>
+                    <Route exact path="/app/traders" component={TraderList}/>
+                </Switch>
+            </Dashboard>
+        )}/>
+        </Switch>
+    </ConnectedRouter>
+</div>
+\end{code}
+%@formatter:on
+
+\todo{Remove subsubsection}
+\subsubsection{Dashboard}
+This component contains the base layout of the web application, rendering the toolbar with title, navigation bar,
+and also rendering nested components. In our case, the nested component is the react-router \textbf{Switch},
+that ensures only one route from a set of route elements is active at one time. This \textbf{Switch} component
+with the set of inner routes contains the individual pages.s
+
+\subsection{Redux}
+Another important aspect of the web applicaiton was the storage, and management of state. The earler attempts failed
+because the management of state was untenable with growing application complexity.
+the \verb|Redux| library was developed precisely to solve this problem.
+As described earlier, the library is based on the \textbf{Flow} architecture pattern, that is based on 3 core concepts.
+
+The redux store contains the application state, and is only mutable inside reducers. The redux reducers are used
+to modify state, based on the actions,that are published by components, and the componts then in turn react to
+changes of state.
+
+\todo{Diagram here or in design chapter - Or move react to theory}
+
+Our usage of redux creates the state upon application creation, along with a single reducer which is responsible
+for storing data received from the REST API inside this state. The access to the REST API is implemented in
+\verb|api/baseApi.js| file. This file contains a metadata object for each entity exposed by the API, and
+a \verb|Api| class that contains methods for executing common methods.
+
+However, this class is not used directly, its only used from the \verb|actions/apiActions.js| file, that
+provides methods for contacting the API and then dispatching the results as redux actions. It utilizes
+the \verb|redux-thunk| middleware.
+
+These actions are then processed by the \verb|dataReducer|, which is responsible for reflecting the changes inside the
+data store. First versions did so manually, but the growing complexity forced us to adopt the \verb|Redux-ORM| library.
+This library provided simple ORM-like experience, and definitely made the development easier.
+
+\subsection{Material-UI}
+This library was chosen as a base library of components, upon which our custom components were built.
+It implements commonly needed components that conform to Google's Material design guidelines\todo{Cite}.
+THese components are also written with first class support of mobile devices, opening up the pathway for
+making our web application into a Progressive Web Application\todo{Footnote PWA}.
+
+Core component used in our custom components is the \verb|Paper| component, which creates a surface
+with the appearance of an elevated piece of paper. This concept of an elevated surface is also at the core of
+Material design guidelines.
+
+Each custom component is implemented as a list of these \verb|Paper| surfaces, each one holding sime kind of information.
+Most commonly, these surfaces contains tables that show existing entities of a given type, along with a button to add new entity.
+
+\subsubsection{EditDialog}
+The creation and editing of data entities is performed by editing a set of fields inside a modal dialog containing a
+form. During development, this pattern of a modal dialog with form organically appeared at multiple points, and therefore we decided to implement a
+single component that would replace individual forms.
+
+This resulted in the implementation of \textbf|EditDialog| component, which performs editing of a javascript object according
+to properties passed into it.
+
+%@formatter:off
+\begin{code}[language=html,label={edit_dialog},caption={EditDialog for creation of Trader account}]
+<EditDialog
+    open={this.state.open}
+    data={this.state.newTrader}
+    title="New trader"
+    text="Create a new trading account"
+    onData={(d) => {
+        this.setState({newTrader: d})
+    }}
+    attrs={[
+        {name: "name", title: "Name", type: "text"},
+        {name: "api_key", title: "Api key", type: "text"},
+        {name: "api_secret", title: "Api secret", type: "text"},
+        {name: "exchange", title: "Exchange", type: "select", values: values, text: (e) => e}
+    ]}
+    onDismiss={(save) => {
+        this.setState({open: false});
+        if (save) {
+            dispatch(postOne(TYPE_TRADER, this.state.newTrader)).then(() => {
+                this.setState({open: false});
+            })
+        }
+    }}
+/>
+\end{code}
+%@formatter:on
+
+The \autoref{edit_dialog} contains code for rendering an \textbf{EditDialog}, that performs creation of new trader
+account. It uses databinding to to pass properties, and callback functions into the dialog.
+\begin{itemize}
+    \item {open -} Whether the dialog is shown or hidden
+    \item {data - } Data object for editing
+    \item {title - } Title of the dialog
+    \item {text - } Information text of the dialog
+    \item {onData - } Callback function that receives changed object
+    \item {attrs - } A list of attributes, that should be mapped to editable fields
+    \item {onDismiss - } Callback function invoked when dialog is dismissed, receives whether the dismissal was performed
+    by the OK button or otherwise.
+\end{itemize}
 
 
 \chapter{Testing and evaluation}

@@ -2,6 +2,18 @@ import api from '../api/baseApi'
 import * as types from "./actionTypes";
 import {redirectToLogin} from "./authActions";
 
+export function loadOne(type, id) {
+    return function (dispatch) {
+        return api.getOne(type, id).then(data => {
+            dispatch(loadOneSuccess(type, data))
+        }).catch(err => {
+            if (err.status == 401) {
+                dispatch(redirectToLogin());
+            }
+        })
+    }
+}
+
 export function loadAll(type) {
     return function (dispatch) {
         return api.getAll(type).then(data => {
@@ -28,16 +40,26 @@ export function postOne(type, v) {
 
 export function deleteOne(type, v) {
     return function (dispatch) {
-        return api.deleteOne(type, v).then(data => {
+        return api.deleteOne(type, v.id).then(data => {
             dispatch(deleteOneSuccess(type, v.id))
         }).catch(err => {
             if (err.status == 401) {
                 dispatch(redirectToLogin());
+            } else {
+
+                dispatch(deleteOneSuccess(type, v.id))
             }
         })
     }
 }
 
+export function loadOneSuccess(type, data) {
+    return {
+        type: types.LOAD_ONE_SUCCESS,
+        dataType: type,
+        data
+    };
+}
 export function loadAllSuccess(type, data) {
     return {
         type: types.LOAD_ALL_SUCCESS,

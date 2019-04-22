@@ -22,14 +22,15 @@ use actix_web::Path;
 use common::types::OhlcPeriod;
 
 
-pub async fn save_strat(req: HttpRequest<State>, id: Option<i32>, info: StrategyInfo) -> Result<db::Strategy> {
-    info!("Save strat: {:?}, {:?}", id, info);
+pub async fn save_strat(req: HttpRequest<State>, id: Option<i32>, mut data: db::StrategyData) -> Result<db::Strategy> {
+    info!("Save strat: {:?}, {:?}", id, data);
     let db: Database = req.state().db.clone();
 
     let base = await_compat!(BaseTemplateInfo::from_request(&req))?;
-    let name: String = info.name;
-    let body: String = info.body;
-    let strat = await_compat!(db.save_strategy(base.auth.uid, id, name,body))?;
+    data.id = id;
+    data.user_id = base.auth.uid;
+
+    let strat = await_compat!(db.save_strategy(data))?;
 
     Ok(strat)
 }
@@ -51,19 +52,19 @@ async fn api_detail((req, id): (HttpRequest<State>, Path<i32>)) -> Result<impl R
 
     let (strat, user) = await_compat!(db.strategy_data(id.into_inner()))?;
     let evals = await_compat!(db.get_evals(strat.id))?;
-    require_cond!(strat.owner_id == base.auth.uid);
+    require_cond!(strat.user_id == base.auth.uid);
 
     Ok(Json(strat).respond_to(&req).unwrap())
 }
 
-async fn api_create((req, data): (HttpRequest<State>, Json<StrategyInfo>)) -> Result<impl Responder> {
+async fn api_create((req, data): (HttpRequest<State>, Json<db::StrategyData>)) -> Result<impl Responder> {
     let base = await_compat!(BaseTemplateInfo::from_request(& req))?;
     require_login!(base);
     let strat = await_compat!(save_strat(req.clone(), None, data.into_inner()))?;
     Ok(Json(strat).respond_to(&req).unwrap())
 }
 
-async fn api_save((req, id, data): (HttpRequest<State>, Path<i32>, Json<StrategyInfo>)) -> Result<impl Responder> {
+async fn api_save((req, id, data): (HttpRequest<State>, Path<i32>, Json<db::StrategyData>)) -> Result<impl Responder> {
     let base = await_compat!(BaseTemplateInfo::from_request(& req))?;
 
     require_login!(base);

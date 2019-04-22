@@ -1,12 +1,11 @@
 use super::*;
 use ::std::result::Result as Result;
 use uuid::Uuid;
-
 table! {
-    assignments (exchange, pair, owner_id) {
+    assignments (exchange, pair, user_id) {
         exchange -> Text,
         pair -> Text,
-        owner_id -> Int4,
+        user_id -> Int4,
         period -> Text,
         strategy_id -> Int4,
         trader_id -> Nullable<Int4>,
@@ -14,17 +13,18 @@ table! {
 }
 
 table! {
-    evaluations (strategy_id, exchange, pair, owner_id, period, time) {
-        strategy_id -> Int4,
+    evaluations (id) {
+        id -> Uuid,
         exchange -> Text,
         pair -> Text,
         period -> Text,
-        owner_id -> Int4,
+        user_id -> Int4,
+        strategy_id -> Int4,
         time -> Timestamptz,
         status -> Bool,
+        duration -> Int8,
         ok -> Nullable<Text>,
         error -> Nullable<Text>,
-        duration -> Int8,
     }
 }
 
@@ -58,7 +58,7 @@ table! {
 table! {
     strategies (id) {
         id -> Int4,
-        owner_id -> Int4,
+        user_id -> Int4,
         name -> Text,
         body -> Text,
         created -> Timestamptz,
@@ -78,13 +78,13 @@ table! {
 }
 
 table! {
-    trades (uuid) {
-        uuid -> Uuid,
+    trades (id) {
+        id -> Uuid,
         time -> Timestamptz,
+        user_id -> Int4,
         trader_id -> Int4,
         exchange -> Varchar,
         pair -> Varchar,
-        period -> Varchar,
         buy -> Bool,
         amount -> Float8,
         price -> Float8,
@@ -110,11 +110,13 @@ table! {
 
 joinable!(assignments -> strategies (strategy_id));
 joinable!(assignments -> traders (trader_id));
-joinable!(assignments -> users (owner_id));
+joinable!(assignments -> users (user_id));
 joinable!(evaluations -> strategies (strategy_id));
-joinable!(strategies -> users (owner_id));
+joinable!(evaluations -> users (user_id));
+joinable!(strategies -> users (user_id));
 joinable!(traders -> users (user_id));
 joinable!(trades -> traders (trader_id));
+joinable!(trades -> users (user_id));
 
 allow_tables_to_appear_in_same_query!(
     assignments,
@@ -128,37 +130,10 @@ allow_tables_to_appear_in_same_query!(
 );
 
 
-#[derive(PartialEq, Deserialize, Serialize, Debug, Clone)]
-#[derive(Queryable, Insertable, AsChangeset, Associations, QueryableByName)]
-#[table_name = "users"]
-pub struct User {
-    pub id: i32,
-    pub name: Option<String>,
-    pub email: String,
-    pub password: String,
-    pub avatar: Option<String>,
-    pub is_verified: bool,
-    pub has_verified_email: bool,
-    pub created: chrono::NaiveDateTime,
-    pub updated: chrono::NaiveDateTime,
-}
-
-#[derive(PartialEq, Deserialize, Serialize, Debug, Clone)]
-#[derive(Queryable, Insertable, AsChangeset, Associations, QueryableByName)]
-#[table_name = "traders"]
-pub struct Trader {
-    pub id: i32,
-    pub user_id: i32,
-    pub name: String,
-
-    pub exchange: String,
-    pub api_key: String,
-    pub api_secret: String,
-}
-
-#[derive(PartialEq, Deserialize, Serialize, Debug, Clone)]
-#[derive(Queryable, Insertable, AsChangeset, Associations, QueryableByName)]
+#[derive(Debug, Clone, PartialOrd, PartialEq, Serialize, Deserialize)]
+#[derive(Identifiable, Queryable, Insertable, AsChangeset, Associations, QueryableByName)]
 #[table_name = "ohlc"]
+#[primary_key(exchange, pair, time)]
 pub struct Ohlc {
     pub time: i64,
     pub exchange: String,
@@ -184,12 +159,46 @@ impl Into<common::types::Ohlc> for Ohlc {
 }
 
 
-#[derive(PartialEq, Deserialize, Serialize, Debug, Clone)]
-#[derive(Queryable, Insertable, AsChangeset, Associations, QueryableByName)]
+#[derive(Debug, Clone, PartialOrd, PartialEq, Serialize, Deserialize)]
+#[derive(Identifiable, Queryable, Insertable, AsChangeset, Associations, QueryableByName)]
+#[table_name = "users"]
+#[primary_key(id)]
+pub struct User {
+    pub id: i32,
+    pub name: Option<String>,
+    pub email: String,
+    pub password: String,
+    pub avatar: Option<String>,
+    pub is_verified: bool,
+    pub has_verified_email: bool,
+    pub created: chrono::NaiveDateTime,
+    pub updated: chrono::NaiveDateTime,
+}
+
+#[derive(Debug, Clone, PartialOrd, PartialEq, Serialize, Deserialize)]
+#[derive(Identifiable, Queryable, Insertable, AsChangeset, Associations, QueryableByName)]
+#[table_name = "traders"]
+#[primary_key(id)]
+#[belongs_to(User, foreign_key = "user_id")]
+pub struct Trader {
+    pub id: i32,
+    pub user_id: i32,
+    pub name: String,
+
+    pub exchange: String,
+    pub api_key: String,
+    pub api_secret: String,
+}
+
+
+#[derive(Debug, Clone, PartialOrd, PartialEq, Serialize, Deserialize)]
+#[derive(Identifiable, Queryable, Insertable, AsChangeset, Associations, QueryableByName)]
 #[table_name = "strategies"]
+#[primary_key(id)]
+#[belongs_to(User, foreign_key = "user_id")]
 pub struct Strategy {
     pub id: i32,
-    pub owner_id: i32,
+    pub user_id: i32,
     pub name: String,
     pub body: String,
     pub created: chrono::NaiveDateTime,
@@ -197,50 +206,65 @@ pub struct Strategy {
 }
 
 
-#[derive(PartialEq, Deserialize, Serialize, Debug, Clone)]
-#[derive(Queryable, Insertable, AsChangeset, Associations, QueryableByName)]
+#[derive(Debug, Clone, PartialOrd, PartialEq, Serialize, Deserialize)]
+#[derive(Identifiable, Queryable, Insertable, AsChangeset, Associations, QueryableByName)]
 #[table_name = "assignments"]
+#[primary_key(exchange, pair, user_id)]
+#[belongs_to(User, foreign_key = "user_id")]
+#[belongs_to(Strategy, foreign_key = "user_id")]
+#[belongs_to(Trader, foreign_key = "trader_id")]
 pub struct Assignment {
     pub exchange: String,
     pub pair: String,
-    pub owner_id: i32,
-    pub period: String,
-    pub strategy_id: i32,
+    pub user_id: i32,
 
+    pub period: String,
+
+    pub strategy_id: i32,
     pub trader_id: Option<i32>,
 }
 
 
-#[derive(PartialEq, Deserialize, Serialize, Debug, Clone)]
-#[derive(Queryable, Insertable, AsChangeset, Associations, QueryableByName)]
+#[derive(Debug, Clone, PartialOrd, PartialEq, Serialize, Deserialize)]
+#[derive(Identifiable, Queryable, Insertable, AsChangeset, Associations, QueryableByName)]
 #[table_name = "evaluations"]
+#[primary_key(id)]
+#[belongs_to(User, foreign_key = "user_id")]
+#[belongs_to(Strategy, foreign_key = "strategy_id")]
 pub struct Evaluation {
-    pub strategy_id: i32,
+    pub id: Uuid,
     pub exchange: String,
     pub pair: String,
     pub period: String,
-    pub owner_id: i32,
+
+    pub user_id: i32,
+    pub strategy_id: i32,
 
     pub time: chrono::NaiveDateTime,
     pub status: bool,
+    pub duration: i64,
+
     pub ok: Option<String>,
     pub error: Option<String>,
 
-    pub duration : i64,
 }
 
 
-#[derive(PartialEq, Deserialize, Serialize, Debug, Clone)]
-#[derive(Queryable, Insertable, AsChangeset, Associations, QueryableByName)]
+#[derive(Debug, Clone, PartialOrd, PartialEq, Serialize, Deserialize)]
+#[derive(Identifiable, Queryable, Insertable, AsChangeset, Associations, QueryableByName)]
 #[table_name = "trades"]
+#[primary_key(id)]
+#[belongs_to(User, foreign_key = "user_id")]
+#[belongs_to(Trader, foreign_key = "trader_id")]
 pub struct Trade {
-    pub uuid: Uuid,
+    pub id: Uuid,
     pub time: chrono::NaiveDateTime,
 
+    pub user_id: i32,
     pub trader_id: i32,
+
     pub exchange: String,
     pub pair: String,
-    pub period: String,
 
     pub buy: bool,
     pub amount: f64,

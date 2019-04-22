@@ -20,7 +20,7 @@ import TableHead from "@material-ui/core/TableHead/index";
 import Button from "@material-ui/core/Button/index";
 import {Link} from "react-router-dom"
 import {withStyles} from "@material-ui/styles";
-import {postOne} from "../../actions/apiActions";
+import {loadAll, postOne} from "../../actions/apiActions";
 import {TYPE_STRATEGY} from "../../api/baseApi";
 import orm, {allStrategiesSelector} from "../../data";
 import EditDialog from "../EditDialog";
@@ -65,6 +65,11 @@ class StrategyList extends Component {
         })
     };
 
+
+    componentDidMount() {
+        this.props.dispatch(loadAll(TYPE_STRATEGY));
+    }
+
     render() {
         let {classes} = this.props;
         return (<div>
@@ -85,7 +90,7 @@ class StrategyList extends Component {
                         </TableRow>
                         {this.props.strategies.map(
                             row => (
-                                <TableRow>
+                                <TableRow key={row.id}>
                                     <TableCell>
                                         {row.name}
                                     </TableCell>
@@ -100,40 +105,22 @@ class StrategyList extends Component {
                 </Table>
             </Paper>
             <EditDialog open={this.state.open}
+                        valid={this.state.newStrat.name}
+                        title="New strategy"
+                        text="Create new strategy"
+                        data={this.state.newStrat}
+                        onData={d => {
+                            this.setState({newStrat: d});
+                        }}
+                        onDismiss={save => {
+                            if (save) {
+                                this.handleOk()
+                            } else {
+                                this.handleClose()
+                            }
+                        }}
+                        attrs={[{name: "name", title: "Name", type: "text"}]}
             />
-            <Dialog open={this.state.open}
-
-                    aria-labelledby="form-dialog-title"
-            >
-                <DialogTitle id="form-dialog-title">Create strategy</DialogTitle>
-                <DialogContent>
-                    <DialogContentText>
-                        Please enter the name of newly created strategy
-                    </DialogContentText>
-                    <FormControl>
-                        <TextField
-                            label="Name"
-                            fullWidth
-                            onChange={(e) => (
-                                this.setState({
-                                    ...this.state,
-                                    newStrat: {
-                                        ...this.state.newStrat,
-                                        name: e.target.value
-                                    }
-                                })
-                            )}
-                        >
-                            asdsa
-                        </TextField>
-                    </FormControl>
-                </DialogContent>
-                <DialogActions>
-                    <Button color="primary" onClick={this.handleClose}>Cancel</Button>
-                    <Button color="primary" onClick={this.handleOk}>Ok</Button>
-                </DialogActions>
-
-            </Dialog>
         </div>)
     }
 }

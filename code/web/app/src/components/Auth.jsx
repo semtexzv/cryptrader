@@ -12,6 +12,8 @@ import LockOutlinedIcon from '@material-ui/icons/LockOutlined';
 import Paper from '@material-ui/core/Paper';
 import Typography from '@material-ui/core/Typography';
 import withStyles from '@material-ui/core/styles/withStyles';
+import {signin, signup} from "../actions/authActions";
+import {connect} from "react-redux";
 
 const styles = theme => ({
     main: {
@@ -47,8 +49,9 @@ const styles = theme => ({
 
 class Auth extends React.Component {
 
+
     render() {
-        let {classes} = this.props;
+        let {classes, dispatch, errors} = this.props;
         return (
             <main className={classes.main}>
                 <CssBaseline/>
@@ -59,7 +62,18 @@ class Auth extends React.Component {
                     <Typography component="h1" variant="h5">
                         Sign in
                     </Typography>
-                    <form className={classes.form} method="post">
+                    <form className={classes.form} id="auth-form" method="post" onSubmit={e => {
+                        e.preventDefault();
+                        let data = new FormData(e.target);
+
+                        let dataObj = {};
+                        for (var [key, value] of data.entries()) {
+                            dataObj[key] = value
+                        }
+
+                        dispatch(this.state.method(dataObj));
+                        console.log("Submitted");
+                    }}>
                         <FormControl margin="dense" required fullWidth>
                             <InputLabel htmlFor="email">Email Address</InputLabel>
                             <Input id="email" name="email" autoComplete="email" autoFocus/>
@@ -74,7 +88,10 @@ class Auth extends React.Component {
                             variant="contained"
                             color="primary"
                             className={classes.submit}
-                            formAction="/users/signin/"
+                            formAction="/api/signin/"
+                            onClick={(e) => {
+                                this.setState({method: signin})
+                            }}
                         >
                             Sign in
                         </Button>
@@ -84,11 +101,14 @@ class Auth extends React.Component {
                             variant="text"
                             color="primary"
                             className={classes.submit}
-                            value="register"
-                            formAction="/users/signup/"
+                            formAction="/api/signup/"
+                            onClick={e => {
+                                this.setState({method: signup})
+                            }}
                         >
                             Sign up
                         </Button>
+                        <Typography>{errors}</Typography>
                     </form>
                 </Paper>
             </main>
@@ -96,4 +116,11 @@ class Auth extends React.Component {
     }
 }
 
-export default withStyles(styles)(Auth);
+function mapStateToProps(state) {
+    return {
+        errors: state.info.errors
+    }
+
+}
+
+export default connect(mapStateToProps)(withStyles(styles)(Auth));

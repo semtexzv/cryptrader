@@ -41,7 +41,7 @@ pub struct OhlcTime {
 
 impl crate::Database {
     pub fn pairs(&self) -> BoxFuture<Vec<Pair>> {
-        return box self.invoke::<_, _, Error>(move |this, ctx| {
+        return box self.invoke::<_, _, _>(move |this, ctx| {
             let conn: &ConnType = &this.0.get().unwrap();
             use crate::schema::pairs::dsl::*;
 
@@ -115,7 +115,7 @@ impl crate::Database {
     }
 
     pub fn ohlc_history(&self, pair_id: PairId, since: i64) -> BoxFuture<BTreeMap<i64, Ohlc>> {
-        return box self.invoke::<_, _, Error>(move |this, ctx| {
+        return box self.invoke::<_, _, _>(move |this, ctx| {
             use crate::schema::ohlc::*;
 
             let conn: &ConnType = &this.0.get().unwrap();
@@ -145,7 +145,7 @@ impl crate::Database {
     }
 
     pub fn ohlc_history_backfilled(&self, spec: OhlcSpec, since: i64) -> BoxFuture<Vec<Ohlc>> {
-        return box self.invoke::<_, _, Error>(move |this, ctx| {
+        return box self.invoke::<_, _, _>(move |this, ctx| {
 
             let sql = ::diesel::sql_query(include_str!("../sql/ohlc_raw_backfilling.sql"));
 
@@ -169,27 +169,5 @@ impl crate::Database {
         });
     }
 
-    pub fn resampled_ohlc_values(&self, spec: OhlcSpec, since: i64) -> BoxFuture<Vec<Ohlc>> {
-        let sql = ::diesel::sql_query(include_str!("../sql/ohlc_resampled_tdb.sql"));
-        error!("Retrieving ohlc since : {:?} for :{:?}", since, spec);
-
-        //let since = spec.period().clamp_time(unixtime() as u64 - 400 * spec.period().seconds() as u64);
-
-        return box self.invoke::<_, _, Error>(move |this, ctx| {
-            let conn: &ConnType = &this.0.get().unwrap();
-
-            let (vals, t): (Vec<Ohlc>, _) = measure_time(|| {
-                sql.bind::<Text, _>(&spec.exch())
-                    .bind::<Text, _>(&spec.pair().to_string())
-                    .bind::<BigInt, _>(spec.period().seconds() as i64)
-                    .bind::<BigInt, _>(since as i64)
-                    .load::<LoadOhlc>(conn).expect("Could not query db")
-                    .iter()
-                    .map(|c| c.clone().into()).collect()
-            });
-            warn!("Loading ohlc data took {:?} ms, retrieved {:?} items", t, vals.len());
-            Ok(vals)
-        });
-    }
 }
 

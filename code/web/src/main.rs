@@ -42,7 +42,7 @@ pub fn static_file_named(name: &str) -> Result<impl Responder> {
 }
 
 pub fn static_file(req: HttpRequest<State>) -> Result<impl Responder> {
-    let name: String = req.match_info().query("tail")?;
+    let name: String = req.match_info().query("tail").unwrap();
     info!("Retrieving : {:?}", name);
 
     return static_file_named(&name);

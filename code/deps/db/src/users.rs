@@ -1,4 +1,4 @@
-use common::prelude::*;
+use crate::prelude::*;
 use diesel::prelude::*;
 
 use crate::{
@@ -13,15 +13,7 @@ use validator::Validate;
 
 #[derive(Insertable, Validate, Deserialize, Serialize, Debug)]
 #[table_name = "users"]
-pub struct NewUser {
-    #[validate(email(message = "Hmmm, invalid email provided."))]
-    pub email: String,
-    pub password: String,
-}
-
-
-#[derive(Deserialize, Validate, Serialize, Debug)]
-pub struct UserLogin {
+pub struct UserAuthInfo {
     #[validate(email(message = "Hmmm, invalid email provided."))]
     pub email: String,
     pub password: String,
@@ -48,7 +40,7 @@ impl crate::Database {
             Ok(res)
         })
     }
-    pub fn login(&self, login: UserLogin) -> BoxFuture<User, diesel::result::Error> {
+    pub fn login(&self, login: UserAuthInfo) -> BoxFuture<User, diesel::result::Error> {
         self.invoke(move |this, ctx| {
             use crate::schema::users::dsl::*;
 
@@ -56,7 +48,7 @@ impl crate::Database {
             users.filter(email.eq(login.email)).get_result::<User>(conn)
         })
     }
-    pub fn new_user(&self, user: NewUser) -> BoxFuture<User, diesel::result::Error> {
+    pub fn new_user(&self, user: UserAuthInfo) -> BoxFuture<User, diesel::result::Error> {
         self.invoke(move |this, ctx| {
             let conn: &ConnType = &this.0.get().unwrap();
             let r = diesel::insert_into(users::table).values(&user).get_result::<User>(conn)?;

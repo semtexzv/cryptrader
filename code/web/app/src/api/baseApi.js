@@ -21,8 +21,9 @@ export const TYPE_ASSIGNMENT = {
     field: "assignments",
     modelName: "Assignment",
     id: (e) => {
-        return e.pair
-    }
+        return `${e.exchange}/${e.pair}/${e.period}`
+    },
+
 };
 
 export const TYPE_PAIR = {
@@ -31,6 +32,15 @@ export const TYPE_PAIR = {
     modelName: "Pair",
     id: (e) => {
         return e
+    }
+};
+
+export const TYPE_PERIOD = {
+    path: "periods",
+    field: "periods",
+    modelName: "Period",
+    id: (e) => {
+        return e.text;
     }
 };
 
@@ -45,6 +55,15 @@ export const TYPE_EVALUATIONS = {
 
 
 export default class Api {
+    static getOne(type,id) {
+        return fetch(`/api/${type.path}/${id}`).then(response => {
+            if (response.status == 401) {
+                throw response
+            }
+            return response.json();
+        })
+    }
+
     static getAll(type) {
         return fetch(`/api/${type.path}`).then(response => {
             if (response.status == 401) {
@@ -89,15 +108,51 @@ export default class Api {
         })
     }
 
-    static logout() {
-        return fetch("/api/logout", {
+    static signin(data) {
+        return fetch("/api/signin/", {
             credentials: 'include',
             method: 'post',
+            body: JSON.stringify(data),
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
+            },
         }).then(response => {
-            if (response.status == 401) {
+            if (response.status >= 400) {
                 throw response
             }
-            return response.json();
+            return {}; //response.json();
+        })
+    }
+
+    static signup(data) {
+        return fetch("/api/signup/", {
+            credentials: 'include',
+            method: 'post',
+            body: JSON.stringify(data),
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
+            },
+        }).then(response => {
+            if (response.status >= 400) {
+                throw response
+            }
+            return {};
+            //return response.json();
+        })
+    }
+
+    static logout() {
+        return fetch("/api/logout/", {
+            credentials: 'include',
+            method: 'post',
+
+        }).then(response => {
+            if (response.status >= 400) {
+                throw response
+            }
+            return {};
         })
     }
 }
