@@ -19,6 +19,7 @@ import Login from "../Auth";
 import {createBrowserHistory} from "history";
 import {TYPE_PAIR, TYPE_PERIOD} from "../../api/baseApi";
 import Home from "./Home";
+import ThemeProvider from "@material-ui/styles/es/ThemeProvider";
 
 export const history = createBrowserHistory();
 const store = configureStore(history);
@@ -26,9 +27,14 @@ const store = configureStore(history);
 store.dispatch(loadAll(TYPE_PAIR));
 store.dispatch(loadAll(TYPE_PERIOD));
 
+const theme = {
+    danger: '#F00'
+}
+
 export default class App extends Component {
     render() {
         return (
+            <ThemeProvider theme={theme} >
             <Provider store={store}>
                 <div className="App">
                     <ConnectedRouter history={history}>
@@ -37,7 +43,7 @@ export default class App extends Component {
                             <Route path="/app" render={props => (
                                 <Dashboard>
                                     <Switch>
-                                        <Route exact path="/app/" component={Home}/>
+                                        <Route exact path="/app/"  component={Home} />
                                         <Route exact path="/app/strategies" component={StrategyList}/>
                                         <Route exact path="/app/strategies/:id" component={StrategyDetail}/>
                                         <Route exact path="/app/assignments" component={AssignmentList}/>
@@ -49,6 +55,7 @@ export default class App extends Component {
                     </ConnectedRouter>
                 </div>
             </Provider>
+            </ThemeProvider>
         );
     }
 }

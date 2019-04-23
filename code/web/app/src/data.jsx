@@ -1,4 +1,4 @@
-import {fk, many, attr, Model, ORM, createSelector} from 'redux-orm';
+import {fk, many, attr, Model, ORM, createSelector, oneToOne} from 'redux-orm';
 
 export class Strategy extends Model {
     static modelName = "Strategy";
@@ -38,22 +38,44 @@ export class Period extends Model {
 
 export class Evaluation extends Model {
     static modelName = "Evaluation";
-    static fields = {}
+    static fields = {
+        strategy_id: fk({
+            to: 'Strategy',
+            as: 'strategy'
+        })
+    };
 }
 
-export class Assignment extends Model {
+export class Trade extends Model {
+    static modelName = "Trade";
+    static fields = {
+        trader_id: fk({
+            to: "Trader",
+            as: "trader"
+        })
+    }
+}
+
+
+class Assignment extends Model {
     static modelName = "Assignment";
     static fields = {
         exchange: attr(),
         pair: attr(),
         period: attr(),
-        strategy_id: attr(),
-        trader_id: attr()
+        strategy_id: fk({
+            to: 'Strategy',
+            as: 'strategy'
+        }),
+        trader_id: fk({
+            to: 'Trader',
+            as: 'trader'
+        }),
     };
 }
 
 export const orm = new ORM();
-orm.register(Strategy, Trader, Pair, Period, Evaluation, Assignment);
+orm.register(Strategy, Trader, Pair, Period, Evaluation, Trade, Assignment);
 
 const dbStateSelector = state => state.db;
 

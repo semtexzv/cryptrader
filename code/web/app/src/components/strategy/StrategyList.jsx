@@ -29,6 +29,9 @@ import EditDialog from "../EditDialog";
 const styles = (theme) => ({
     newButton: {
         width: '100%'
+    },
+    tableWrapper: {
+        overflowX: "auto"
     }
 });
 
@@ -73,7 +76,7 @@ class StrategyList extends Component {
     render() {
         let {classes} = this.props;
         return (<div>
-            <Paper>
+            <Paper className={classes.tableWrapper}>
                 <Table>
                     <TableHead>
                         <TableRow>
@@ -95,7 +98,7 @@ class StrategyList extends Component {
                                         {row.name}
                                     </TableCell>
                                     <TableCell align="right">
-                                        <Button component={Link} to={`/app/strategies/${row.id}`} variant="contained"
+                                        <Button component={Link} to={`/app/strategies/${row.id}`}
                                                 color="primary">Edit</Button>
                                     </TableCell>
                                 </TableRow>

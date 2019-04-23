@@ -69,6 +69,21 @@ impl crate::Database {
         });
     }
 
+    pub fn delete_strategy(&self, uid : i32, sid : i32) -> BoxFuture<bool> {
+        return self.invoke(move |this, ctx| {
+            use schema::strategies::dsl::*;
+
+
+            let conn: &ConnType = &this.0.get().unwrap();
+            let q = diesel::delete(strategies)
+                .filter(user_id.eq(uid))
+                .filter(id.eq(sid));
+
+            Ok(q.execute(conn)? > 0)
+        });
+    }
+
+
     pub fn log_eval(&self, res: Evaluation) -> BoxFuture<Evaluation> {
         self.invoke(move |this, _| {
             use schema::evaluations::dsl::*;

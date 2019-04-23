@@ -43,7 +43,7 @@ impl Handler<OhlcUpdate> for Rescaler {
                     box wrap_future(self.db.ohlc_history(msg.spec.pair_id().clone(), time as _))
                         .map(move |v, this: &mut Self, ctx| {
                             this.cache.insert(msg.spec.pair_id().clone(), v);
-                        })
+                        }).from_err()
                 } else {
                     box actix::fut::ok(())
                 };

@@ -9,7 +9,9 @@ use crate::{
 
 #[derive(Insertable, AsChangeset, Deserialize, Serialize, Debug)]
 #[table_name = "traders"]
-pub struct NewTraderData {
+pub struct TraderData {
+    #[serde(skip_deserializing, skip_serializing)]
+    pub id: Option<i32>,
     #[serde(skip_deserializing, skip_serializing)]
     pub user_id: i32,
     pub name: String,
@@ -19,10 +21,9 @@ pub struct NewTraderData {
 }
 
 #[derive(PartialEq, Deserialize, Serialize, Debug, Clone)]
-#[derive( Insertable, AsChangeset)]
+#[derive(Insertable, AsChangeset)]
 #[table_name = "trades"]
 pub struct NewTradeData {
-
     #[serde(skip_deserializing, skip_serializing)]
     pub user_id: i32,
     pub trader_id: i32,
@@ -50,7 +51,7 @@ impl crate::Database {
         })
     }
 
-    pub fn save_trader(&self, trader: NewTraderData) -> BoxFuture<Trader> {
+    pub fn save_trader(&self, trader: TraderData) -> BoxFuture<Trader> {
         self.invoke(move |this, ctx| {
             use crate::schema::traders::dsl::*;
             let conn: &ConnType = &this.0.get().unwrap();
@@ -64,15 +65,15 @@ impl crate::Database {
         })
     }
 
-    pub fn delete_trader(&self, trader: Trader) -> BoxFuture<()> {
+    pub fn delete_trader(&self, uid: i32, tid: i32) -> BoxFuture<bool> {
         self.invoke(move |this, ctx| {
             use crate::schema::traders::dsl::*;
             let conn: &ConnType = &this.0.get().unwrap();
             let q = diesel::delete(traders)
-                .filter(id.eq(trader.id));
+                .filter(user_id.eq(uid))
+                .filter(id.eq(tid));
 
-            q.execute(conn)?;
-            Ok(())
+            Ok(q.execute(conn)? > 0)
         })
     }
 
@@ -89,6 +90,17 @@ impl crate::Database {
                 .get_result::<Trade>(conn)?;
 
             Ok(r)
+        })
+    }
+    pub fn user_trades(&self, uid : i32) -> BoxFuture<Vec<Trade>> {
+        self.invoke(move |this, ctx| {
+            use self::trades::dsl::*;
+
+            let conn: &ConnType = &this.0.get().unwrap();
+
+            let q = trades.filter(user_id.eq(uid)).get_results(conn)?;
+
+            Ok(q)
         })
     }
 }

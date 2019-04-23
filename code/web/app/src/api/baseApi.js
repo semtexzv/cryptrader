@@ -44,18 +44,25 @@ export const TYPE_PERIOD = {
     }
 };
 
-export const TYPE_EVALUATIONS = {
+export const TYPE_EVALUATION = {
     path: "evaluations",
     field: "evaluations",
     modelName: "Evaluation",
     id: (e) => {
-        return e.pair
-    }
+        return e.id
+    },
+};
+
+export const TYPE_TRADE = {
+    path: "trades",
+    field: "trades",
+    modelName: "Trade",
+    id: (e) => e.id,
 };
 
 
 export default class Api {
-    static getOne(type,id) {
+    static getOne(type, id) {
         return fetch(`/api/${type.path}/${id}`).then(response => {
             if (response.status == 401) {
                 throw response

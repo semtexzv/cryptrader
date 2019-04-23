@@ -18,6 +18,7 @@ export default function dataReducer(state = initial, action) {
 
     switch (action.type) {
         case types.LOAD_ALL_SUCCESS:
+            sess[action.dataType.modelName].all().delete();
             action.data.forEach(elem => {
                 elem['id'] = action.dataType.id(elem);
                 sess[action.dataType.modelName].upsert(elem)

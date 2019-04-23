@@ -28,6 +28,7 @@ export function loadAll(type) {
 
 export function postOne(type, v) {
     return function (dispatch) {
+        v['id'] = type.id(v);
         return api.postOne(type, v).then(data => {
             dispatch(postOneSuccess(type, data))
         }).catch(err => {

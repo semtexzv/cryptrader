@@ -25,6 +25,9 @@ import EditDialog from "./EditDialog";
 const styles = (theme) => ({
     newButton: {
         width: '100%'
+    },
+    tableWrapper: {
+        overflowX: "auto"
     }
 });
 
@@ -33,6 +36,7 @@ class AssignmentList extends Component {
 
     state = {
         open: false,
+        creating: true,
         newData: {
             exchange: null,
             pair: null,
@@ -55,51 +59,7 @@ class AssignmentList extends Component {
 
 
     handleClickOpen = () => {
-        this.setState({open: true});
-    };
-
-    handleClose = () => {
-        this.setState({open: false});
-    };
-
-    handleOk = () => {
-        let {dispatch} = this.props;
-        dispatch(postOne(TYPE_ASSIGNMENT, this.state.newData)).then(() => {
-            this.handleClose();
-        })
-    };
-    handleDelete = (it) => {
-        let {dispatch} = this.props;
-        dispatch(deleteOne(TYPE_ASSIGNMENT, it)).then(() => {
-            this.handleClose();
-        })
-    };
-
-    handleChangeNum = name => event => {
-        let newData = {
-            ...this.state.newData,
-            [name]: Number(event.target.value),
-        };
-        this.setState({newData});
-    };
-
-    handleChangeText = name => event => {
-        let newData = {
-            ...this.state.newData,
-            [name]: event.target.value
-        };
-        this.setState({newData});
-
-    };
-    handleChangePair = event => {
-        let sel = event.target.options[event.target.selectedIndex];
-
-        let newData = {
-            ...this.state.newData,
-            exchange: sel.dataset.exchange,
-            pair: sel.dataset.pair
-        };
-        this.setState({newData});
+        this.setState({open: true, creating: true});
     };
 
     componentDidMount() {
@@ -113,8 +73,10 @@ class AssignmentList extends Component {
         let {classes, assignments, strategies, pairs, periods, traders, dispatch} = this.props;
         let valid = Boolean(this.state.newData.exchange && this.state.newData.pair && this.state.newData.period
             && this.state.newData.strategy_id);
+
+
         return (<div>
-            <Paper>
+            <Paper className={classes.tableWrapper}>
                 <Table>
 
                     <TableHead>
@@ -140,12 +102,12 @@ class AssignmentList extends Component {
                                     <TableCell>{row.exchange}</TableCell>
                                     <TableCell>{row.pair}</TableCell>
                                     <TableCell>{row.period}</TableCell>
-                                    <TableCell>{row.strategy_id}</TableCell>
-                                    <TableCell>{row.trader_id}</TableCell>
+                                    <TableCell>{row.strategy ? row.strategy.name : ""}</TableCell>
+                                    <TableCell>{row.trader ? row.trader.name : ""}</TableCell>
                                     <TableCell align="right">
                                         <Button color="primary" onClick={() => {
-                                            dispatch(deleteOne(TYPE_ASSIGNMENT,row))
-                                        }}>Remove</Button>
+                                            this.setState({open: true, creating: false})
+                                        }}>Edit</Button>
                                     </TableCell>
                                 </TableRow>
                             )
@@ -169,6 +131,9 @@ class AssignmentList extends Component {
                     } else {
                         this.setState({open: false})
                     }
+                }}
+                onDelete={this.state.creating ? null : e => {
+                    dispatch(deleteOne(TYPE_ASSIGNMENT, e)).then(() => this.setState({open: false}))
                 }}
                 attrs={[
                     {
@@ -256,11 +221,11 @@ function mapStoreToProps(state, props) {
     let sess = orm.session(state.data.db);
 
     return {
-        assignments: sess.Assignment.all().toRefArray(),
-        strategies: sess.Strategy.all().toRefArray(),
-        pairs: sess.Pair.all().toRefArray(),
-        periods: sess.Period.all().toRefArray(),
-        traders: sess.Trader.all().toRefArray(),
+        assignments: sess.Assignment.all().toModelArray(),
+        strategies: sess.Strategy.all().toModelArray(),
+        pairs: sess.Pair.all().toModelArray(),
+        periods: sess.Period.all().toModelArray(),
+        traders: sess.Trader.all().toModelArray(),
     };
 }
 

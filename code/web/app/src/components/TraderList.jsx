@@ -24,12 +24,19 @@ import orm from "../data";
 const styles = (theme) => ({
     newButton: {
         width: '100%'
+    },
+    cell: {
+        minWidth: '10em'
+    },
+    tableWrapper: {
+        overflowX: "auto"
     }
 });
 
 class TraderList extends Component {
     state = {
         open: false,
+        creatingNew: true,
         newTrader: {}
     };
 
@@ -47,7 +54,7 @@ class TraderList extends Component {
     }
 
     handleClickOpen = () => {
-        this.setState({open: true});
+        this.setState({open: true, creatingNew: true});
     };
 
     handleClose = () => {
@@ -64,17 +71,23 @@ class TraderList extends Component {
             && this.state.newTrader.api_key
             && this.state.newTrader.api_secret);
 
+        let onDeleteCb = null;
+
+        if (!this.state.creatingNew) {
+            onDeleteCb = e => dispatch(deleteOne(TYPE_TRADER, e)).then(() => this.setState({open: false}))
+        }
         return (
             <div>
-                <Paper>
+                <Paper className={classes.tableWrapper}>
                     <Table>
 
                         <TableHead>
                             <TableRow>
-                                <TableCell>Name</TableCell>
-                                <TableCell>Exchange</TableCell>
-                                <TableCell>Key</TableCell>
-                                <TableCell align="right">Actions</TableCell>
+                                <TableCell className={classes.cell}>Name</TableCell>
+                                <TableCell className={classes.cell}>Exchange</TableCell>
+                                <TableCell className={classes.cell}>Key</TableCell>
+                                <TableCell className={classes.cell} style={{minWidth: '15em'}}
+                                           align='right'>Actions</TableCell>
                             </TableRow>
                         </TableHead>
                         <TableBody>
@@ -92,11 +105,8 @@ class TraderList extends Component {
                                         <TableCell>{row.api_key}</TableCell>
                                         <TableCell align="right">
                                             <Button color="primary"
-                                                    onClick={e => dispatch(deleteOne(TYPE_TRADER, row.id))}
-                                            >Delete</Button>
-                                            <Button color="primary"
                                                     onClick={e => {
-                                                        this.setState({newTrader: row, open: true})
+                                                        this.setState({newTrader: row, open: true, creatingNew: false})
                                                     }}
                                             >Edit</Button>
                                         </TableCell>
@@ -115,6 +125,7 @@ class TraderList extends Component {
                     onData={(d) => {
                         this.setState({newTrader: d})
                     }}
+                    onDelete={onDeleteCb}
                     attrs={[
                         {name: "name", title: "Name", type: "text"},
                         {name: "api_key", title: "Api key", type: "text"},

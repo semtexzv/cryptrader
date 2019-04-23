@@ -1,0 +1,109 @@
+// MIR for `main`
+// source = MirSource { instance: Item(DefId(0/0:3 ~ lib[317d]::main[0])), promoted: None }
+// pass_name = TypeckMir
+// disambiguator = after
+
+| User Type Annotations
+| 0: Canonical { max_universe: U0, variables: [CanonicalVarInfo { kind: Region(U0) }, CanonicalVarInfo { kind: Region(U0) }], value: TypeOf(DefId(2/0:4227 ~ core[3f39]::fmt[0]::{{impl}}[2]::new_v1[0]), UserSubsts { substs: [ReLateBound(DebruijnIndex(0), BrAnon(0))], user_self_ty: Some(UserSelfTy { impl_def_id: DefId(2/0:4226 ~ core[3f39]::fmt[0]::{{impl}}[2]), self_ty: std::fmt::Arguments<'_> }) }) } at <::std::macros::println macros>:2:29: 2:63
+|
+fn  main() -> () {
+    let mut _0: ();                      // return place
+    let mut _1: ();
+    let mut _2: ();
+    let mut _3: std::fmt::Arguments<'_>;
+    let mut _4: &[&str];
+    let mut _5: &[&str; 1];
+    let mut _6: &[&str; 1];
+    let _7: [&str; 1];
+    let mut _8: &str;
+    let mut _9: &'static str;
+    let mut _10: &[std::fmt::ArgumentV1<'_>];
+    let mut _11: &[std::fmt::ArgumentV1<'_>; 0];
+    let mut _12: &[std::fmt::ArgumentV1<'_>; 0];
+    let _13: [std::fmt::ArgumentV1<'_>; 0];
+    let mut _14: ();
+
+    bb0: {
+        StorageLive(_3);                 // bb0[0]: scope 0 at <::std::macros::println macros>:2:29: 2:63
+        StorageLive(_4);                 // bb0[1]: scope 0 at src/lib.rs:4:14: 4:29
+        StorageLive(_5);                 // bb0[2]: scope 0 at src/lib.rs:4:14: 4:29
+        StorageLive(_6);                 // bb0[3]: scope 0 at src/lib.rs:4:14: 4:29
+        StorageLive(_7);                 // bb0[4]: scope 0 at src/lib.rs:4:14: 4:29
+        StorageLive(_8);                 // bb0[5]: scope 0 at src/lib.rs:4:14: 4:29
+        StorageLive(_9);                 // bb0[6]: scope 0 at src/lib.rs:4:14: 4:29
+        _9 = const "Hello, world!\n";    // bb0[7]: scope 0 at src/lib.rs:4:14: 4:29
+                                         // ty::Const
+                                         // + ty: &'static str
+                                         // + val: Slice(Ptr(Pointer { alloc_id: AllocId(0), offset: Size { raw: 0 }, tag: () }), 14)
+                                         // mir::Constant
+                                         // + span: src/lib.rs:4:14: 4:29
+                                         // + ty: &'static str
+                                         // + literal: Const { ty: &'static str, val: Slice(Ptr(Pointer { alloc_id: AllocId(0), offset: Size { raw: 0 }, tag: () }), 14) }
+        _8 = &(*_9);                     // bb0[8]: scope 0 at src/lib.rs:4:14: 4:29
+        _7 = [move _8];                  // bb0[9]: scope 0 at src/lib.rs:4:14: 4:29
+        StorageDead(_8);                 // bb0[10]: scope 0 at src/lib.rs:4:28: 4:29
+        _6 = &_7;                        // bb0[11]: scope 0 at src/lib.rs:4:14: 4:29
+        _5 = &(*_6);                     // bb0[12]: scope 0 at src/lib.rs:4:14: 4:29
+        _4 = move _5 as &[&str] (Unsize); // bb0[13]: scope 0 at src/lib.rs:4:14: 4:29
+        StorageDead(_5);                 // bb0[14]: scope 0 at src/lib.rs:4:28: 4:29
+        StorageLive(_10);                // bb0[15]: scope 0 at src/lib.rs:4:14: 4:29
+        StorageLive(_11);                // bb0[16]: scope 0 at src/lib.rs:4:14: 4:29
+        StorageLive(_12);                // bb0[17]: scope 0 at src/lib.rs:4:14: 4:29
+        StorageLive(_13);                // bb0[18]: scope 0 at src/lib.rs:4:14: 4:29
+        StorageLive(_14);                // bb0[19]: scope 0 at src/lib.rs:4:14: 4:29
+        _14 = ();                        // bb0[20]: scope 0 at src/lib.rs:4:14: 4:29
+        FakeRead(ForMatchedPlace, _14);  // bb0[21]: scope 0 at src/lib.rs:4:14: 4:29
+        falseEdges -> [real: bb3, imaginary: bb2]; // bb0[22]: scope 0 at src/lib.rs:4:14: 4:29
+    }
+
+    bb1 (cleanup): {
+        resume;                          // bb1[0]: scope 0 at src/lib.rs:3:1: 5:2
+    }
+
+    bb2: {
+        unreachable;                     // bb2[0]: scope 0 at src/lib.rs:4:14: 4:29
+    }
+
+    bb3: {
+        _13 = [];                        // bb3[0]: scope 0 at src/lib.rs:4:14: 4:29
+        _12 = &_13;                      // bb3[1]: scope 0 at src/lib.rs:4:14: 4:29
+        _11 = &(*_12);                   // bb3[2]: scope 0 at src/lib.rs:4:14: 4:29
+        _10 = move _11 as &[std::fmt::ArgumentV1<'_>] (Unsize); // bb3[3]: scope 0 at src/lib.rs:4:14: 4:29
+        StorageDead(_11);                // bb3[4]: scope 0 at src/lib.rs:4:28: 4:29
+        _3 = const std::fmt::Arguments::<'a>::new_v1(move _4, move _10) -> [return: bb4, unwind: bb1]; // bb3[5]: scope 0 at <::std::macros::println macros>:2:29: 2:63
+                                         // ty::Const
+                                         // + ty: fn(&[&str], &[std::fmt::ArgumentV1<'_>]) -> std::fmt::Arguments<'_> {std::fmt::Arguments::<'_>::new_v1}
+                                         // + val: Scalar(Bits { size: 0, bits: 0 })
+                                         // mir::Constant
+                                         // + span: <::std::macros::println macros>:2:29: 2:63
+                                         // + ty: fn(&[&str], &[std::fmt::ArgumentV1<'_>]) -> std::fmt::Arguments<'_> {std::fmt::Arguments::<'_>::new_v1}
+                                         // + user_ty: UserType(0)
+                                         // + literal: Const { ty: fn(&[&str], &[std::fmt::ArgumentV1<'_>]) -> std::fmt::Arguments<'_> {std::fmt::Arguments::<'_>::new_v1}, val: Scalar(Bits { size: 0, bits: 0 }) }
+    }
+
+    bb4: {
+        StorageDead(_10);                // bb4[0]: scope 0 at <::std::macros::println macros>:2:62: 2:63
+        StorageDead(_4);                 // bb4[1]: scope 0 at <::std::macros::println macros>:2:62: 2:63
+        _2 = const std::io::_print(move _3) -> [return: bb5, unwind: bb1]; // bb4[2]: scope 0 at <::std::macros::println macros>:2:3: 2:65
+                                         // ty::Const
+                                         // + ty: for<'r> fn(std::fmt::Arguments<'r>) {std::io::_print}
+                                         // + val: Scalar(Bits { size: 0, bits: 0 })
+                                         // mir::Constant
+                                         // + span: <::std::macros::println macros>:2:3: 2:26
+                                         // + ty: for<'r> fn(std::fmt::Arguments<'r>) {std::io::_print}
+                                         // + literal: Const { ty: for<'r> fn(std::fmt::Arguments<'r>) {std::io::_print}, val: Scalar(Bits { size: 0, bits: 0 }) }
+    }
+
+    bb5: {
+        StorageDead(_3);                 // bb5[0]: scope 0 at <::std::macros::println macros>:2:64: 2:65
+        StorageDead(_12);                // bb5[1]: scope 0 at <::std::macros::println macros>:2:66: 2:67
+        StorageDead(_13);                // bb5[2]: scope 0 at <::std::macros::println macros>:2:66: 2:67
+        StorageDead(_14);                // bb5[3]: scope 0 at <::std::macros::println macros>:2:66: 2:67
+        StorageDead(_6);                 // bb5[4]: scope 0 at <::std::macros::println macros>:2:66: 2:67
+        StorageDead(_7);                 // bb5[5]: scope 0 at <::std::macros::println macros>:2:66: 2:67
+        StorageDead(_9);                 // bb5[6]: scope 0 at <::std::macros::println macros>:2:66: 2:67
+        _1 = ();                         // bb5[7]: scope 0 at <::std::macros::println macros>:2:1: 2:69
+        _0 = ();                         // bb5[8]: scope 0 at src/lib.rs:3:11: 5:2
+        return;                          // bb5[9]: scope 0 at src/lib.rs:5:2: 5:2
+    }
+}

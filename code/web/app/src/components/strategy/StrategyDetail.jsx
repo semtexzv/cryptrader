@@ -22,12 +22,13 @@ import {
 } from "@material-ui/core";
 import Card from "@material-ui/core/Card";
 import {postOne, loadAll, deleteOne, loadOne} from "../../actions/apiActions";
-import {TYPE_ASSIGNMENT, TYPE_EVALUATIONS, TYPE_STRATEGY} from "../../api/baseApi";
+import {TYPE_ASSIGNMENT, TYPE_EVALUATION, TYPE_STRATEGY} from "../../api/baseApi";
 import Table from "@material-ui/core/Table";
 import TableHead from "@material-ui/core/TableHead";
 import {Link} from "react-router-dom";
 import {orm, getStrategySelector} from "../../data";
 import List from "@material-ui/core/List";
+import Moment from "react-moment";
 
 const styles = (theme) => ({
 
@@ -38,8 +39,10 @@ const styles = (theme) => ({
         float: 'right'
     },
     card: {
-        marginBottom: '24px'
-    }
+        marginBottom: '24px',
+        overflowX: "auto"
+    },
+
 });
 
 class StrategyDetail extends Component {
@@ -69,7 +72,7 @@ class StrategyDetail extends Component {
             dispatch(loadOne(TYPE_STRATEGY, this.props.match.params.id));
         }
         dispatch(loadAll(TYPE_ASSIGNMENT));
-        dispatch(loadAll(TYPE_EVALUATIONS))
+        dispatch(loadAll(TYPE_EVALUATION))
     }
 
     render() {
@@ -105,8 +108,10 @@ class StrategyDetail extends Component {
                                 tabSize: 2,
                             }}/>
                         <CardActions className={classes.actions}>
+                            {/*
                             <Button color="primary"
                                     onClick={() => dispatch(deleteOne(TYPE_STRATEGY, this.props.strategy.id))}>Delete</Button>
+                                    */}
                             <Button color="primary"
                                     onClick={() => dispatch(postOne(TYPE_STRATEGY, this.props.strategy.ref))}>Save</Button>
                         </CardActions>
@@ -145,9 +150,8 @@ class StrategyDetail extends Component {
                             <TableHead>
                                 <TableRow>
                                     <TableCell>Output</TableCell>
-                                    <TableCell>Exchange</TableCell>
-                                    <TableCell>Pair</TableCell>
-                                    <TableCell>Time</TableCell>
+                                    <TableCell>Asset</TableCell>
+                                    <TableCell>When</TableCell>
                                     <TableCell>Duration</TableCell>
                                 </TableRow>
                             </TableHead>
@@ -155,11 +159,10 @@ class StrategyDetail extends Component {
                                 {this.props.evaluations.map(
                                     s => (
                                         <TableRow>
-                                            <TableCell>{s.ok || s.error}</TableCell>
-                                            <TableCell>{s.exchange}</TableCell>
-                                            <TableCell>{s.pair}</TableCell>
-                                            <TableCell>{s.time}</TableCell>
-                                            <TableCell>{s.duration}</TableCell>
+                                            <TableCell style={{minWidth: '16em'}}>{s.ok || s.error}</TableCell>
+                                            <TableCell>{s.exchange}/{s.pair}/{s.period}</TableCell>
+                                            <TableCell style={{whiteSpace: 'nowrap'}}><Moment fromNow  date={s.time}/></TableCell>
+                                            <TableCell>{s.duration} ms</TableCell>
                                         </TableRow>
                                     )
                                 )}

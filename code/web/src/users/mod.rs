@@ -17,7 +17,7 @@ use db::validator::Validate;
 
 pub async fn login((request, login): (HttpRequest<State>, Json<UserAuthInfo>)) -> Result<HttpResponse> {
     error!("Login");
-    let base: BaseTemplateInfo = await_compat!(BaseTemplateInfo::from_request(&request))?;
+    let base: BaseReqInfo = await_compat!(BaseReqInfo::from_request(&request))?;
 
     let url = request.url_for("homepage", &[""; 0]).unwrap();
     let homepage = Ok(redirect(url.as_str()));
@@ -53,7 +53,7 @@ pub async fn signup((request, user): (HttpRequest<State>, Json<UserAuthInfo>)) -
         return Ok(redirect_to(request, "homepage"));
     }
 
-    let  base: BaseTemplateInfo = await_compat!(BaseTemplateInfo::from_request(&request))?;
+    let  base: BaseReqInfo = await_compat!(BaseReqInfo::from_request(&request))?;
 
     let mut user = user.into_inner();
 

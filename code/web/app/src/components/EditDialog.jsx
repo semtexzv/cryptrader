@@ -11,11 +11,23 @@ import Button from "@material-ui/core/Button";
 import React from "react";
 import * as PropTypes from "prop-types";
 import InputLabel from "@material-ui/core/InputLabel";
+import {useTheme, withStyles} from "@material-ui/styles";
 
 const attrShape = PropTypes.shape({
     type: PropTypes.string,
     title: PropTypes.string,
     name: PropTypes.string,
+});
+
+const styles = theme => ({
+    'DialogActions': {
+        display: 'flex'
+    },
+
+    'deleteButton' :{
+        textColor: theme.danger,
+        marginRight: 'auto'
+    }
 });
 
 class EditDialog extends React.Component {
@@ -46,6 +58,7 @@ class EditDialog extends React.Component {
         attrs: PropTypes.array,
         onDismiss: PropTypes.func,
         onData: PropTypes.func,
+        onDelete: PropTypes.func,
     };
 
 
@@ -64,7 +77,12 @@ class EditDialog extends React.Component {
 
 
     render() {
-        let {open, data, attrs, title, text, onDismiss, onData} = this.props;
+        let {classes, open, data, attrs, title, text, onDismiss, onData, onDelete} = this.props;
+
+        let deleteButton = null;
+        if(onDelete) {
+            deleteButton = (<Button className={classes.deleteButton} onClick={() => onDelete(data)}>Delete</Button>);
+        }
         return (<div><Dialog open={open} aria-labelledby="form-dialog-title">
             <DialogTitle id="form-dialog-title">{title}</DialogTitle>
             <DialogContent>
@@ -116,7 +134,8 @@ class EditDialog extends React.Component {
 
                 })}
             </DialogContent>
-            <DialogActions>
+            <DialogActions className={classes.DialogActions}>
+                {deleteButton}
                 <Button color="primary" onClick={e => onDismiss(false)}>Cancel</Button>
                 <Button color="primary" onClick={e => onDismiss(true)} disabled={!this.props.valid}>Ok</Button>
             </DialogActions>
@@ -126,5 +145,5 @@ class EditDialog extends React.Component {
 }
 
 
-export default EditDialog;
+export default withStyles(styles)(EditDialog);
 

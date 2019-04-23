@@ -28,13 +28,13 @@ pub struct AuthTemplateInfo {
 }
 
 #[derive(Debug, Serialize)]
-pub struct BaseTemplateInfo {
+pub struct BaseReqInfo {
     pub auth: AuthTemplateInfo,
 }
 
-impl BaseTemplateInfo {
+impl BaseReqInfo {
     pub async fn from_request(req: &HttpRequest<super::State>) -> Result<Self> {
-        Ok(BaseTemplateInfo {
+        Ok(BaseReqInfo {
             auth: AuthTemplateInfo {
                 signed_in: req.is_authenticated(),
                 email: req.session().get("email").unwrap().unwrap_or("".into()),

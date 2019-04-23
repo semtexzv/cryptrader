@@ -7,12 +7,14 @@ pub mod prelude;
 #[macro_use]
 pub mod utils;
 
-pub mod pages;
+pub mod root;
 pub mod users;
 pub mod traders;
 pub mod strategies;
 pub mod assignments;
+
 pub mod evaluations;
+pub mod trades;
 
 use crate::prelude::*;
 use crate::utils::*;
@@ -61,12 +63,13 @@ pub fn run() {
             static_file_named("index.html")
         }));
 
-        app = pages::configure(app);
+        app = root::configure(app);
         app = users::configure(app);
 
         app = strategies::configure(app);
         app = assignments::configure(app);
         app = evaluations::configure(app);
+        app = trades::configure(app);
         app = traders::configure(app);
 
         app

@@ -171,8 +171,8 @@ pub struct User {
     pub avatar: Option<String>,
     pub is_verified: bool,
     pub has_verified_email: bool,
-    pub created: chrono::NaiveDateTime,
-    pub updated: chrono::NaiveDateTime,
+    pub created: chrono::DateTime<chrono::Utc>,
+    pub updated: chrono::DateTime<chrono::Utc>,
 }
 
 #[derive(Debug, Clone, PartialOrd, PartialEq, Serialize, Deserialize)]
@@ -201,8 +201,8 @@ pub struct Strategy {
     pub user_id: i32,
     pub name: String,
     pub body: String,
-    pub created: chrono::NaiveDateTime,
-    pub updated: chrono::NaiveDateTime,
+    pub created: chrono::DateTime<chrono::Utc>,
+    pub updated: chrono::DateTime<chrono::Utc>,
 }
 
 
@@ -240,7 +240,7 @@ pub struct Evaluation {
     pub user_id: i32,
     pub strategy_id: i32,
 
-    pub time: chrono::NaiveDateTime,
+    pub time: chrono::DateTime<chrono::Utc>,
     pub status: bool,
     pub duration: i64,
 
@@ -258,7 +258,7 @@ pub struct Evaluation {
 #[belongs_to(Trader, foreign_key = "trader_id")]
 pub struct Trade {
     pub id: Uuid,
-    pub time: chrono::NaiveDateTime,
+    pub time: chrono::DateTime<chrono::Utc>,
 
     pub user_id: i32,
     pub trader_id: i32,

@@ -29,7 +29,7 @@ const styles = theme => ({
         display: 'flex',
     },
     toolbar: {
-        paddingRight: 24, // keep right padding when drawer closed
+        paddingRight: 24, // keep right padding when drawer closed,
     },
     toolbarIcon: {
         display: 'flex',
@@ -88,13 +88,7 @@ const styles = theme => ({
         flexGrow: 1,
         padding: theme.spacing.unit * 3,
         height: '100vh',
-        overflow: 'auto',
-    },
-    chartContainer: {
-        marginLeft: -22,
-    },
-    tableContainer: {
-        height: 320,
+        overflow: 'scroll',
     },
     h5: {
         marginBottom: theme.spacing.unit * 2,
@@ -103,7 +97,7 @@ const styles = theme => ({
 
 class Dashboard extends React.Component {
     state = {
-        open: true,
+        open: false,
     };
     static propTypes = {
         classes: PropTypes.object.isRequired,
@@ -146,7 +140,7 @@ class Dashboard extends React.Component {
                             noWrap
                             className={classes.title}
                         >
-                            Dashboard
+                            {this.props.location.hash}
                         </Typography>
                         <IconButton color="inherit" onClick={(e) => {
                             dispatch(logout());
@@ -175,8 +169,6 @@ class Dashboard extends React.Component {
                 <main className={classes.content}>
                     <div className={classes.appBarSpacer}/>
                     {children}
-                    <div className={classes.tableContainer}>
-                    </div>
                 </main>
             </div>
         );

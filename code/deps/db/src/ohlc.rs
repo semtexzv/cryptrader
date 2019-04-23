@@ -115,7 +115,7 @@ impl crate::Database {
     }
 
     pub fn ohlc_history(&self, pair_id: PairId, since: i64) -> BoxFuture<BTreeMap<i64, Ohlc>> {
-        return box self.invoke::<_, _, _>(move |this, ctx| {
+        return box self.invoke::<_, _, diesel::result::Error>(move |this, ctx| {
             use crate::schema::ohlc::*;
 
             let conn: &ConnType = &this.0.get().unwrap();

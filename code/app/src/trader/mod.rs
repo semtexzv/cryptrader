@@ -97,7 +97,21 @@ impl Trader {
 
         let res = balance.and_then(move |bal: Result<BalanceResponse, _>, this: &mut Self, ctx| {
             if let Err(e) = bal {
-                return (box afut::err(e)) as ResponseActFuture<_, _, _>;
+                return (box  wrap_future(this.db.log_trade(NewTradeData {
+                    user_id: pos.trader_id.user_id,
+                    trader_id: pos.trader_id.id,
+                    exchange: pos.pair.exchange().into(),
+                    pair: pos.pair.pair().to_string(),
+
+                    buy : false,
+                    amount: 0.0,
+                    price: 0.0,
+                    status: false,
+                    ok: None,
+                    error: Some(e.to_string()),
+                }))
+                    .map_err(|e, _, _| ExchangeError::Internal)
+                    .map(|_, _, _| ())) as ResponseActFuture<_,_,_>;
             }
             let bal = bal.unwrap();
             let mut buy = false;

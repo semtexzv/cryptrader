@@ -156,7 +156,7 @@ impl Handler<OhlcUpdate> for Decider {
                         period,
                         user_id,
                         status: res.is_ok(),
-                        time: common::chrono::Utc::now().naive_utc(),
+                        time: common::chrono::Utc::now(),
                         ok,
                         error,
                         duration: (t1.to(t2)).num_milliseconds() as _,

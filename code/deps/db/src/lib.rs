@@ -1,4 +1,5 @@
 #![feature(box_syntax)]
+#![recursion_limit = "128"]
 #![allow(unused_imports, unused_variables)]
 
 #[macro_use]
@@ -34,6 +35,7 @@ use crate::prelude::*;
 
 pub use crate::schema::*;
 
+pub mod repo;
 
 pub use crate::ohlc::*;
 pub use crate::users::*;
@@ -72,13 +74,22 @@ pub fn start() -> Database {
         .build(manager)
         .expect("Failed to create connection pool");
 
-    return Database(SyncArbiter::start(4, move || DbWorker(pool.clone())),scylla::connect());
+    return Database(SyncArbiter::start(4, move || DbWorker(pool.clone())), scylla::connect());
 }
 
 impl Actor for DbWorker { type Context = SyncContext<Self>; }
 
 #[derive(Clone)]
 pub struct Database(Addr<DbWorker>, scylla::Scylla);
+
+
+use diesel::query_dsl::select_dsl::SelectDsl;
+use diesel::query_builder::{AsQuery, Query};
+use diesel::deserialize::QueryableByName;
+use diesel::associations::{HasTable, BelongsTo, Identifiable};
+use crate::repo::GetAllDsl;
+
+
 
 impl_invoke!(Database,DbWorker);
 

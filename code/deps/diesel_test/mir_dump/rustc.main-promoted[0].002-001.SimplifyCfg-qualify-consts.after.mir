@@ -1,0 +1,15 @@
+// MIR for `main`
+// source = MirSource { instance: Item(DefId(0/0:3 ~ lib[317d]::main[0])), promoted: Some(promoted[0]) }
+// pass_name = SimplifyCfg-qualify-consts
+// disambiguator = after
+
+promoted[0] in  main: [std::fmt::ArgumentV1<'_>; 0] = {
+    let mut _0: [std::fmt::ArgumentV1<'_>; 0]; // return place
+    let mut _1: [std::fmt::ArgumentV1<'_>; 0];
+
+    bb0: {
+        _1 = [];                         // bb0[0]: scope 0 at src/lib.rs:4:14: 4:29
+        _0 = move _1;                    // bb0[1]: scope 0 at src/lib.rs:4:14: 4:29
+        return;                          // bb0[2]: scope 0 at src/lib.rs:4:14: 4:29
+    }
+}

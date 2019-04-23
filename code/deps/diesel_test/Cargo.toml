@@ -1,0 +1,8 @@
+[package]
+name = "diesel_test"
+version = "0.1.0"
+authors = ["Michal Hornický <semtexzv@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+diesel = {version ="*", features=["postgres"]}
