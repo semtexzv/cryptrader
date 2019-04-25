@@ -59,7 +59,7 @@ class AssignmentList extends Component {
 
 
     handleClickOpen = () => {
-        this.setState({open: true, creating: true});
+        this.setState({open: true, creating: true , newData: {}});
     };
 
     componentDidMount() {
@@ -106,7 +106,7 @@ class AssignmentList extends Component {
                                     <TableCell>{row.trader ? row.trader.name : ""}</TableCell>
                                     <TableCell align="right">
                                         <Button color="primary" onClick={() => {
-                                            this.setState({open: true, creating: false})
+                                            this.setState({open: true, creating: false, newData : row})
                                         }}>Edit</Button>
                                     </TableCell>
                                 </TableRow>

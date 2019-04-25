@@ -68,7 +68,7 @@ impl crate::Database {
     }
 
     pub fn do_save_ohlc(&self, id: PairId, ohlc: Vec<Ohlc>) {
-        self.1.save(id.clone(),ohlc.clone());
+       // self.1.save(id.clone(),ohlc.clone());
         self.do_invoke::<_, _, ()>(move |this, ctx| {
             let t1 = PreciseTime::now();
             use crate::schema::ohlc::{self, *};

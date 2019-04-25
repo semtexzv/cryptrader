@@ -23,7 +23,6 @@ impl CandleSpec {
     pub fn sym_str(&self) -> String {
         return self.2.clone();
     }
-
 }
 
 #[derive(Debug, Clone)]
@@ -41,14 +40,15 @@ impl Into<Ohlc> for BfxCandle {
         Ohlc {
             // Candles timestamps are in seconds
             time: self.timestamp / 1000,
-            open : self.open,
-            close : self.close,
-            high : self.high,
-            low : self.low,
-            vol : self.vol,
+            open: self.open,
+            close: self.close,
+            high: self.high,
+            low: self.low,
+            vol: self.vol,
         }
     }
 }
+
 impl<'de> Deserialize<'de> for BfxCandle {
     fn deserialize<D>(deserializer: D) -> StdResult<Self, D::Error> where
         D: Deserializer<'de> {
@@ -61,8 +61,24 @@ impl<'de> Deserialize<'de> for BfxCandle {
                 close,
                 high,
                 low,
-                vol
+                vol,
             }
         });
+    }
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(untagged)]
+pub enum BfxUpdate {
+    One(BfxCandle),
+    Many(Vec<BfxCandle>),
+}
+
+impl BfxUpdate {
+    pub fn data(self) -> Vec<BfxCandle> {
+        match self {
+            BfxUpdate::One(c) => vec![c],
+            BfxUpdate::Many(c) => c,
+        }
     }
 }

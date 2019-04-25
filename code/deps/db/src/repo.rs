@@ -17,7 +17,6 @@ pub struct Repository<DB: Backend, C: Connection<Backend=DB>>(PhantomData<(DB, C
 
 type Id<T> = <T as Identifiable>::Id;
 type TablePk<T> = <<T as HasTable>::Table as Table>::PrimaryKey;
-type TableOf<T> = <T as HasTable>::Table;
 
 pub trait GetAllDsl<T: HasTable> {
     type Output;

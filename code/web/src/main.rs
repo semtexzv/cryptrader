@@ -52,35 +52,36 @@ pub fn static_file(req: HttpRequest<State>) -> Result<impl Responder> {
 
 pub fn run() {
     env::set_var("RUST_LOG", "debug");
-    server::new(move || {
-        let mut app = App::with_state(State {
-            db: db::start(),
-        });
-        app = app.middleware(actix_web::middleware::Logger::default());
-        // app = app.middleware(sentry_actix::SentryMiddleware::new());
+    actix::System::run(|| {
+        let mut db = db::start();
+        server::new(move || {
+            let mut app = App::with_state(State {
+                db: db.clone(),
+            });
+            app = app.middleware(actix_web::middleware::Logger::default());
+            // app = app.middleware(sentry_actix::SentryMiddleware::new());
 
-        app = app.resource("/app/{tail:.*}", |r| r.method(http::Method::GET).with(|r: HttpRequest<State>| {
-            static_file_named("index.html")
-        }));
+            app = app.resource("/app/{tail:.*}", |r| r.method(http::Method::GET).with(|r: HttpRequest<State>| {
+                static_file_named("index.html")
+            }));
 
-        app = root::configure(app);
-        app = users::configure(app);
+            app = root::configure(app);
+            app = users::configure(app);
 
-        app = strategies::configure(app);
-        app = assignments::configure(app);
-        app = evaluations::configure(app);
-        app = trades::configure(app);
-        app = traders::configure(app);
+            app = strategies::configure(app);
+            app = assignments::configure(app);
+            app = evaluations::configure(app);
+            app = trades::configure(app);
+            app = traders::configure(app);
 
-        app
-            .resource("/healthy", |r| r.method(http::Method::GET).f(check))
-            .resource("/ready", |r| r.method(http::Method::GET).f(check))
-            .resource("/static/{tail:.*}", |r| r.method(http::Method::GET).with(static_file))
-            .default_resource(|r| r.h(http::NormalizePath::default()))
-    })
+            app
+                .resource("/healthy", |r| r.method(http::Method::GET).f(check))
+                .resource("/ready", |r| r.method(http::Method::GET).f(check))
+                .resource("/static/{tail:.*}", |r| r.method(http::Method::GET).with(static_file))
+                .default_resource(|r| r.h(http::NormalizePath::default()))
+        }).bind("0.0.0.0:8000").unwrap().start();
 
-        .bind("0.0.0.0:8000").unwrap()
-        .run();
+    });
 }
 
 fn main() {

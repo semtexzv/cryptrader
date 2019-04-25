@@ -48,7 +48,7 @@ class Home extends Component {
 
     render() {
         const {classes} = this.props;
-        const {strategies, assignments, evaluations, traders} = this.props;
+        const {strategies, assignments, evaluations, traders, trades} = this.props;
 
         let nextStep = "";
 
@@ -63,7 +63,7 @@ class Home extends Component {
             nextStep =
                 <Button color='primary' component={NavLink} to="/app/assignments">Assign a trader to an asset</Button>
         } else {
-            nextStep = "Everything ready, system should be evaluation strategies and attempting to trade";
+            nextStep = "Everything ready, system should be evaluating strategies and attempting to trade";
         }
 
         let evalBody = (
@@ -98,7 +98,37 @@ class Home extends Component {
                     })}
                 </TableBody>
             </Table></div>)
+        }
 
+        let tradeBody = (
+            <Typography component="p" color='textSecondary' className={classes.placeholder}>
+                No data available
+            </Typography>
+        );
+
+        if (trades.length != 0) {
+            tradeBody = (<div className={classes.tableWrapper}><Table>
+                <TableHead>
+                    <TableRow>
+                        <TableCell>Asset</TableCell>
+                        <TableCell>Trader</TableCell>
+                        <TableCell>When</TableCell>
+                        <TableCell>Result</TableCell>
+                    </TableRow>
+                </TableHead>
+                <TableBody>
+                    {trades.map(e => {
+                        let res = e.status ? (e.buy ? "Buy" : "Sell") : "Error: " + e.error;
+                        return <TableRow key={e.id}>
+                            <TableCell>{e.exchange}/{e.pair}</TableCell>
+                            <TableCell>{e.trader ? e.trader.name : "-"}</TableCell>
+                            <TableCell style={{whiteSpace: 'nowrap'}}><Moment fromNow date={e.time}/></TableCell>
+                            <TableCell>{res}</TableCell>
+
+                        </TableRow>;
+                    })}
+                </TableBody>
+            </Table></div>)
         }
         return (<div>
             <Grid container spacing={24} justify="space-evenly" alignItems="center">
@@ -146,10 +176,7 @@ class Home extends Component {
                                 className={classes.title}
                             >Trades executed</Typography>
                             <div className={classes.cardContainer}>
-
-                                <Typography component="p" color='textSecondary' className={classes.placeholder}>
-                                    No data available
-                                </Typography>
+                                {tradeBody}
                             </div>
                         </CardContent>
                     </Card>
@@ -165,6 +192,7 @@ function mapStateToProps(state) {
     return {
         strategies: sess.Strategy.all().toModelArray(),
         traders: sess.Trader.all().toModelArray(),
+        trades: sess.Trade.all().toModelArray(),
         assignments: sess.Assignment.all().toModelArray(),
         evaluations: sess.Evaluation.all().toModelArray(),
     }

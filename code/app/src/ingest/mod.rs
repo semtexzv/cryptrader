@@ -94,8 +94,8 @@ impl Handler<IngestUpdate> for Ingest {
 
 impl Ingest {
     pub async fn new(handle: ContextHandle, db: Database, out: Recipient<OhlcUpdate>) -> Result<Addr<Self>, failure::Error> {
-        let input = compat_await!(Subscriber::new(handle.clone()))?;
-        let last = compat_await!(db.last_ohlc_values())?;
+        let input = await_compat!(Subscriber::new(handle.clone()))?;
+        let last = await_compat!(db.last_ohlc_values())?;
 
         Ok(Arbiter::start(move |ctx: &mut Context<Self>| {
             input.register(ctx.address().recipient());

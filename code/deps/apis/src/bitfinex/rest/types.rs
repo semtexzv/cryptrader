@@ -35,7 +35,7 @@ impl Serialize for NewOrderPayload {
         let mut p = RawPayload {
             symbol: self.symbol.to_bfx_pair(),
             amount: f64::abs(self.amount).to_string(),
-            price: self.amount.to_string(),
+            price: 1.to_string(),
             exchange: "bitfinex".into(),
             side: (if self.buy { "buy" } else { "sell" }).to_string(),
             typ: "exchange market".into(),
@@ -56,7 +56,30 @@ pub struct SymbolDetail {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct OrderStatus {
     pub id: usize,
-    pub exchange: String,
+
+    #[serde(rename = "symbol")]
     #[serde(deserialize_with = "tradepair_from_bfx")]
     pub pair: TradePair,
+    pub exchange: String,
+
+    #[serde(deserialize_with = "f64_from_str")]
+    pub price: f64,
+
+    pub side: String,
+    #[serde(rename = "type")]
+    pub typ: String,
+
+    pub is_live: bool,
+    pub is_cancelled: bool,
+    pub is_hidden: bool,
+
+    #[serde(deserialize_with = "f64_from_str")]
+    pub original_amount: f64,
+
+    #[serde(deserialize_with = "f64_from_str")]
+    pub remaining_amount: f64,
+
+    #[serde(deserialize_with = "f64_from_str")]
+    pub executed_amount: f64,
+
 }

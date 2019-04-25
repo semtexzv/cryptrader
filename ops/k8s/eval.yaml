@@ -50,4 +50,4 @@ items:
               imagePullPolicy: Always
               command: ["/app", "eval-worker"]
               env: *env
-              resources: { requests: { cpu: 150m, memory: 50M }, limits: { cpu: 160m, memory: 55M } }
+              resources: { requests: { cpu: 150m, memory: 50M }, limits: { cpu: 160m, memory: 80M } }

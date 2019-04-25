@@ -181,7 +181,7 @@ impl<'de> Deserialize<'de> for Resp {
         D: Deserializer<'de> {
         let mut data: json::Value = json::Value::deserialize(deserializer)?;
 
-        #[derive(Deserialize)]
+        #[derive(Deserialize,Debug)]
         struct Help {
             event: EventType,
             #[serde(rename = "chanId")]
@@ -198,6 +198,7 @@ impl<'de> Deserialize<'de> for Resp {
                 });
             }
             EventType::Sub => {
+                println!("Sub: {:?}",h);
                 return Ok(Resp {
                     chan_id: h.chan_id,
                     data: RespData::Sub(json::from_value::<SubData>(data).map_err(|e| D::Error::custom("ABC"))?),

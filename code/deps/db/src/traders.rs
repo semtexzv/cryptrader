@@ -95,10 +95,14 @@ impl crate::Database {
     pub fn user_trades(&self, uid : i32) -> BoxFuture<Vec<Trade>> {
         self.invoke(move |this, ctx| {
             use self::trades::dsl::*;
+            println!("Tst");
 
             let conn: &ConnType = &this.0.get().unwrap();
 
-            let q = trades.filter(user_id.eq(uid)).get_results(conn)?;
+            let q = trades.filter(user_id.eq(uid))
+                .order_by(time.desc())
+                .limit(20)
+                .get_results(conn)?;
 
             Ok(q)
         })

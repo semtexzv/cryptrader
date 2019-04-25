@@ -8,7 +8,6 @@ use actix_comm::ContextHandle;
 use crate::svc::ServiceRequest;
 use std::collections::vec_deque::VecDeque;
 use std::collections::btree_map::BTreeMap;
-use common::tokio::prelude::FutureExt;
 use actix_comm::Remotable;
 
 
@@ -64,7 +63,7 @@ impl<S: ServiceInfo> Actor for LoadBalancer<S> { type Context = Context<Self>; }
 
 impl<S: ServiceInfo> LoadBalancer<S> {
     pub async fn new(handle: ContextHandle) -> Result<Addr<Self>> {
-        let handler = compat_await!(ServiceHandler::new(handle.clone()))?;
+        let handler = await_compat!(ServiceHandler::new(handle.clone()))?;
 
 
         let worker_handler: ServiceHandler<WorkerServiceInfo<S>> = ServiceHandler::from_other(handle.clone(), &handler.clone());

@@ -43,7 +43,7 @@ target/docker:
 	mkdir -p ./target/docker
 
 $(DOCKER_MARK): $(APP_FILE) ops/docker/app.Dockerfile target/docker
-	docker build -f ./ops/docker/app.Dockerfile -t $(DOCKER_IMAGE) --build-arg app_name=$(APP_NAME) .
+	docker build --network "host" -f ./ops/docker/app.Dockerfile -t $(DOCKER_IMAGE) --build-arg app_name=$(APP_NAME) .
 	docker push $(DOCKER_IMAGE)
 	mkdir -p ./target/docker
 	echo "$(DOCKER_IMAGE_VAR)='$(DOCKER_IMAGE)'" > ./target/docker/$(APP_NAME)

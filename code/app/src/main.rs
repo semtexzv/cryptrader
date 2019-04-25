@@ -1,4 +1,4 @@
-#![feature(box_syntax, associated_type_defaults)]
+#![feature(box_syntax, try_blocks, associated_type_defaults)]
 #![feature(await_macro, futures_api, async_await)]
 #![feature(impl_trait_in_bindings)]
 #![allow(dead_code, unused_variables, unused_imports, unreachable_code, deprecated)]
@@ -24,7 +24,7 @@ fn main() {
     use common::actix::spawn as arb_spawn;
     env::set_var("RUST_BACKTRACE", "1");
 
-    fn execute<I, E: Debug, F: 'static  + std::future::Future<Output=Result<I, E>>>(f: F) {
+    fn execute<I, E: Debug, F: 'static + std::future::Future<Output=Result<I, E>>>(f: F) {
         let res = Compat::new(f);
         common::actix::spawn(res.unwrap_err().drop_item());
     }

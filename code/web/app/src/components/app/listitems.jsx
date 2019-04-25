@@ -52,7 +52,7 @@ class MainListItems extends React.Component {
                 <ListItemIcon>
                     <TrendIcon/>
                 </ListItemIcon>
-                <ListItemText primary="Evaluations"/>
+                <ListItemText primary="Backtesting"/>
             </ListItem>
         </div>)
     }

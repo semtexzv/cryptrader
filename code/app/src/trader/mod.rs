@@ -9,6 +9,7 @@ pub struct PositionService;
 pub struct PositionRequest {
     pub trader_id: db::Trader,
     pub pair: PairId,
+    pub price_approx: f64,
     pub position: TradingPosition,
 }
 
@@ -40,7 +41,7 @@ pub struct Trader {
 
 impl Trader {
     pub async fn new(handle: ContextHandle, db: db::Database) -> Result<Addr<Self>> {
-        let handler = compat_await!(ServiceHandler::new(handle.clone()))?;
+        let handler = await_compat!(ServiceHandler::new(handle.clone()))?;
 
         Ok(Actor::create(|ctx| {
             handler.register(ctx.address().recipient());
@@ -81,96 +82,136 @@ impl Trader {
         (*self.conns.get::<ServiceConnection<TradeService<E>>>().unwrap()).clone()
     }
 
+    pub async fn new_pos_async<E: Exchange>(balancer: ServiceConnection<BalanceService<E>>,
+                                            trader: ServiceConnection<TradeService<E>>,
+                                            db: db::Database,
+                                            pos: PositionRequest,
+    ) -> Result<(), ExchangeError> {
+        // We use try block to catch all errors
+        // And return Option of trade result from this block
+        let logic: Result<Option<(_, bool)>> = try {
+            let bal = await_compat!(balancer.send(BalanceRequest {
+                pair: pos.pair.pair().clone(),
+                trader: pos.trader_id.clone(),
+            })).unwrap()?;
+
+            let buy_avail = bal.source / pos.price_approx;
+            let sell_avail = bal.target;
+
+            let is_buy_op = if buy_avail > bal.min_buy && pos.position == TradingPosition::Long {
+                Some(true)
+            } else if sell_avail > bal.min_sell && pos.position == TradingPosition::Short {
+                Some(false)
+            } else {
+                None
+            };
+            //println!("State:  ba: {:?}, sa: {:?}, mb : {:?} ms :{:?}", buy_avail, sell_avail, bal.min_buy, bal.min_sell);
+            if let Some(buy) = is_buy_op {
+                let trade = await_compat!(trader.send(TradeRequest {
+                    trader: pos.trader_id.clone(),
+                    pair: pos.pair.pair().clone(),
+                    amount: if buy { buy_avail } else { sell_avail },
+                    buy,
+                })).unwrap()?;
+
+                Some((trade, buy))
+            } else { None }
+        };
+        // Transposition from Result<Option<>>> to Option<Result<>>
+        let logic = logic.transpose();
+
+        // We log to the db only if ther was an error or successfull trade, if there was no attempt
+        // to trade, we ignore this
+        if let Some(res) = logic {
+            println!("Trade executed or error : {:?}", res);
+            let trade = res.as_ref().map(|r| r.0.clone());
+            let buy = res.as_ref().map(|r| r.1.clone());
+            let buy = buy.unwrap_or(false);
+
+            await_compat!(db.log_trade(NewTradeData {
+                user_id: pos.trader_id.user_id,
+                trader_id: pos.trader_id.id,
+                exchange: pos.pair.exchange().into(),
+                pair: pos.pair.pair().to_string(),
+
+                buy,
+                amount: 0.0,
+                price: 0.0,
+                status: trade.is_ok(),
+                ok: trade.as_ref().map(|r| "OK".to_string()).ok(),
+                error: trade.as_ref().map_err(|e| e.to_string()).err(),
+            })).unwrap();
+        }
+
+
+        Ok(())
+    }
     /// New PositionRequest was received, and it was dispatched to this exchange implementation
     pub fn new_position<E: Exchange>(&mut self, ctx: &mut Context<Self>, pos: PositionRequest) -> ResponseActFuture<Self, (), ExchangeError> {
         let balancer = self.balance_handler::<E>();
         let trader = self.trade_handler::<E>();
+        let db = self.db.clone();
 
-        let balance = balancer.send(BalanceRequest {
-            pair: pos.pair.pair().clone(),
-            trader: pos.trader_id.clone(),
-        });
+        return box wrap_future(actix_async_await::Compat::new(Self::new_pos_async(balancer, trader, db, pos)));
+
+        /*
+
+    let balance = wrap_future(balance).map_err(|_, _, _| ExchangeError::Internal);
 
 
-        let balance = wrap_future(balance).map_err(|_, _, _| ExchangeError::Internal);
+    let res = balance.and_then(move |bal: Result<BalanceResponse, _>, this: &mut Self, ctx| {
+        if let Err(e) = bal {
+            return (box  wrap_future(this.db.log_trade(NewTradeData {
+                user_id: pos.trader_id.user_id,
+                trader_id: pos.trader_id.id,
+                exchange: pos.pair.exchange().into(),
+                pair: pos.pair.pair().to_string(),
+
+                buy : false,
+                amount: 0.0,
+                price: 0.0,
+                status: false,
+                ok: None,
+                error: Some(e.to_string()),
+            }))
+                .map_err(|e, _, _| ExchangeError::Internal)
+                .map(|_, _, _| ())) as ResponseActFuture<_,_,_>;
+        }
 
 
-        let res = balance.and_then(move |bal: Result<BalanceResponse, _>, this: &mut Self, ctx| {
-            if let Err(e) = bal {
-                return (box  wrap_future(this.db.log_trade(NewTradeData {
-                    user_id: pos.trader_id.user_id,
-                    trader_id: pos.trader_id.id,
-                    exchange: pos.pair.exchange().into(),
-                    pair: pos.pair.pair().to_string(),
+        let trade = fut.map(|f| wrap_future(f));
+        if let Some(trade) = trade {
+            box trade
+                // Map Msg delivery error to internal error
+                .map_err(|_, _, _| ExchangeError::Internal)
+                // Flatten the error hierarchy
+                .then(|r, _, _| {
+                    afut::result(r.and_then(|r| r))
+                })
+                .then(move |r, this: &mut Self, ctx| {
+                    wrap_future(this.db.log_trade(NewTradeData {
+                        user_id: pos.trader_id.user_id,
+                        trader_id: pos.trader_id.id,
+                        exchange: pos.pair.exchange().into(),
+                        pair: pos.pair.pair().to_string(),
 
-                    buy : false,
-                    amount: 0.0,
-                    price: 0.0,
-                    status: false,
-                    ok: None,
-                    error: Some(e.to_string()),
-                }))
-                    .map_err(|e, _, _| ExchangeError::Internal)
-                    .map(|_, _, _| ())) as ResponseActFuture<_,_,_>;
-            }
-            let bal = bal.unwrap();
-            let mut buy = false;
+                        buy,
+                        amount: 0.0,
+                        price: 0.0,
+                        status: r.is_ok(),
+                        ok: r.as_ref().map(|r| "".to_string()).ok(),
+                        error: r.as_ref().map_err(|e| e.to_string()).err(),
+                    }))
+                        .map_err(|e, _, _| ExchangeError::Internal)
+                        .map(|_, _, _| ())
+                })
+        } else {
+            box afut::ok(())
+        }
+    });
 
-            let fut = if bal.target > bal.min_buy && pos.position == TradingPosition::Long {
-                info!("Can go longer");
-                buy = true;
-                Some(trader.send(TradeRequest {
-                    trader: pos.trader_id.clone(),
-                    pair: pos.pair.pair().clone(),
-                    amount: bal.target,
-                    buy: true,
-                }))
-            } else if bal.source > bal.min_sell && pos.position == TradingPosition::Short {
-                info!("Can go shorter");
-                buy = false;
-                Some(trader.send(TradeRequest {
-                    trader: pos.trader_id.clone(),
-                    pair: pos.pair.pair().clone(),
-                    amount: bal.source,
-                    buy: true,
-                }))
-            } else {
-                info!("Not enough funds for position adjustement");
-                None
-            };
-
-            let trade = fut.map(|f| wrap_future(f));
-            if let Some(trade) = trade {
-                box trade
-                    // Map Msg delivery error to internal error
-                    .map_err(|_, _, _| ExchangeError::Internal)
-                    // Flatten the error hierarchy
-                    .then(|r, _, _| {
-                        afut::result(r.and_then(|r| r))
-                    })
-                    .then(move |r, this: &mut Self, ctx| {
-                        wrap_future(this.db.log_trade(NewTradeData {
-                            user_id: pos.trader_id.user_id,
-                            trader_id: pos.trader_id.id,
-                            exchange: pos.pair.exchange().into(),
-                            pair: pos.pair.pair().to_string(),
-
-                            buy,
-                            amount: 0.0,
-                            price: 0.0,
-                            status: r.is_ok(),
-                            ok: r.as_ref().map(|r| "".to_string()).ok(),
-                            error: r.as_ref().map_err(|e| e.to_string()).err(),
-                        }))
-                            .map_err(|e, _, _| ExchangeError::Internal)
-                            .map(|_, _, _| ())
-                    })
-            } else {
-                box afut::ok(())
-            }
-        });
-
-        box res
+    box res
+    */
     }
 }
 
@@ -218,12 +259,12 @@ pub struct BalanceResponse {
 
 #[derive(Debug, Clone, Fail, Deserialize, Serialize)]
 pub enum ExchangeError {
-    #[fail(display = "invalid trader auth info: {}", 0)]
+    #[fail(display = "Invalid info: {}", 0)]
     InvalidInfo(String),
-    #[fail(display = "invalid trader funds : {}", 0)]
+    #[fail(display = "Invalid funds: {}", 0)]
     InvalidFunds(String),
-    #[fail(display = "Internal err")]
-    Internal,
+    #[fail(display = "Internal err: {}", 0)]
+    Internal(String),
 }
 
 

@@ -69,10 +69,10 @@ items:
               resources:
                 limits:
                   cpu: 300m
-                  memory: 450Mi
+                  memory: 550Mi
                 requests:
                   cpu: 300m
-                  memory: 440Mi
+                  memory: 540Mi
               securityContext:
                 capabilities:
                   add:

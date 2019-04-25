@@ -45,8 +45,8 @@ pub struct Decider {
 
 impl Decider {
     pub async fn new(handle: ContextHandle, db: db::Database, input: Addr<Proxy<OhlcUpdate>>) -> Result<Addr<Self>, failure::Error> {
-        let eval_svc = compat_await!(ServiceConnection::new(handle.clone()))?;
-        let pos_svc = compat_await!(ServiceConnection::new(handle.clone()))?;
+        let eval_svc = await_compat!(ServiceConnection::new(handle.clone()))?;
+        let pos_svc = await_compat!(ServiceConnection::new(handle.clone()))?;
 
 
         Ok(Arbiter::start(move |ctx: &mut Context<Self>| {
@@ -98,12 +98,13 @@ impl Handler<OhlcUpdate> for Decider {
         let sub = self.requests.get(&msg.search_prefix());
         if let Some(sub) = sub {
             for spec in sub.iter() {
+                let msg = msg.clone();
                 let spec: &TradingRequestSpec = spec;
-                info!("Should eval {:?} on {:?}", spec, msg.spec);
+                info!("Should eval {:?} on {:?}", spec, msg.clone().spec);
                 let req = EvalRequest {
                     strat_id: spec.strat_id,
                     spec: spec.ohlc.clone(),
-                    last: msg.ohlc.time,
+                    last: msg.clone().ohlc.time,
                 };
                 let strategy_id = spec.strat_id;
                 let user_id = spec.user_id;
@@ -128,6 +129,7 @@ impl Handler<OhlcUpdate> for Decider {
                                 let pos = crate::trader::PositionRequest {
                                     trader_id: trader,
                                     pair: pair_id,
+                                    price_approx : msg.clone().ohlc.close,
                                     position: *decision,
                                 };
                                 let sent = this.pos_svc.send(pos);

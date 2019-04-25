@@ -187,6 +187,12 @@ pub struct Publisher<E: EndpointInfo> {
     inner: Addr<actix_comm::Publish>,
 }
 
+impl<E: EndpointInfo> Clone for Publisher<E> {
+    fn clone(&self) -> Self {
+        Publisher { inner: self.inner.clone(), _e: PhantomData }
+    }
+}
+
 
 impl<E: EndpointInfo> Publisher<E> {
     pub fn new(handle: ContextHandle) -> BoxFuture<Self, tzmq::Error> {

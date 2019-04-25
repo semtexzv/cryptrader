@@ -29,7 +29,7 @@ pub use actix::{
     fut::{self as afut, wrap_future, wrap_stream}};
 
 pub use actix_web;
-pub use actix_async_await::{self, Compat, await as compat_await};
+pub use actix_async_await::{self, Compat, await as await_compat};
 
 pub use url::Url;
 pub use log::{log, trace, debug, info, warn, error};
@@ -58,7 +58,7 @@ pub use time::{self, PreciseTime};
 
 pub fn unixtime_millis() -> i64 {
     let now = ::chrono::Utc::now();
-    return now.timestamp() * 1000 + now.timestamp_subsec_millis() as i64;
+    return now.timestamp() * 1000 + (now.timestamp_subsec_millis() as i64) % 1000;
 }
 
 pub fn unixtime() -> i64 {
