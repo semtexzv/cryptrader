@@ -55,9 +55,9 @@ impl OhlcAggregator {
                 return Some(oc.get().clone());
             }
             Entry::Vacant(vc) => {
-                let t1 = PreciseTime::now();
+                let t1 = Instant::now();
                 let mut from_db = ::db::last_candle_for(&self.conn, id.exchange(), id.pair());
-                let t2 = PreciseTime::now();
+                let t2 = Instant::now();
                 println!("Execution time : {}", t1.to(t2).num_milliseconds());
 
                 if let Some(ref d) = from_db {

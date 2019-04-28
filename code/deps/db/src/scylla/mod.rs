@@ -24,7 +24,7 @@ use cdrs::{
 use super::impl_invoke;
 
 use cdrs_helpers_derive::{IntoCDRSValue, TryFromRow};
-use common::prelude::PreciseTime;
+use common::prelude::Instant;
 
 static CREATE_KEYSPACE: &str = include_str!("../../cql/keyspace.cql");
 static CREATE_TABLE: &str = include_str!("../../cql/ohlc_table.cql");
@@ -72,40 +72,40 @@ pub struct DbOhlc {
 impl Scylla {
     pub fn save(&self, id: PairId, ohlc: Vec<Ohlc>) {
         return self.do_invoke::<_, _, failure::Error>(move |this, ctx| {
-            let new_ohlc: Vec<DbOhlc> = ohlc.iter().map(|candle| {
-                DbOhlc {
-                    time: candle.time as i64,
-                    exchange: id.exchange().into(),
-                    pair: id.pair().to_string(),
-                    open: candle.open,
-                    high: candle.high,
-                    low: candle.low,
-                    close: candle.close,
-                    vol: candle.vol,
+            let (_,t) = measure_time(|| {
+                let new_ohlc: Vec<DbOhlc> = ohlc.iter().map(|candle| {
+                    DbOhlc {
+                        time: candle.time as i64,
+                        exchange: id.exchange().into(),
+                        pair: id.pair().to_string(),
+                        open: candle.open,
+                        high: candle.high,
+                        low: candle.low,
+                        close: candle.close,
+                        vol: candle.vol,
+                    }
+                }).collect();
+                let t1 = Instant::now();
+
+                let q = this.0.prepare(INSERT_OHLC).expect("Prepare query");
+
+                let mut queries = BatchQueryBuilder::new();
+
+                for o in new_ohlc.into_iter() {
+                    let values = query_values!(o.time,o.exchange,o.pair,o.open,o.high,o.low,o.close,o.vol);
+                    queries = queries.add_query_prepared(q.clone(), values);
                 }
-            }).collect();
-            let t1 = PreciseTime::now();
 
-            let q = this.0.prepare(INSERT_OHLC).expect("Prepare query");
+                this.0.batch_with_params(queries.finalize().expect("Finalized"))
+                    .expect("Batched write");
+            });
 
-            let mut queries = BatchQueryBuilder::new();
-
-            for o in new_ohlc.into_iter() {
-                let values = query_values!(o.time,o.exchange,o.pair,o.open,o.high,o.low,o.close,o.vol);
-                queries = queries.add_query_prepared(q.clone(), values);
-            }
-
-            this.0.batch_with_params(queries.finalize().expect("Finalized"))
-                .expect("Batched write");
-
-            let t2 = PreciseTime::now();
-            println!("Saved csdb items, took {:?} ", t1.to(t2).num_milliseconds());
+            println!("Saved csdb items, took {:?} ", t);
             Ok(())
         });
     }
     pub fn last_ohlcs(&self) -> BoxFuture<(), ()> {
         return self.invoke(move |this, ctx| {
-
             #[derive(Clone, Debug, IntoCDRSValue, TryFromRow, PartialEq)]
             pub struct Pair {
                 pub exchange: String,

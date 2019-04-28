@@ -9,6 +9,8 @@ pub mod ingest;
 pub mod trader;
 pub mod eval;
 
+pub mod measure;
+
 
 use crate::prelude::*;
 
@@ -23,7 +25,7 @@ use crate::eval::EvalService;
 fn main() {
     use common::actix::spawn as arb_spawn;
     env::set_var("RUST_BACKTRACE", "1");
-
+    
     fn execute<I, E: Debug, F: 'static + std::future::Future<Output=Result<I, E>>>(f: F) {
         let res = Compat::new(f);
         common::actix::spawn(res.unwrap_err().drop_item());
@@ -37,9 +39,14 @@ fn main() {
         .subcommand(SubCommand::with_name("trader"))
         .subcommand(SubCommand::with_name("eval-balancer"))
         .subcommand(SubCommand::with_name("eval-worker"))
+        .subcommand(SubCommand::with_name("measure"))
         .get_matches();
 
     common::actix::System::run(move || {
+
+        if cfg!(feature = "measure") {
+            crate::measure::init_measurer();
+        }
         let ctx = actix_comm::new_handle();
         let db = db::start();
 
@@ -73,6 +80,10 @@ fn main() {
                 for i in 0..4 {
                     let _ = crate::eval::EvalWorker::new(actix_comm::new_handle(), db.clone());
                 }
+            }
+            "measure" => {
+                let m = crate::measure::Measurer::new(actix_comm::new_handle());
+                execute(m)
             }
             _ => {
                 panic!("Not a valid subcommannd")

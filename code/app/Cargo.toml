@@ -4,12 +4,16 @@ version = "0.0.0"
 authors = ["Michal Hornický <semtexzv@gmail.com>"]
 edition = "2018"
 
+[features]
+measure = []
+default = ["measure"]
+
 [dependencies.common]
 path = "../common"
 
 [dependencies]
 clap = { version = "*", default-features=false }
-serde = "*"
+serde = { version ="*" }
 
 actix-comm = { path = "../deps/actix-comm" }
 actix-arch = { path = "../deps/actix-arch" }

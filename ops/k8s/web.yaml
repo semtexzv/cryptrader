@@ -9,7 +9,6 @@ items:
     spec:
       selector: { layer: web }
       type: NodePort
-      externalIPs: ["67.207.76.239"]
       ports:
         - name: http
           port: 8000
@@ -42,8 +41,8 @@ items:
               command: ["/app", "web"]
               env: [{name: "RUST_LOG", value: ${RUST_LOG}}]
               resources:
-                requests: { cpu: 100m, memory: 100M }
-                limits: { cpu: 200m, memory: 130M   }
+                requests: { cpu: 200m, memory: 150M }
+                limits: { cpu: 400m, memory: 200M   }
 
               ports:
               - containerPort: 8000

@@ -23,7 +23,7 @@ impl ::common::AppComponent for BittrexOhlcProvider {
             let mut pairs: Vec<TradePair> = markets.iter().map(|m: &::apis::bittrex::MarketInfo| {
                 TradePair::new(m.tar_currency.clone(), m.src_currency.clone())
             }).collect();
-            let t1 = PreciseTime::now();
+            let t1 = Instant::now();
             pairs.par_iter().enumerate()
                 .for_each(|(i, pair)| {
                     let mut provider = super::OhlcProvider::new().unwrap();
@@ -36,7 +36,7 @@ impl ::common::AppComponent for BittrexOhlcProvider {
                     provider.update(&spec, &ohlc.clone()).unwrap();
                     // info!("updated Bittrex: {} of {}", i, pairs.len());
                 });
-            let t2 = PreciseTime::now();
+            let t2 = Instant::now();
             info!("Bittrex loop taken : {:?}", t1.to(t2).num_milliseconds());
         }
     }
@@ -118,7 +118,7 @@ impl ::common::AppComponent for BittrexLastOhlcProvider {
             let mut pairs: Vec<TradePair> = markets.iter().map(|m: &::apis::bittrex::MarketInfo| {
                 TradePair::new(m.tar_currency.clone(), m.src_currency.clone())
             }).collect();
-            let t1 = PreciseTime::now();
+            let t1 = Instant::now();
             info!("Bittrex last starting");
             pairs.par_iter().enumerate()
                 .for_each(|(i, pair)| {
@@ -130,7 +130,7 @@ impl ::common::AppComponent for BittrexLastOhlcProvider {
                     // provider.update(&spec, &[ohlc]).unwrap();
                     info!("updated Bittrex: {} of {:?}", i, ohlc);
                 });
-            let t2 = PreciseTime::now();
+            let t2 = Instant::now();
             info!("Bittrex last taken : {:?}", t1.to(t2).num_milliseconds());
         }
     }

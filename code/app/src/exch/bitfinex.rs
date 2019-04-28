@@ -9,8 +9,6 @@ use crate::trader::{BalanceService, TradeService, BalanceRequest, BalanceRespons
                     TradeResponse,
                     ExchangeError};
 
-use time::PreciseTime;
-use std::time::Duration;
 
 
 #[derive(Debug)]
@@ -34,7 +32,7 @@ pub struct ActixWsClient {
     ohlc_ids: BTreeMap<i32, TradePair>,
     pairs: BTreeMap<TradePair, SymbolDetail>,
 
-    last: PreciseTime,
+    last: Instant,
 
 }
 
@@ -77,10 +75,10 @@ impl ActixWsClient {
     ) -> Result<Addr<Self>> {
         Ok(Arbiter::start(|ctx: &mut Context<Self>| {
             ctx.run_interval(Duration::from_secs(20), |this, ctx: &mut Context<Self>| {
-                if this.last.to(PreciseTime::now()).num_seconds() > 20 {
+                if (Instant::now()).duration_since(this.last).as_secs() > 20 {
                     let reconn = this.reconnect(ctx);
                     ctx.spawn(reconn);
-                    this.last = PreciseTime::now();
+                    this.last = Instant::now();
                 }
             });
 
@@ -94,7 +92,7 @@ impl ActixWsClient {
                 ohlc_ids: BTreeMap::new(),
                 pairs,
 
-                last: PreciseTime::now(),
+                last: Instant::now(),
             };
 
             let reconn = client.reconnect(ctx);
@@ -109,7 +107,7 @@ impl ActixWsClient {
 /// Handle server websocket messages
 impl StreamHandler<ws::Message, ws::ProtocolError> for ActixWsClient {
     fn handle(&mut self, msg: ws::Message, ctx: &mut Context<Self>) {
-        self.last = PreciseTime::now();
+        self.last = Instant::now();
 
         let text = if let ws::Message::Text(text) = msg {
             text
@@ -162,7 +160,7 @@ impl StreamHandler<ws::Message, ws::ProtocolError> for ActixWsClient {
     }
 
     fn error(&mut self, err: actix_web::ws::ProtocolError, ctx: &mut Self::Context) -> Running {
-        panic!("Stream error");
+        panic!("Stream error : {:?}", err);
     }
 
     fn finished(&mut self, ctx: &mut Context<Self>) {

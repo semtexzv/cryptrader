@@ -3,7 +3,7 @@ use crate::schema::{self, ohlc, Pair};
 
 
 use cdrs::frame::IntoBytes;
-use cdrs::types::prelude::{Value,TryFromRow};
+use cdrs::types::prelude::{Value, TryFromRow};
 
 #[derive(PartialEq, Debug, Clone, Queryable, QueryableByName)]
 #[table_name = "ohlc"]
@@ -67,49 +67,49 @@ impl crate::Database {
         })
     }
 
-    pub fn do_save_ohlc(&self, id: PairId, ohlc: Vec<Ohlc>) {
-       // self.1.save(id.clone(),ohlc.clone());
-        self.do_invoke::<_, _, ()>(move |this, ctx| {
-            let t1 = PreciseTime::now();
-            use crate::schema::ohlc::{self, *};
+    pub fn do_save_ohlc(&self, id: PairId, ohlc: Vec<Ohlc>) ->  BoxFuture<(),()> {
+        // self.1.save(id.clone(),ohlc.clone());
+        self.invoke::<_, _, ()>(move |this, ctx| {
+            let (_, t) = measure_time(|| {
+                use crate::schema::ohlc::{self, *};
 
-            let conn: &ConnType = &this.0.get().unwrap();
+                let conn: &ConnType = &this.0.get().unwrap();
 
-            let new_ohlc: Vec<schema::Ohlc> = ohlc.iter().map(|candle| {
-                schema::Ohlc {
-                    time: candle.time as i64,
-                    exchange: id.exchange().into(),
-                    pair: id.pair().to_string(),
-                    open: candle.open,
-                    high: candle.high,
-                    low: candle.low,
-                    close: candle.close,
-                    vol: candle.vol,
+                let new_ohlc: Vec<schema::Ohlc> = ohlc.iter().map(|candle| {
+                    schema::Ohlc {
+                        time: candle.time as i64,
+                        exchange: id.exchange().into(),
+                        pair: id.pair().to_string(),
+                        open: candle.open,
+                        high: candle.high,
+                        low: candle.low,
+                        close: candle.close,
+                        vol: candle.vol,
+                    }
+                }).collect();
+
+                for data in new_ohlc.chunks(4096) {
+                    use diesel::pg::upsert::*;
+
+                    let stmt = ::diesel::insert_into(schema::ohlc::table)
+                        .values(data)
+                        .on_conflict((ohlc::time, ohlc::pair, ohlc::exchange))
+                        .do_update()
+                        .set(
+                            (open.eq(excluded(open)),
+                             high.eq(excluded(high)),
+                             low.eq(excluded(low)),
+                             close.eq(excluded(close)),
+                             vol.eq(excluded(vol))
+                            ));
+
+
+                    stmt.execute(conn)
+                        .expect("Error saving candle into the database");
                 }
-            }).collect();
+            });
 
-            for data in new_ohlc.chunks(4096) {
-                use diesel::pg::upsert::*;
-
-                let stmt = ::diesel::insert_into(schema::ohlc::table)
-                    .values(data)
-                    .on_conflict((ohlc::time, ohlc::pair, ohlc::exchange))
-                    .do_update()
-                    .set(
-                        (open.eq(excluded(open)),
-                         high.eq(excluded(high)),
-                         low.eq(excluded(low)),
-                         close.eq(excluded(close)),
-                         vol.eq(excluded(vol))
-                        ));
-
-
-                stmt.execute(conn)
-                    .expect("Error saving candle into the database");
-            }
-
-            let t2 = PreciseTime::now();
-            debug!("Saved {} items, took {:?} ", new_ohlc.len(), t1.to(t2).num_milliseconds());
+            debug!("Saved {} items, took {:?} ", ohlc.len(), t);
             Ok(())
         })
     }
@@ -146,7 +146,6 @@ impl crate::Database {
 
     pub fn ohlc_history_backfilled(&self, spec: OhlcSpec, since: i64) -> BoxFuture<Vec<Ohlc>> {
         return box self.invoke::<_, _, _>(move |this, ctx| {
-
             let sql = ::diesel::sql_query(include_str!("../sql/ohlc_raw_backfilling.sql"));
 
             use crate::schema::ohlc::*;
@@ -168,6 +167,5 @@ impl crate::Database {
             Ok(vals)
         });
     }
-
 }
 

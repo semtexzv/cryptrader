@@ -5,16 +5,15 @@ use actix_arch::balancing::WorkerRequest;
 pub use strat_eval::EvalError;
 use actix_arch::balancing::WorkerProxy;
 use actix::msgs::StopArbiter;
-use time::Duration;
 
-
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct EvalRequest {
     pub strat_id: i32,
+    #[cfg(feature = "measure")]
+    pub eval_id: Uuid,
     pub spec: OhlcSpec,
     pub last: i64,
 }
-
 
 
 #[derive(Debug)]
@@ -72,19 +71,42 @@ impl Handler<ServiceRequest<EvalService>> for EvalWorker {
 
         let strat = self.db.single_strategy(req.strat_id);
 
+        if cfg!(feature = "measure") {
+            log_measurement(MeasureInfo::EvalReceived {
+                eval_id: req.eval_id
+            });
+        }
+        let t1 = Instant::now();
+
         // Thousand ohlc candles ought to be enough for everyone
-        let data = self.db.ohlc_history_backfilled(req.spec.clone(), req.last - (req.spec.period().seconds() * 2000));
-            //.timeout(std::time::Duration::from_secs(30));
+        let data = self.db.ohlc_history_backfilled(req.spec.clone(), req.last - (req.spec.period().seconds() * 1000));
+        //.timeout(std::time::Duration::from_secs(30));
 
 
         let fut = Future::join(strat, data);
-        let fut = Future::map(fut, |(strat, data)| {
+        let fut = Future::map(fut, move |(strat, data)| {
             debug!("Starting exec");
             let data = data.into_iter().map(|x| (x.time, x)).collect();
+
+            if cfg!(feature = "measure") {
+                log_measurement(MeasureInfo::EvalDataLookup {
+                    eval_id: req.eval_id,
+                    lookup_duration: Instant::now().duration_since(t1),
+                });
+            }
+
             debug!("Starting Eval");
-            let res = strat_eval::eval(data, strat.body)?;
+
+            let (res, time) = measure_time(|| strat_eval::eval(data, strat.body));
+
+            if cfg!(feature = "measure") {
+                log_measurement(MeasureInfo::EvalExecute {
+                    eval_id: req.eval_id,
+                    eval_duration: Duration::from_millis(time as _),
+                });
+            }
             debug!("Done Eval");
-            Ok(res)
+            Ok(res?)
         });
 
         return Response::r#async(fut.unwrap_err().set_err(RemoteError::Timeout));

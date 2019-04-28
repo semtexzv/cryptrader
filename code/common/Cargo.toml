@@ -24,7 +24,6 @@ url = "*"
 uuid = { version = "<0.7.0", features = ["v4","serde"] }
 
 chrono = { version = "*", features = ["serde"]}
-time = "*"
 base64 = "*"
 
 tokio = { version ="*"}

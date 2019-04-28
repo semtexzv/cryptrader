@@ -5,12 +5,12 @@ items:
 - apiVersion: v1
   kind: Service
   metadata:
-    name: ingest
+    name: core
     labels: { app: trader}
   spec:
-    selector: { layer: ingest }
+    selector: { layer: core }
     ports:
-      - name: ingest
+      - name: core
         port: 42042
         targetPort: 42042
 
@@ -22,14 +22,14 @@ items:
 - kind: Deployment
   apiVersion: apps/v1
   metadata:
-    name: ingest
+    name: core
     labels: { app: trader }
   spec:
     replicas: 1
-    selector: { matchLabels: { app: trader, layer: ingest }}
+    selector: { matchLabels: { app: trader, layer: core }}
     template:
       metadata:
-        labels: { app: trader, layer: ingest }
+        labels: { app: trader, layer: core }
       spec:
         containers:
         - name: app

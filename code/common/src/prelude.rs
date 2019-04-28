@@ -10,7 +10,7 @@ pub use std::{
     },
     str::FromStr,
     marker::PhantomData,
-    time::Instant,
+    time::{Instant, Duration},
     io::{Error as IoError, ErrorKind},
     env,
 };
@@ -52,8 +52,6 @@ pub use futures::{self, prelude::*, future};
 pub type Result<T, E = Error> = std::result::Result<T, E>;
 
 pub use std::result::Result as StdResult;
-
-pub use time::{self, PreciseTime};
 
 
 pub fn unixtime_millis() -> i64 {
@@ -121,11 +119,11 @@ impl<K: Ord + Clone, V> BTreeMapExt<K, V> for BTreeMap<K, V> {
 
 pub fn measure_time<R, F>(f: F) -> (R, i64)
     where F: FnOnce() -> R {
-    let t1 = PreciseTime::now();
+    let t1 = Instant::now();
     let res = f();
-    let t2 = PreciseTime::now();
+    let t2 = Instant::now();
 
-    return (res, t1.to(t2).num_milliseconds());
+    return (res, t2.duration_since(t1).as_millis() as _) ;
 }
 
 

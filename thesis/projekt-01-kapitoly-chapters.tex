@@ -3,7 +3,7 @@
 \newcommand{\trait}[1]{{#1}}
 
 \newcommand{\type}[1]{{#1}}
-\newcommand{\fun}[1]{{#1}}
+\newcommand{\fun}[1]{{\texttt{#1}}}
 \newcommand{\kubecomp}[1]{{#1}}
 \newcommand{\actor}[1]{{#1}}
 \newcommand{\msg}[1]{{#1}}
@@ -143,14 +143,16 @@ There are four key categories of HFT strategies\cite{wiki:hft}:
 Our system will mainly support strategies, that would fall into \textbf{Tick data market making} category. This is due
 to simplicity of these strategies, and the fact that the information provided by the cryptocurrency exchanges is best suited
 for these strategies. However, we should clarify, that this system does not aim to achieve extremely low latencies.
-The general goal is to have latency between receiving of data, and executing trads below one second.
-\todo{Reword}
-Strategies will be used to create trading decisions for multiple assets. The fact that
-there are multiple different strategies evaluated for multiple currencies means that the total number of strategy evaluations is
-extremely large. In addition to that , the system will also have to provide some degree of scalability, since the system will
-have to respond to changes in number of users.
+The general goal is to achieve latency of one second. This latency is measured between the moment the system receives
+update from an exchange to a moment at which the system starts executing API calls related to order creation on said exchange.
 
-To satisfy these constraints, the system will have to be of distributed nature.
+The strategies will be implemented in a generic way. That means that an individual strategy will not be referencing any
+particular asset, but will be working with a general representation of financial data within the system. The selection
+of an asset, to which a particular strategy should be applied will be performed by users. The system will allow
+application of a strategy to multiple assets.
+
+The users' capability to use multiple strategies on multiple assets, and the multi-user nature of the system will
+require large degree of scalability in different parts of the system. To satisfy these constraints, it will have to be of distributed nature.
 
 \section{Distributed systems}
 Distributed systems are systems, that are comprised of many loosely coupled components. These components might be threads
@@ -168,31 +170,33 @@ We can use these properties to make a very loose definition of what a distribute
 types of systems, we will have to analyze several additional properties.
 
 \subsection{Additional properties}
-
 We can analyze whether a distributed system uses homogeneous or heterogeneous components.
-The systems that only use homogeneous component are commonly used in open
-environments, like the Internet. Systems like BitTorrert or similar file distribution software are the perfect example.
+The systems that only use homogeneous components are commonly used in open environments.
+Systems like BitTorrent or similar file distribution software are the perfect example.
 
 In order to find an example of heterogeneous system , we don't have to look further than World Wide Web. In this system,
 we have servers and clients, which are 2 different types of system components.
 
 Another property of distributed system is the communication method. There are 2 primary approaches to communication between 2 components. Message passing or shared
-memory. Most commonly used is message passing, since it allows for 2 components to be on different networked computers, while implementations that utilize
-shared memory can only be used on a single machine. We can simulate former approach with the latter and vice versa at the cost of performance.
+memory.
+
+Message passing is used more commonly, since it allows lower degree of coupling between components, allowing them to communicate
+over any communication channel. We can simulate former approach with the latter and vice versa at the cost of performance.
 Going further, this thesis will only deal with systems that use message passing as the communication paradigm.
 
 Another aspect of component communication is the communication protocol. This does not mean the underlying technology that is used to send
-messages, but rather the protocol that determines what messages will be sent , and when.
+messages, but rather the protocol that determines what messages will be sent, and when.
 
 Components might communicate using simple request - reply based protocol , like HTTP. Or they might communicate using slightly different
 publish - subscribe model over technologies like ZeroMQ, or message buses like Kafka.
 
 We can also examine the rigidity of the system. The number and types of components can be either dynamic, or static. This
-property influences the \todo{Self healing architectures need dynamic components, figure out wording}
+property influences the ability of a system to independently resolve local failures (self-healing systems).
 
+\subsubsection{Designed system properties}
 Using these properties, we settled on a model of a distributed system, that utilizes large amount of heterogeneous components.
 Each of these components communicates primarily using request-reply style of communication utilizing message passing paradigm.
-This paradigm is called the Actor model.
+This model is called the Actor model.
 
 \section{Actor model}
 Actor model is a conceptual model of describing concurrent computation. It treats Actors as primitives of concurrent
@@ -225,13 +229,13 @@ While these models are similar, Smalltalk was tied to particular implementation,
 tools for concurrent programming. But the similarity nonetheless still stands, and actor model can be also understood as
 an extension of OOP paradigm.
 
-\subsection{Petri nets}
+\subsubsection{Petri nets}
 Petri nets have been widely used to model concurrent computation. However, while they are extremely well suited
 for modeling control flow, They can't be used to model data flow in their basic form. Another problem is
 simultaneous action. While we can easily simulate simultaneous action of removing a marker from one place, performing
 a transition and placing a marker in output place, in reality, these 3 actions will not be simultaneous.
 
-\subsection{Communicating sequential processes}
+\subsubsection{Communicating sequential processes}
 While CSP model has similar goals to actor model, there are several ways, in which these 2 models differ.
 Most important difference is that Actor model is inherently
 dynamic, while CSP model if based on a fixed number of sequential processes communicating in a fixed topology\cite{Hoare:1985:CSP:3921}.
@@ -240,18 +244,15 @@ which is not possible in CSP model.
 
 \subsection{Implementations}
 While the actor model is almost 4 decades old, implementations of concurrent and distributed systems that
-are based on this model are more common than ever.
-\todo{Reword}
-Originally, this model was primarily used in niche systems, like
-telecommunications
+are based on this model are more common than ever. One of the oldest implementations of the actor model is in the
+\textbf{Erlang} language. This language was originally developed for telecommunications, with the goal put upon
+high-availability. The language was created in 1986, originally was implemented in Prolog, and thus extremely slow.
+But in 1995 it gained custom VM (BEAM VM), and Ericcson deployed more than a million lines of variety in production.
 
-The success in these kinds of systems slowly fueled growth of this paradigm into more general purpose programming. With this
-growth, several libraries started popping up. There are multiple similar libraries in
+But the Erlang is not the only implementation of this paradigm. There are several libraries implementing Actor model in
 wide variety of languages, ranging from Lisp to C++. Today, one of the most commonly used libraries is Akka\cite{web:akka}, which was originally
 developed for Java and Scala, but was reimplemented using C\# for the .NET platform. While Akka is extremely easy to use,
 extensible, and performant, it is still only implemented for managed languages, which require heavy runtime with tracing garbage collection.
-
-\todo{Erlang here}
 
 This was one of the aspects , which influenced the decision to look for another library, that would be implemented in
 non-managed language. The library, we chose is called Actix\cite{web:actix}, and is implemented in Rust\cite{Blandy:2015:RPL:3019371}
@@ -260,13 +261,13 @@ programming language.
 \section{Rust}
 Rust is a new programming language developed by Mozilla. It was created as a response to many shortcomings of existing low level
 languages such as C and C++. While these languages have crucial place in programming landscape, providing the highest performance and
-degree of control over hardware, they are outdated, unergonomic and unsafe ( particularly with respect to concurrency). On opposite
+degree of control over hardware, they are outdated, unergonomic and unsafe ( particularly with respect to concurrency)\todo{Cite}. On opposite
 side of this equation , are managed languages, that are highly ergonomic, and seem to contain most innovation in this space.
 
 Rust language aims to position itself among the low level languages, bringing new and exciting features to this space.
 It was originally developed by Graydon Hoare\cite{web:rust_progress} while working at Mozilla, and was based on
 ML. Probably the most important step, was adoption of the language by Mozilla for the purpose of creating new browser engine
-called Servo\cite{proc:servo}. Goal of Servo was to experiment and innovate in the Web browser space, without
+called Servo\cite{proc:servo}. Goal of Servo was to experiment and innovate in the web browser space, without
 the depending on over 30 years of legacy code, that was Firefox.
 
 \subsection{Language basics}
@@ -275,7 +276,7 @@ It has functions, a module system, and other features, that will be uninterestin
 However, some of the more advanced concepts make this language particularly well suited for large concurrent systems, and
 will be explored later in this chapter.
 
-Language has 2 primary conceptual entities -- types, and traits.
+Language has 2 primary entities -- types, and traits.
 For the types, language supports product and sum types(structs and enums respectively), and references (which can be mutable or immutable).
 Traits are more interesting feature. They are similar to interfaces in Java, but their closest analogy would be typeclasses from Haskell.
 Traits are used to declare a set of constraints, types, constants, and functions, that an implementing type(implementor) must provide.
@@ -287,7 +288,7 @@ also supports expressive pattern matching using the \verb|match| expression. How
 
 \subsection{Features}
 The requirements influenced the design of the language in a significant way. It started out as general purpose programming
-language with functional features, very similar to ML, and then acquired some features that make it excellent
+language with functional features, very similar to ML, and due to its use for the implemetatio of the Servo browser, it acquired some features that make it excellent
 systems programming language. These features are:
 
 \begin{itemize}
@@ -304,7 +305,7 @@ By using this tool, programmer can write common functions or types only once, an
 types, thus reducing duplication. This paradigm was pioneered by ML, and is supported in virtually every
 modern language in one shape or form.
 
-Modern implementations follow 2 primary approaches for typing generic constructs: Structural, or protocol based.
+Modern implementations follow 2 primary approaches for typing generic constructs: structural, or protocol based.
 
 Structural generic typing (also called Duck typing) is primarily used in C++. With this approach, the type
 checking is performed after instantiation of generic construct. This allows for greater flexibility.
@@ -317,7 +318,7 @@ Type classes (Haskell) or Traits(Rust). Then, upon instantiation it is only nece
 each type parameter satisfies specified constraints.
 
 \subsection{Traits}
-As described earlier, traits are used to declare interface, that a type must provide. They are used tu support
+As described earlier, traits are used to declare interface, that a type must provide. They are used to support
 other language features, and must be understood in order to effectively use the language.
 Below is an example of a simple trait.
 
@@ -358,7 +359,7 @@ Traits can also be generic, accepting type parameters, such as the PartialOrd tr
 %@formatter:on
 
 \autoref{ord_impl} shows simple implementation of Ord trait specified earlier for boolean data type. This sample
-uses an impl block, to implement a trait for specific type. Impl block can be generic, and have to provide
+uses an impl block, to implement a trait for specific type. Impl block can itself be generic, and have to provide
 implementations for all functions that do not have default implementations specified in trait definitions.
 
 \subsection{Marker traits}
@@ -368,16 +369,15 @@ in implementing types. However, the \trait{Sized} trait might not be so easy to 
 This trait belongs to special category of traits, called marker traits. These include \trait{Send} , \trait{Sync}, \trait{Sized} and several others.
 The marker traits do not provide any functions and serve, as their name implies, as markers. They are used for marking specific
 types. The \trait{Sized} trait marks types, which have their sizes defined at compile time, and is automatically implemented
-for these types by compiler. The example of unsized type might be \type{[u8]} , which is an arrray with unknown length.
+for these types by compiler. The example of unsized type might be \type{[u8]} , which is an array of unsigned bytes with unknown length.
 
 The \trait{Send} and \trait{Sync} traits are crucial for features supporting safe concurrent programming , and will be explored later in
 this chapter.
 
 \subsection{Memory management}
 Modern programming languages primarily use one of 2 approaches to manage memory.
-
-The garbage collection is an approach most commonly used in High-level languages. 2 Most common implementations
-are reference counting and tracing garbage collection. Both of these approaches have drawbacks, primary ones being
+The garbage collection is an approach most commonly used in High-level languages. 2 most common variants of
+garbage collection are reference counting and tracing garbage collection. Both of these approaches have drawbacks, primary ones being
 difficulty handling reference cycles for reference counting and necessary program pauses for tracing garbage collection
 
 Second common approach used is called RAII, which stands for "Resource acquisition is initialization". It is most
@@ -416,12 +416,13 @@ that object , and is responsible for its destruction. However, requiring program
 it is passed into a function would be extremely tedious on programmer side, and copying of an object would degrade performance.
 
 Rust also provides a way to reference objects, without moving or copying them. By using \verb|&| or
-\verb|&mut| sigil, the programmer can create immutable and mutable reference respectively. Why 2 reference types? This is
-done to ensure memory safety by disallowing mutation and aliasing at the same time.
+\verb|&mut| sigil, the programmer can create immutable and mutable reference respectively. The reason for 2 different
+reference types is ensuring memory safety.
 
 We can create any number of immutable references to an object, but these references can't mutate referenced object, or
 we can create one mutable reference, and use this reference to mutate the object. Creation of multiple mutable references
-is not allowed, and will result in compiler error.
+at the same time is not allowed, and will result in compiler error. Compiler uses the concept of a \textit{lifetime} to ensure that created
+references do not overlap.
 
 \subsection{Concurrency primitives}
 The concept of ownership and borrowing is also used to ensure memory safety in multithreaded programs, and prevent
@@ -437,13 +438,17 @@ constraints in multithreaded programs. Primary building blocks are 2 marker trai
 The \trait{Send} trait denotes that the implementor can be safely transferred to a different thread. This trait is automatically
 implemented by compiler, when appropriate. For example, objects that reference thread local storage do not implement \trait{Send}.
 
-The \trait{Sync} trait is implemented for types that can be safely shared between threads(Reference can be shared between threads).
+The \trait{Sync} trait is implemented for types that can be safely shared between threads(eg. immutable reference).
 
 These 2 traits are then used by library abstractions like \type{Mutex} and \type{Rwlock} to ensure memory safety and data race free code.
 For example, the \type{Mutex} abstraction is used to protect an object with a mutex. The \type{Mutex} struct is generic,
 with one type parameter, that denotes contained value, which must implement \trait{Send} trait.
 This ensures that the contained value can be safely shared between threads. The mutex itself implements both \trait{Send} and \trait{Sync} traits,
 meaning mutex can be safely shared between threads.
+
+\subsection{Asynchronous programming}
+One of the most recent additions the Rust language is the addition of primitives for lightweight asynchronous programming.
+\todo{Describe futures}
 
 \subsection{Build system and package manager}
 One area that low level languages are extremely outdated compared more high-level languages is modularity and code reuse.
@@ -465,12 +470,11 @@ turn allows for the standard library to be extremely small, on par with C++, wit
 \section{Actix}
 One of primary reasons for choosing rust was the choice of Actix\cite{web:actix} library. Actix is a library that provides abstractions
 for implementing applications with Architecture based on actor model. It provides runtime system for managing actor, that is
-based on Tokio libarry, which is core for asynchronous programming in rust(Similar to LibUV). It also provides
+based on Tokio library, which is core for asynchronous programming in rust(Similar to LibUV). It also provides
 traits for defining actors, implementing their behavior in response to messages.
 
 \subsection{Actor in actix}
-Actor in actix is a structure, that has some wider state attached to it. This structure is created by programmer, and must
-implement the \trait{Actor} trait. The \trait{Actor} trait has an associated type, that defines the context in which the actor will be run,
+Actors are types, that implement the \trait{Actor} trait. The \trait{Actor} trait has an associated type, that defines the context in which the actor will be run,
 and several methods, for dealing with actor lifetime.
 The actor context defines how will the actor receive messages, manages actor mailbox, and several other
 supporting components, but its detailed description is out of the scope of this thesis.
@@ -494,11 +498,11 @@ The implemented \fun{handle} method runs synchronously, but asynchronous computa
 can be started by returning a value that implements a  \trait{Future} trait, from the handle method, or by utilizing the \fun{spawn}
 method on the ctx argument to spawn a new asynchronous task in same context.
 
-After creating an actor, the actor must be started. This is done inside a runtime system. This system must be manually created
-upon sthe start of first actor, or is implictly provided, if starting an actor from another running one. By starting
-an actor, the system will take ownership of this actor, will create runtime context for it. After starting an actor, the runtime
-context returns an address of this actor.
+After creating an actor, the actor must be started. This can be performed by several functions.
+the \fun{Arbiter::start} function starts a new thread, runs an \actor{Arbiter} actor inside it, and then
+starts our custom actor within this thread.
 
+Or the \fun{Actor::create} starts an actor within current thread.
 
 %@formatter:off
 \begin{code}[language=rust,label={msg_example},caption={Asynchronous message handling example}]
@@ -516,7 +520,7 @@ context returns an address of this actor.
 \end{code}
 %@formatter:on
 
-\autoref{msg_example} shows precisely implementation of the \trait{Handler} trait. The \type{Ingest} actor receives \type{IngestUpdate} message,
+\autoref{msg_example} shows implementation of the \trait{Handler} trait with asynchronous message handling. The \type{Ingest} actor receives \type{IngestUpdate} message,
 and in response then sends \type{SaveOhlc} message to \type{db} actor. Then, using the \fun{then} combinator, it
 verifies that the operation completed successfully, and returns number of written rows to original message sender.
 
@@ -549,13 +553,15 @@ Most popular of these environments are Amazon web services, Microsoft Azure, Goo
 this thesis, the Digital Ocean was chosen to be primary provider, but modifying created system for other
 environments should be relatively simple.
 
-\subsection{Virtual machine model}
 The basic component the necessary for function of cloud environment is virtualization. By virtualizing resources,
 the provider can ensure isolation of different customers, and fine-grained allocation of resources.
 
-Therefore, the basic unit of computing resource is a Virtual Machine. However, the problem with virtual machines
-is that each virtual machine runs complete OS, and least some part of management of this machine
-must be performed manually.
+\subsection{Virtual machine model}
+Conventional approach to virtualizing computing resources is the usage of a Virtual Machine(VM).
+However, the problem with virtual machines is that each virtual machine runs complete OS, that is
+running within the confines of another operating system. This redundancy creates unnecessary overhead.
+Another issue is the management of these VMs. Since each VM is running a complete OS,
+this OS must be periodically updated.
 
 \subsection{Container model}
 More fine-grained unit of isolation is a container. A container is a simple lightweight image, that contains
@@ -574,8 +580,7 @@ based on the Borg\cite{borg} system, that was used for similar purposes internal
 
 Kubernetes defines a set of primitives, which are used to describe a distributed system. The kubernetes
 runtime then dynamically modifies state of the system, to conform to described model. The kubernetes runtime
-runs on a Cluster. A cluster is comprised of multiple virtual machines(Nodes), and can dynamically scale number
-of used nodes.
+runs on a Cluster. A cluster is comprised of multiple nodes, that can be dynamically added or removed.
 
 Basic used primitives are:
 \begin{itemize}
@@ -593,28 +598,27 @@ Basic used primitives are:
 \section{Web applications}
 \todo{Low level details ?}
 Another aspect of the designed system is user access to this system. Because the system will be distributed, and will run
-in cloud environment, there is only one usable approach for implementig user facing part of the system. The system will have
-to provide a web interface. There are several possible approaches for implementing such interfaces. The primary
+in cloud environment, there is only one usable approach to implementation of the user-facing side of the system.
+We will have to provide a web interface. There are several possible approaches for implementing such interfaces. The primary
 distinction between them is the location of the main application logic.
 
-We could implement the whole application as a set of static html pages with some templating and minmal javascript,
-however, this approach would requir ea lot of time, work duplication, and result would leave very poor impression
-on system users.
+\subsubsection{Server-side rendering \& logic}
+We could implement the whole application as a set of static html pages. We would introduce dynamic behavior into
+the server side by rendering these pages using some kind of templating language. And some dynamic behavior
+into client side by embedding some javascript. while this approach could reduce development time, it would
+almost certainly yield bad user experience, and thus we chose not to go this way.
 
-We could supplant the drawbacks of static site approach by introducing some dynamic behavior with minimal javascript.
-
-But the state of the art approach for creating web applications is the Single-page application approach. In this approach,
+\subsubsection{Client side rendering \& Logic}
+State of the art approach for creating web applications is so called "single-page application. In this approach,
 the application consists of 2 parts, the \textit{frontend} part runs in browser, and it connects to the \textit{backed}
-that is running on the server. The fronend is implemented in javascript, and its primary functions include interpreting system
+that is running on the server. The frontend is implemented in javascript, and its primary functions include interpreting system
 data for user consumption, accepting user inputs and communicating with the \textit{backend}. The \textit{Backend} then
-runs on the server, connects to the database, and usually provides some kind of a API, most commonly REST(\todo{Footnote})
+runs on the server, connects to the database, and usually provides some kind of a API, most commonly in the form of REST\footnote{https://en.wikipedia.org/wiki/Representational\_state\_transfer} API.
 
 \chapter{Design}
 \label{chapter:design}
-
 This chapter aims to outline a system, that satisfies the requirements listed in \autoref{chapter:introduction}, utilizing
-concepts and technologoies outlined in \autoref{chapter:theory}.
-
+concepts and technologies outlined in \autoref{chapter:theory}.
 
 \section{General system design}
 System is designed as a collection of loosely coupled components, running inside virtualized environment provided by kubernetes, which
@@ -1438,16 +1442,104 @@ account. It uses databinding to to pass properties, and callback functions into 
 
 
 \chapter{Testing and evaluation}
-\todo{Application logging}
-\todo{Debugging using telepresence and local components}
+This chapter aims to describe the methodology that was used for evaluating the implemented system, and project results
+as a whole. Another goal is to outline authors experience with the used technolgies, and provide some guidelines for future
+projects of this type.
+
+\section{Testing}
+While 2 primary implementation languages of this project (Rust + React Javascript) have excellent support for unit testing,
+this approach for ensuring software correctness was used in minimal capacity. The most thoroughly tested part of this project
+were the \verb|actix_comm| and a \verb|actix_arch| library, that were implemented to serve as a layer between ZeroMQ, Actix
+and our system.
+\todo{Code coverage table here}
+
+To properly test the individual components and ensure their correct behavior, another approach was chosen. because of the
+fact, that the project uses kubernetes for managmennt, and deployment of the implemented system, allowed us to create
+separate testing environment. The system was then primarily deployed into this environment, and was observed.
+This approach allowed us to observe the system in virtually the same environment, in which it will be deployed.
+Several complex behaviors arisen from interaction of individual components were observed, and subsequently fixed.
+We wouldnt be able to observe these issues without all the components integrated together, so subjectivelly, we
+feel that the chosen approach was correct.
+
+\subsubsection{Example case - Silent disconnects}
+One of the observed complex interaction behaviors was the problem of long-lived connections in the environment, in
+which components are removed and added dynamically.
+The ZeroMQ library has a complex internal networking layer, that utilizes several sockets, and a separate thread
+for managing them.
+
+Our \verb|actix_net| uses ZeroMQ, and uses several different virtual socket types provided by it. These sockets
+are long-lived. They should stay open during the whol time the compoonent runs. However, in the kubernetes environment,
+components can be killed at virtually any time. This poses a problem. For ROuter and PUB socket types that were
+used in serviceHandler and publisher actors respectively, the ZeroMQ library does not detect disconnects, or detects
+them after some time.
+
+This duration between disconnect and detection of it caused an issue with a large amount of missed messages, which
+destabilized the whole system. THe component that was affected the most, was the \actor{Ingest} actor in the \kubecomp{core}
+component, which could not detect missing OHLC updates, since it was a binding SUB socket that created a SUB topology.
+
+The approach, that we chose to fix this issue was to use features of the TCP protocol implementation know as Keepalive.
+This feature is so called, because it can be usd to keep a TCP conection alive and well, and determine when it was dropped from the other side.
+
+The primary mechanism for performing this service is to periodically send empty TCP packets, that must be acknowledged from
+the other side. If a sequence of packets is not acknowledged in some pre-defined time, the connection is considered closd
+from the other side, and is dropped. Usage of this feature required the modification of \verb|tokio-zmq| library, that provides asynchronous implemntation
+of ZeroMQ sockets. This change allowed setting custom options on the underlying sockets.
+\todo{Something about parameters?}
 
 
-\section{Evaluation}
-\todo{A few strategies - latency}
-\todo{Grow strategies - latency}
-\todo{Add more nodes - latency}
-\todo{should be at most logarithmic - DB will be problem}
+\subsection{Debugging}
+However, sometimes it was necessary to observe the internal state of a particular component while it is integrated in the system.
+Initially, this provided to b quite a difficult challenge, since kubernetes utilizes containers, and accessing the container
+internals is difficult.
 
+But, after some research, we discovered the Telepresence\todo{Footnote} command line tool. This tool is written in python,
+and it creates a vpn tunnel to a container that is running in the kubernetes cluster. Allowing local applications to run as if
+the were ran inside the actual kubernetes environment.
+
+The fact that we could now run individual components locally, with a debugger greatly simplified the testing and bugfixing process.
+
+\subsection{Monitoring}
+Another important aspect was the monitoring of deployed system, with particular \todo{Preklad dôraz} put upon
+the monitoring of system performance, and access to individual container logs.
+
+At first, we only used the \verb|kubectl| command line tool. But during during the development the system kept growing
+in size, and with it the number of components that needed to be monitored has grown too. We solved this issue by installing
+
+a Kubernetes Dashboard\todo{Footnote} into our cluster, and using this dashboard for monitoring, visualization and log access.
+
+Currently, we use only the metrics provided by kubernetes dashboard out of the box, but in the future, we might export
+custom metrics specific to our application, that would allow us to better understand the internal system status.
+
+\section{Implementation evaluation}
+The need for low latency, scalability and predictable performance was one of the driving forces for multiple key decisions in this project.
+The implemtation language, communication technology, deployent strategy were all chosen in order to achieve these goals.
+This section aims to evaluate, whether we achieved these goals.
+
+\subsection{Measurement methodology}
+In order to precisely measure key aspects of the implementation, the system had to be modified. the primary change
+is addition of a \verb|Measurement| component in the system, that receives data from other components and holds the
+"global" clock. Because of the distributed nature, the true global clock does not exist, but using a component that
+will utilize its internal clock to annotate events in the system should provide enough precision for our purposes, since
+we are measuring on the scale of milliseconds.
+
+\subsubsection{Latency measurements}
+First step to allow for measuring latency is annotating a data update with unique identifier, which will be passed on throughout the system.
+The components will the use this identifier to uniquely identify all messages associated with a particular update.
+Then, throuchout normal system function, each component in the system will send messages denoting the state of a particular message along with its identifier
+to measuring component. This approach might add some latency, but considering that several of the processing steps
+take several milliseconds, it should be precise enough for our purposes.
+
+\subsubsection{Scalability measurements}
+The scalability measurement is closely associated with the latency measurement. We measured the scalability of the system
+by adding virtual strategies and corresponding assingments to the system, increasing the load put upon it. Then , we measured,
+how the system latency was affected. With the increase in computing requirements, the computing resources
+available to the kubernetes cluster were also increased.
+
+\section{Performance measurements}
+The performance measurements were taken in production environment
+\section{Results}
+
+\todo{Results - Performance figures}
 
 \chapter{Conclusion \& Future work}
 The title of this thesis is a Design and development of distributed system that would perform a specific function.

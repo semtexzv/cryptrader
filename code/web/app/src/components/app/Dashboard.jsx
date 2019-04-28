@@ -97,7 +97,7 @@ const styles = theme => ({
 
 class Dashboard extends React.Component {
     state = {
-        open: false,
+        open: true,
     };
     static propTypes = {
         classes: PropTypes.object.isRequired,

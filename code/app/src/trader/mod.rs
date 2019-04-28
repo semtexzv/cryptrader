@@ -23,7 +23,7 @@ pub enum PositionResponse {
 impl ServiceInfo for PositionService {
     type RequestType = PositionRequest;
     type ResponseType = Result<(), ExchangeError>;
-    const ENDPOINT: &'static str = "actix://ingest:42045/trader";
+    const ENDPOINT: &'static str = "actix://core:42045/trader";
 }
 
 

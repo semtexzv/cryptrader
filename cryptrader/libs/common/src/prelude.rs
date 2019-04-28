@@ -27,7 +27,7 @@ pub use rayon::prelude::*;
 
 pub use log::{error, info, log};
 
-pub use time::{PreciseTime, Duration};
+pub use time::{Instant, Duration};
 
 pub use zmq;
 pub use ta;

@@ -5,7 +5,6 @@ use radix_trie::Trie;
 use crate::eval::EvalRequest;
 use std::time::Duration;
 use chrono::NaiveDateTime;
-use time::precise_time_s;
 use uuid::Uuid;
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -18,11 +17,6 @@ pub struct TradingRequestSpec {
 
 impl TradingRequestSpec {
     pub fn from_db(d: &db::Assignment, t: Option<db::Trader>) -> Self {
-        /*
-        if t.is_some() {
-            info!("Trading spec for : {:?} has trader : {:?}", d, t);
-        }
-        */
         TradingRequestSpec {
             ohlc: OhlcSpec::new(d.exchange.clone(), TradePair::from_str(&d.pair).unwrap(), OhlcPeriod::from_str(&d.period).unwrap()),
             user_id: d.user_id,
@@ -103,6 +97,8 @@ impl Handler<OhlcUpdate> for Decider {
                 info!("Should eval {:?} on {:?}", spec, msg.clone().spec);
                 let req = EvalRequest {
                     strat_id: spec.strat_id,
+                    #[cfg(feature = "measure")]
+                    eval_id: Uuid::new_v4(),
                     spec: spec.ohlc.clone(),
                     last: msg.clone().ohlc.time,
                 };
@@ -115,13 +111,25 @@ impl Handler<OhlcUpdate> for Decider {
 
                 let pair = spec.ohlc.pair().clone().to_string();
                 let period = spec.ohlc.period().to_string();
-                let fut = wrap_future(self.eval_svc.send(req));
 
-                let t1 = PreciseTime::now();
+                if cfg!(feature = "measure") {
+                    log_measurement(MeasureInfo::EvalDispatched {
+                        update_id: msg.id,
+                        eval_id: req.eval_id,
+                    });
+                }
+
+                let fut = wrap_future(self.eval_svc.send(req.clone()));
+
+                let t1 = Instant::now();
 
                 let fut = fut.and_then(move |res, this: &mut Self, ctx| {
                     info!("Evaluated to {:?}", res);
-
+                    if cfg!(feature = "measure") {
+                        log_measurement(MeasureInfo::EvalFinished {
+                            eval_id: req.eval_id
+                        });
+                    }
                     let (ok, error) = match res {
                         Ok(ref decision) => {
                             if let Some(trader) = trader {
@@ -129,7 +137,7 @@ impl Handler<OhlcUpdate> for Decider {
                                 let pos = crate::trader::PositionRequest {
                                     trader_id: trader,
                                     pair: pair_id,
-                                    price_approx : msg.clone().ohlc.close,
+                                    price_approx: msg.clone().ohlc.close,
                                     position: *decision,
                                 };
                                 let sent = this.pos_svc.send(pos);
@@ -148,10 +156,10 @@ impl Handler<OhlcUpdate> for Decider {
                         }
                     };
 
-                    let t2 = PreciseTime::now();
+                    let t2 = Instant::now();
 
                     let evaluation = db::Evaluation {
-                        id : Uuid::new_v4(),
+                        id: Uuid::new_v4(),
                         strategy_id,
                         exchange,
                         pair,
@@ -161,7 +169,7 @@ impl Handler<OhlcUpdate> for Decider {
                         time: common::chrono::Utc::now(),
                         ok,
                         error,
-                        duration: (t1.to(t2)).num_milliseconds() as _,
+                        duration: t2.duration_since(t1).as_millis() as _,
                     };
 
                     let log_fut = wrap_future(this.db.log_eval(evaluation).drop_item().set_err(RemoteError::MailboxClosed));

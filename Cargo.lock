@@ -544,7 +544,6 @@ dependencies = [
  "serde 1.0.90 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde_derive 1.0.90 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde_json 1.0.39 (registry+https://github.com/rust-lang/crates.io-index)",
- "time 0.1.42 (registry+https://github.com/rust-lang/crates.io-index)",
  "tokio 0.1.18 (registry+https://github.com/rust-lang/crates.io-index)",
  "url 1.7.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "uuid 0.6.5 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -713,13 +712,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "migrations_internals 1.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "migrations_macros 1.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
-]
-
-[[package]]
-name = "diesel_test"
-version = "0.1.0"
-dependencies = [
- "diesel 1.4.2 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]

@@ -43,7 +43,7 @@ items:
         app: scylla
     spec:
       serviceName: scylla
-      replicas: 2
+      replicas: 0
       selector:
         matchLabels:
           app: scylla
