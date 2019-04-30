@@ -20,6 +20,7 @@ use diesel_migrations::*;
 embed_migrations!("./migrations");
 
 mod prelude;
+#[cfg(feature = "scylla")]
 mod scylla;
 
 mod schema;
@@ -74,13 +75,13 @@ pub fn start() -> Database {
         .build(manager)
         .expect("Failed to create connection pool");
 
-    return Database(SyncArbiter::start(4, move || DbWorker(pool.clone())), /* scylla::connect()*/);
+    return Database(SyncArbiter::start(4, move || DbWorker(pool.clone())), #[cfg(feature = "scylla")] scylla::connect());
 }
 
 impl Actor for DbWorker { type Context = SyncContext<Self>; }
 
 #[derive(Clone)]
-pub struct Database(Addr<DbWorker>, /*scylla::Scylla*/ );
+pub struct Database(Addr<DbWorker>, #[cfg(feature = "scylla")]  scylla::Scylla);
 
 
 use diesel::query_dsl::select_dsl::SelectDsl;

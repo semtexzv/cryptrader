@@ -160,7 +160,10 @@ impl StreamHandler<ws::Message, ws::ProtocolError> for ActixWsClient {
     }
 
     fn error(&mut self, err: actix_web::ws::ProtocolError, ctx: &mut Self::Context) -> Running {
-        panic!("Stream error : {:?}", err);
+
+        let reconn = self.reconnect(ctx);
+        ctx.spawn(reconn);
+        return Running::Continue;
     }
 
     fn finished(&mut self, ctx: &mut Context<Self>) {

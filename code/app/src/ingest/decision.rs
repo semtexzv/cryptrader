@@ -147,6 +147,8 @@ impl Handler<OhlcUpdate> for Decider {
                                 });
 
                                 ctx.spawn(wrap_future(sent).drop_err());
+                            } else {
+                                info!("Trader unavailable")
                             }
 
                             (Some(decision.to_string()), None)

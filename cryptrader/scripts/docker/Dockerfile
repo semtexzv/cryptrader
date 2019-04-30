@@ -1,1 +1,0 @@
-FROM timescale/timescaledb:0.8.0-pg10

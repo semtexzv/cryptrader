@@ -1,4 +1,4 @@
-#![feature(await_macro, futures_api, async_await, box_syntax)]
+#![feature(await_macro,  async_await, box_syntax)]
 #![allow(dead_code, unused_variables, unused_imports, unreachable_code)]
 
 
@@ -53,7 +53,7 @@ pub fn static_file(req: HttpRequest<State>) -> Result<impl Responder> {
 pub fn run() {
     env::set_var("RUST_LOG", "debug");
     actix::System::run(|| {
-        let mut db = db::start();
+        let db = db::start();
         server::new(move || {
             let mut app = App::with_state(State {
                 db: db.clone(),

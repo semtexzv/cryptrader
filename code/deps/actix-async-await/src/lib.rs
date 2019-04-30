@@ -1,4 +1,4 @@
-#![feature(await_macro, async_await, futures_api, box_syntax, specialization)]
+#![feature(await_macro, async_await, box_syntax, specialization)]
 
 
 use std::future::Future;
@@ -6,9 +6,7 @@ pub use tokio_async_await::compat::backward::Compat;
 use futures::Future as Future01;
 use actix_web::{FutureResponse, error::Error};
 
-// Re-export `tokio::await` for ease-of-use
 pub use tokio_async_await::await;
-use std::marker::PhantomData;
 
 
 macro_rules! define_compat {

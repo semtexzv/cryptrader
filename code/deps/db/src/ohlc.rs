@@ -1,9 +1,11 @@
 use crate::prelude::*;
 use crate::schema::{self, ohlc, Pair};
 
-
-use cdrs::frame::IntoBytes;
-use cdrs::types::prelude::{Value, TryFromRow};
+#[cfg(feature = "scylla")]
+use cdrs::{
+    frame::IntoBytes,
+    types::prelude::{Value, TryFromRow}
+};
 
 #[derive(PartialEq, Debug, Clone, Queryable, QueryableByName)]
 #[table_name = "ohlc"]

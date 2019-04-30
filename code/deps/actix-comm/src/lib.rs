@@ -8,7 +8,6 @@ pub mod prelude;
 pub mod ctx;
 pub mod msg;
 pub mod base;
-pub mod addr;
 pub mod util;
 
 pub mod export {

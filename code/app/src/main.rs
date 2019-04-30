@@ -1,5 +1,5 @@
 #![feature(box_syntax, try_blocks, associated_type_defaults)]
-#![feature(await_macro, futures_api, async_await)]
+#![feature(await_macro,  async_await)]
 #![feature(impl_trait_in_bindings)]
 #![allow(dead_code, unused_variables, unused_imports, unreachable_code, deprecated)]
 

@@ -5,7 +5,7 @@
 \newcommand{\type}[1]{{#1}}
 \newcommand{\fun}[1]{{\texttt{#1}}}
 \newcommand{\kubecomp}[1]{{#1}}
-\newcommand{\actor}[1]{{#1}}
+\newcommand{\actor}[1]{\textbf{#1}}
 \newcommand{\msg}[1]{{#1}}
 
 \chapter*{Abstract}
@@ -247,7 +247,7 @@ While the actor model is almost 4 decades old, implementations of concurrent and
 are based on this model are more common than ever. One of the oldest implementations of the actor model is in the
 \textbf{Erlang} language. This language was originally developed for telecommunications, with the goal put upon
 high-availability. The language was created in 1986, originally was implemented in Prolog, and thus extremely slow.
-But in 1995 it gained custom VM (BEAM VM), and Ericcson deployed more than a million lines of variety in production.
+But in 1995 it gained custom VM (BEAM VM), and Ericcson deployed more than a million lines of Erlang code in production.
 
 But the Erlang is not the only implementation of this paradigm. There are several libraries implementing Actor model in
 wide variety of languages, ranging from Lisp to C++. Today, one of the most commonly used libraries is Akka\cite{web:akka}, which was originally
@@ -255,8 +255,14 @@ developed for Java and Scala, but was reimplemented using C\# for the .NET platf
 extensible, and performant, it is still only implemented for managed languages, which require heavy runtime with tracing garbage collection.
 
 This was one of the aspects , which influenced the decision to look for another library, that would be implemented in
-non-managed language. The library, we chose is called Actix\cite{web:actix}, and is implemented in Rust\cite{Blandy:2015:RPL:3019371}
-programming language.
+non-managed language.
+
+On the other side of the equation, we evaluated CAF \footnote{https://actor-framework.org/} framework for C++, but ultimately
+we decided against the use of this library and language. We decided against this approach because of the complexity of this
+framework, and inherent unsafety in C++. 
+
+In order to avoid these issues, we decided to use  Rust\cite{Blandy:2015:RPL:3019371} programming language along
+with the Actix\cite{web:actix} library.
 
 \section{Rust}
 Rust is a new programming language developed by Mozilla. It was created as a response to many shortcomings of existing low level
@@ -425,8 +431,8 @@ at the same time is not allowed, and will result in compiler error. Compiler use
 references do not overlap.
 
 \subsection{Concurrency primitives}
-The concept of ownership and borrowing is also used to ensure memory safety in multithreaded programs, and prevent
-data races
+In addition to ensuring memory safety, the concenpt of ownership and borrowing is also used for preventing data 
+races in concurrent programs. 
 
 Data race occurs when 2 or more threads concurrently access same location of memory, one of these accesses is a write,
 and accesses are unsychronized. These types of bugs are extremely hard to discover, and have lead to death of several medical patients in
@@ -448,7 +454,31 @@ meaning mutex can be safely shared between threads.
 
 \subsection{Asynchronous programming}
 One of the most recent additions the Rust language is the addition of primitives for lightweight asynchronous programming.
-\todo{Describe futures}
+The key component of this feature is the \trait{Future} trait. This trait denotes that the implementing type represents
+an asynchronous computation that will result in a value or an error at a later time. The types of resulting item of error
+are represented as associated type on the \trait{Future} trait.
+
+%@formatter:off
+\begin{code}[language=rust,label={future_trait},caption={Future trait}]
+
+pub trait Future {
+    type Item;
+    type Error;
+    fn poll(&mut self) -> Poll<Self::Item>, Self::Error>;
+}
+\end{code}
+%@formatter:on
+
+\autoref{future_trait} shows the definition of the \trait{Future} trait. As you can see, in addition to two associated types,
+it also contains a method declaration for \verb|poll| method. This method is called when a runtime executing the future
+is interested whether the future has completed. Implementations of this method should actively try to complete
+the work represented by the \trait{Future}.
+
+This design means that Rust futures are pull-based, as opposed to push-based implementations ( eg. Javascripts promises).
+Our implementation heavily relies on this feature of Rust.
+
+\todo{Actix built on top of this}
+\todo{Mentin tokio lib}
 
 \subsection{Build system and package manager}
 One area that low level languages are extremely outdated compared more high-level languages is modularity and code reuse.
@@ -469,13 +499,15 @@ turn allows for the standard library to be extremely small, on par with C++, wit
 
 \section{Actix}
 One of primary reasons for choosing rust was the choice of Actix\cite{web:actix} library. Actix is a library that provides abstractions
-for implementing applications with Architecture based on actor model. It provides runtime system for managing actor, that is
-based on Tokio library, which is core for asynchronous programming in rust(Similar to LibUV). It also provides
-traits for defining actors, implementing their behavior in response to messages.
+for implementing applications with architecture based on actor model. Internally it is based upon the \trait{Futures} feature describe earlier.
+
+Core API provided by the library is a set of traits, that are used to for introducing semantics based on actor model to
+custom types. In addition to that, the library also provides several structs, that rely on these traits in order
+to provide communication between individual actors.
 
 \subsection{Actor in actix}
 Actors are types, that implement the \trait{Actor} trait. The \trait{Actor} trait has an associated type, that defines the context in which the actor will be run,
-and several methods, for dealing with actor lifetime.
+and several methods for dealing with actor lifetime.
 The actor context defines how will the actor receive messages, manages actor mailbox, and several other
 supporting components, but its detailed description is out of the scope of this thesis.
 
@@ -496,7 +528,7 @@ The programmer will also have to implement \trait{Handler} trait for every messa
 
 The implemented \fun{handle} method runs synchronously, but asynchronous computation
 can be started by returning a value that implements a  \trait{Future} trait, from the handle method, or by utilizing the \fun{spawn}
-method on the ctx argument to spawn a new asynchronous task in same context.
+method on the \verb|ctx|s argument to spawn a new asynchronous task in same context.
 
 After creating an actor, the actor must be started. This can be performed by several functions.
 the \fun{Arbiter::start} function starts a new thread, runs an \actor{Arbiter} actor inside it, and then
@@ -539,7 +571,7 @@ base actix library with primitives for communication between actors on different
 This library is described in detail in \autoref{chapter:design}.
 
 \section{Cloud environment}
-While usage of low level language, with the support for Effective concurrent programming should provide a large performance
+While usage of low level language, with the support for effective concurrent programming should provide a large performance
 advantage, this does not solve the scalability problem. One of the requirements was for the resulting system to
 be able to scale according to number of users, and resulting load on the system.
 
@@ -593,6 +625,7 @@ Basic used primitives are:
     serve incoming requests
     \item Volume - Object representing a persistent storage.
 \end{itemize}
+
 
 
 \section{Web applications}
@@ -681,7 +714,7 @@ will contain base communication actor from \verb|actix-comm| library, and severa
 these supporting actors, it will also contain varying number of actors, that will collectively implement
 the desired functionality of a particular component.
 
-\section{Communication \& actix-comm}
+\section{Communication, actix-comm and actix-arch}
 \label{section:actix_comm}
 As described earlier the Actix library does not provide tools for communication between actors on different machines. One of the
 goals of this thesis was to design \& implement a library that would facilitate this functionality. The resulting library
@@ -690,50 +723,77 @@ should be usable by other projects.
 \subsection{Underlying protocol}
 We chose to use ZeroMQ\cite{hintjens2011} as an underlying protocol instead of TCP/UDP because of several factors. The ZeroMQ can be used over
 many different transport types, including TCP, UDP, Unix pipes, PGM or shared memory. Another benefit is the added flexibility; While
-TCP requires estabilishing connection in a particular order (Bind then Connect), while ZeroMQ does not have similar constraints.
+TCP requires establishing connection in a particular order (Bind then Connect), ZeroMQ does not have similar constraints.
 
-It also provides wide array of socket types to implement different communication paradigms. We primarily use 2 of them.
+Another possible approach would be usage of HTTP and/or Websockets. While these 2 communication protocols would probably
+satisfy the requirements, ZeroMQ was specifically designed for low-latency, low-overhead applications and seemed
+like a better fit into the global system architecture.
 
-The Router-Dealer socket pair is well suited for asynchronous request-reply communication pattern, and will be most commonly used as
-such.
+\subsubsection{ZeroMQ}
+ZeroMQ is an asynchronous message-based communication library. It is aimed at low-latency distributed systems, and does not require a centralized
+message broker. It provides primitives for implementing different communication patterns. Our library
+will utilize 2 of these communication patterns.
 
-\todo{Reword}
-The Pub-Sub socket pair will be used for pub-sub communication pattern. This communication pattern will be used for receiving
-large amounts of financial data from exchanges, and maybe for some additional system functions, like logging.
+The Router-Dealer socket types are used for asynchronous request-reply communication pattern, and our library uses
+them to implement \actor{Request} and \actor{Reply} actors respectively, which collectively implement described communication pattern.
+This type of communication is then used
+
+The Pub-Sub socket types are used for publish-subscribe communication pattern. This communication pattern is implemented
+by \actor{Publish} and \actor{Subscribe} actors.
+
 
 \subsection{Library interface}
 Because the library is intended to be used exclusively with the Actix framework, the only provided interface will be in form
-of a several actors. These actors will respond to a set of messages that are also exported by the library. These messages
-are of 2 types, control, and data messages. Control messages will affect the state of one or more communication actors
-in one process, and data messages are requests to send data to different processes/machines.
+of a several actors. These actors will respond to a set of messages that are also exported by the library.
+The implementation of additional functionality by creating a set of actors \& messages is is very common within the Actix ecosystem.
+For example, the actix-web library, which is used to implement the web application, is also built with similar approach
 
-The implementation of additional functionality by creating a set of actors \& messages is is very common within the actix ecosystem.
-The actix-web library, which is used to implement the web application, is also built with similar approach
+The \actor{Request} actor responds to \textbf{SendRequest} message, which denotes a request for sending another, wrapped
+request to remote machine. The \actor{Request} anotates sent request with unique identifier, which is then inside the
+actor state along with an information used for notifying original \textbf{SendRequest} sender about the message response.
 
-\todo{Rewrite - Not accurate anymore}
+the \actor{Reply} actor responds to \textbf{Register} message, which is used for registering another actor
+as a recipient of some message type. Then, whenever the \textbf{Register} actor receivies of said type, the message
+is forwarded to registered actor.
+
+The \actor{Publish} \actor{Subscribe} actors operate similarly to \actor{Request}, \actor{Reply} actors respectively,
+but they do not send or receive message responses.
+
 \subsection{Communication protocol}
-The library imnple
-Each component will utilize several ZeroMQ sockets. The primary socket will be of Dealer type, and will serve as an endpoint
-for accepting connections from other components. In addition to one Dealer socket, each component will alse create a router
-socket for each connection to another component. The requests will be sent over this router socket.
-
+Each of the defined communication actors contains one primary ZeroMQ socket, that is used for receiving and sending messages
+to other components. The actual communication protocols vary between individual actor types
 \begin{figure}[H]
     \includegraphics[width=\textwidth]{obrazky-figures/actix-net communication.png}
     \caption{actix-comm communication}
     \label{img:actix_comm}
 \end{figure}
 
-In \autoref{img:actix_comm} you can see simple sequence diagram showing types of most common interactions with the library. The \actor{Communicator}
-actor serves as a entry point into the library. By creating and sending \msg{Connect} message to this actor, the \actor{Node} actor is created,
-and the address of created node is retruned into user code. User can use the \actor{Node} actor for sending messages to
-remote nodes. User can register global handlers for specific message type
-using the \msg{RegisterRecipient} message, and specific actors using the \msg{RegisterActor} message. The response to \msg{RegisterActor}
-message is global actor address, which can be sent to other nodes, and used to send messages to specific actor on local node.
+In \autoref{img:actix_comm} you can see simple sequence diagram containing basic request-reply communication pattern.
+The diagram contains 2 component. The component A contains a  \actor{Request} actor, that is used to send request to component B,
+which contains \actor{Reply} actor and another, programmer defined, custom actor. The user code in component B first
+registers the user actor as a recipient of message type M. Then , the user code in component A sends a SendRequest
+to its actor{Request} actor. It then stores some information about the message into its local state, and sends message
+data along with its type to ZeroMQ socket.
 
+After the \actor{Reply} actor in component B receives this message, it forwards the message to actor registered earlier,
+and upon a response from this actor, it sends response along with metadata received earlier back to ZeroMQ socket.
+
+Then, upon receiving the response, the \actor{Request} actor uses provided metadata to get apropriate notification
+channel from its local state, and uses it to notify originating code about the response.
+
+\subsection{Message format, actor state}
+\todo{Type erasure, message stored as a type name + json/Msgpack data}
+\todo{If name not found, message not understood}
+\todo{Fast, simple}
+
+\subsubsection{Actor state}
+\todo{Identifier tokens, currently int}
+\todo{Channels , rx is provided as asynchronous reply, tx stored internally}
+\todo{Rx is also a future, a lot of futures used}
 
 \subsection{Actix-arch}
 Is a library that was built on top of \verb|actix-comm| simplify development of individual components. It contains implementations
-from commpon communication patterns, and components to support the development of communicating applications.
+from common communication patterns, and components to support the development of communicating applications.
 
 \subsubsection{Service abstraction}
 Since most common communication pattern is Request-Response, this component was created to support this type of communication.
@@ -750,19 +810,17 @@ pub trait ServiceInfo: 'static + Debug {
 \end{code}
 %@formatter:on
 
-Two other components are the \type{ServiceHandler}and \type{ServiceConnection} actors, which are generic over type paramenter
-S, that must implement \trait{ServiceInfo} trait, that describes the service that component handles or connects to.
-The \type{ServiceHandler} struct has a register method, which can be used to register a handler of service messages.
-Both of these structs internally use ZeroMQ actors defined in \verb|actix-comm| library, namely the Request and Reply actors.
+Two other components are the \type{ServiceHandler} and \type{ServiceConnection} structs, which are generic over type paramenter
+S, that must implement \trait{ServiceInfo} trait. The \type{ServiceHandler} struct has a register method, which can be used to register a handler of service messages.
+Both of these structs internally use ZeroMQ actors defined in \verb|actix-comm| library, namely the \actor{Request} and \actor{Reply} actors.
 
 \subsubsection{Publish - subscribe abstraction}
-Is an apstraction for implementing Publish-Subscribe data flows.
+Is an abstraction for implementing Publish-Subscribe data flows.
 Is analogous to Service abstraction, utilizing 3 parts. The \trait{EndpointInfo} trait defines the hostname, on which
 the binding endpoint can be found, its associated type \type{FanType} can be either \type{FanOut} or \type{FanIn},
 and defines, which part of the communication channels binds to an address, and which connects to it.
-With \type{FanIn}, the subscriber binds to a port, and multiple publishers connect to it (used for receving tick
-data from multiple exchange adapters), and with \type{FanOut}, the publisher binds to a socket, and subsribers connect
-to it.
+With \type{FanIn}, the subscriber binds to a port, and multiple publishers connect to it (used for receiving data from multiple exchange adapters),
+and with \type{FanOut}, the publisher binds to a socket, and subscribers connect to it.
 
 %@formatter:off
 \begin{code}[language=rust,label={endpointinfo_trait},caption={EndpointInfo trait definition}]
@@ -774,15 +832,15 @@ pub trait EndpointInfo {
 \end{code}
 %@formatter:on
 
-The \type{Publisher} and \type{Subscriber} actors are generic over type paramenter E, that must implement the \trait{EndpointInfo}
-trait, and contain methods for publishing and subscriving to updates respectively.
+The \type{Publisher} and \type{Subscriber} actors are generic over type parameter E, that must implement the \trait{EndpointInfo}
+trait, and contain methods for publishing and subscribing to updates respectively.
 
 \subsubsection{Service load balancing}
 Other component necessary for our designed system was a way to perform load balancing for Service handlers.
 This will be mainly used in the strategy evaluation component, since this component will probably result in most
 of the computing load.
 
-This component is implemented as 2 actors: the \actor{LoadBalancer} and \actor{WorkerProxy}, which botha have one type
+This component is implemented as 2 actors: the \actor{LoadBalancer} and \actor{WorkerProxy}, which both have one type
 parameter S that must implement ServiceInfo. Then, the LoadBalancer binds 2 ServiceHandlers to single port.
 The first one is used for receiving service requests from client, and the second one is used for receiving message for workers.
 
@@ -791,8 +849,8 @@ for work. If \actor{LoadBalancer} does not have any work available, it sends an 
 or, if available, it sends a work unit to this worker. The \actor{WorkerProxy} then sends received work to internal
 worker implementation, and after finishing, sends result to \actor{LoadBalancer} as a separate request, that is also used
 for requesting more work units.
-
-The \actor{LoadBalancer} therefore serves as a load balancing broker, which performs rendezvous between available workers
+\todo{Diagram, cant explain this in words only}
+Therefore, the \actor{LoadBalancer} therefore serves as a load balancing broker, which performs rendezvous between available workers
 and work units, communication using 2 service handlers.
 
 \section{Data storage}
@@ -833,7 +891,7 @@ a relational database for storage.
 \subsection{Evaluated storage solutions}
 In order to store application data, we just have to use a relational database. These databases are most common types of databases used,
 and have extensive tooling built to support them. For the purposes of this application the \textbf{PostgreSQL} databases was chosen.
-This is an open source database which supports most of the modern SQL, and probably the only competitor to Oracles offering
+This is an open source database which supports most of the modern SQL, and probably the only competitor to Oracle's offering
 in terms of functionality. One of the most exciting features of this database is support of extensions, that transform
 this simple relational database into general purpose storage solution. Some of the database extensions are
 \begin{itemize}
@@ -841,7 +899,7 @@ this simple relational database into general purpose storage solution. Some of t
     data - improving redundancy and performance
     \item TimescaleDB - Improves upon built-in table partitioning, and adds custom storage engine optimized
     for time-series datasets.
-    \item Cstore - Adds columnar store, which can be used for storing data in ORC format.
+    \item CStore - Adds columnar store, which can be used for storing data in ORC format.
 \end{itemize}
 Thanks to these features, the \textbf{PostgreSQL} was chosen as a database for storing application data.
 
@@ -886,11 +944,22 @@ that seems to provide same performance as current \textbf{PostgreSQL} storage la
 \todo{Not in production, postgresql more than enough}
 
 \section{Web}
-\todo{Some text, dont know}
-\subsection{Frontend technologies}
-As mentioned earlier, in order to create optimal user experience, the Single-page web application approach for creating
-web applications. For creating the web application that woud be serve as user interface for the system, several
-libraries and frameworks were evaluated:
+As mentioned earlier, we elected to implement the web application with the single-page approach. This requires dividing
+the application into 2 parts. The Backend part will run on the server, and provide information to the Frontend running on the
+clients web browser.
+
+\subsection{Backend}
+The backend part of the web application is implemented in \verb|actix-web| library, which, like many other parts of this project,
+is built upon \verb|actix| and its implementation of the actor model. This library provides several REST endpoints
+for working with system resources like strategies, trader accounts, or strategy assignments. Internally,
+these endpoints should perform validation of input data, and execute database queries, which modify the state of the system.
+
+Other languages were not considered for this task, because utilizing them would mean that definitions of stored entities
+would have to be duplicated, and the cost of duplication would not be outweighed by the benefits provided, since
+the Backend part of the application is relatively small.
+
+\subsection{Frontend}
+For implementation of the Frontend part of the application, we evaluated several popular technologies.
 
 \subsubsection{Polymer}
 Is a library developed by Google. It utilizes custom webcomponents\todo{Cite}, Shadow DOM \todo{Cite} and HTML Templating\todo{Cite} technologies
@@ -917,14 +986,14 @@ at the cost of memory usage.
 \subsubsection{Flux \& Redux}
 One of most important concepts used in React is the uni-directional data flow. Data flows
 from components to their children, and notifications from children to parents.
-To support this paradigm, the Flux architecture. In this architecture there are \textit{actions}, that flow through the
+To support this paradigm, we utilize the Flux architecture. In this architecture there are \textit{actions}, that flow through the
 central \textit{dispatcher} to a \textit{store}, and changes in the store are propagated back to view. In react,
-this propagation is performed through component properties. This approach is similar to observer pattern\todo{Footnote}
+this propagation is performed through component properties. This approach is similar to observer pattern\footnote{https://en.wikipedia.org/wiki/Observer\_pattern}
 With this architecture, the properties passed to a components are immutable. Only way the application state can be affected is
 through sending \textit{actions} to dispatcher.
 
 Redux is the most well known implementation of this pattern. It features a single store, and dispatchers are
-called reducers. The reducers are pure functions, that respond to actions, and based on the modify this single source of truth.
+called reducers. The reducers are pure functions, that respond to actions, and based on them modify this single source of truth.
 
 
 \subsection{Frontend application}
@@ -937,27 +1006,22 @@ must be able to:
     \item Login \& Log out
     \item Create \& edit strategies and exchange trading accounts
     \item Assign strategies and trading accounts to assets
-    \item VIsualize the results of strategy evaluation and executed trades
+    \item Visualize the results of strategy evaluation and executed trades
 \end{itemize}
-
-\subsection{Backend}
-The backend part of the web application is implemented in \verb|actix-web| library, which, like many other parts of this project,
-is built upon \verb|actix| and its implementation of the actor model. This library provides several REST endpoints
-for working with system resources like strategies, trader accounts, or strategy assignments. Internally,
-these endpoints should perform validation of input data, and execute database queries, which modify the state of the system
 
 \section{Exchange adapters}
 While all cryptocurrency exchanges use similar technologies to implement their APIs, each of them is different. To reduce
 complexity of the system, these differences must be resolved at the edge of our system, and should not permeate into other
-components. To brdige the gap between external APIs, and internal communication, the system contains adapter component
+components. To bridge the gap between external APIs, and internal communication, the system contains adapter component
 for each exchange.
 
-This component connects to real-time websocket API in order to receive notifications about market updates,
+This component connects to real-time webso cket API in order to receive notifications about market updates,
 then translates this data into OHLC format, and sends it to the \kubecomp{core} component.
 It also exposes a service endpoint for querying account state (wallet balances), and executing trades, to which the
 \kubecomp{core}'s trader actor connects.
 
 \section{Strategies}
+\label{design:eval}
 In \autoref{chapter:current_state} we have described several implementations of automatic trading systems. Each one of them
 utilized some kind of programming language to define a trading strategy. In this regard, our system is very similar to others.
 
@@ -996,7 +1060,35 @@ key properties, which caused this decision.
 By using an intepreted language for implementation of user strategies, we have successfully eliminated a whole
 class of risks. By using a safe language, the probability of user code crashing the executing process is virtually
 none. However, there still are several safety issues, that have to be resolved, even with using an interpreted language.
-\todo{Safety - Creating safe environment withouyt file access, Limit execution time}
+
+\subsubsection{Sandbox}
+As a basic strategy for ensuring the safety of strategy execution, we chose to utilize a sandboxing mechanism.
+This mechanism is supported by LUA very well. The sandbox mechanism consists of replacing the global environment table
+with a table, that contains only functions deemed safe when executing user code. This simple replacement
+restricts access to unsafe functions like \verb|read|, removing the ability to of an malicious to to
+affect our system
+
+\subsubsection{Execution control}
+Another attack vector considered was the ability of an attacker to perform A Denial-of-Service(DOS) attack by
+submitting a strategy, that never terminates. Upon the start of evalauation, this strategy would lock
+currently evaluation actor, reducing the amount of available actors for strategy evaluation. After
+sufficient amount of attempts, this would leave no available actors, and then, the system would be unable
+to function.
+
+\subsection{Access to information}
+Method for strategy evaluation described so far should provide safe, and performant
+way for users to write custom code, that can be run inside our system. However, we must allow this code to access the
+financial data, and provide some kind of library for supporting the strategies.
+
+We expose a vector of OHLC data items inside the \verb|__ohlc| global variable. Each item in this vector
+has methods to access individual prices described in the \todo{autoref OHLC definition}.
+
+We also expose a set of functions implementing indicators for Technical analysis\footnote{https://en.wikipedia.org/wiki/Technical\_analysis}.
+These are available inside the \verb|ta| global table.
+
+
+To ensure this attack is not possible, we limit number of LUA instructions that a particular strategy can execute.
+This is done by utilizing the \verb|debug.sethook| function.
 
 \section{Evaluation}
 Since users can crate multiple strategies, and then apply these trategies to multiple different assets on different exchanges,
@@ -1006,6 +1098,9 @@ This variability of computational load on the system was primary reason for desi
 The service that is most affected by this variability is the strategy evaluation service. This service needs to
 dynamically change the amount of used resources.
 
+
+To implement this component, we will utilize the \actor{LoadBalancer} actor defined earlier. The compoennt
+will consist of 2 sub-compontents. The load
 This will require specific architecture. The service will be divided into 2 parts. The control and the worker layers.
 The control layer will be a single Kubernetes pod, that will serve as an endpoint to rest of the system. It will receive
 strategy evaluation requests from Core service, and will pass them to individual workers int the worker layer.
@@ -1024,25 +1119,24 @@ user can manuall implement his logic}
 In this chapter, we aim to present current state of the implementation, outline the problems faced when trying to satisfy the
 reuqirements outlined in previous chapters, what methodologies and approaches were taken to solve them, and also
 point out some interesting aspects of the implementation. Another goal of this chapter is to present the operations
-side of this project, meaning the processes used for building and deploying this project, since that was another
+side of this project, meaning the processes used for building and deploying the system, since that was another
 important part of the implementation
 
 \section{Project structure}
 Like any other larger project, this project is also structured into several subdirectories. The main subdirectory is \verb|code|,
-which contains the code for all components, contains the \verb|common| project and several other
-projects in the \verb|deps| directory. The \verb|common| project groups all the dependencies that
-are shared by all components, and re-exports them for easier upgrading. The \verb|deps| subdirectory contains
-projects for \verb|actix-arch|, \verb|actix-comm|, \verb|db| projects and other dependencies.
+which contains the code for system compoennts,the \verb|common| library and several other
+libraries in the \verb|deps| directory. The \verb|common| library groups dependencies that
+are shared by all components, and re-exports them for easier acess and centrailized version selection. The \verb|deps| subdirectory contains
+for \verb|actix-arch|, \verb|actix-comm|, \verb|db| libraries and other dependencies.
 
 Then, the second core directory is the \verb|ops| directory, that contains scripts and configuration files
 needed for deploying and managing the system.
 
-The main directory contains \verb|Cargo.toml| file, that is used by the \textbf|cargo| tool. This root file
-defines a workspace, and some configuration profiles for rust compilation. Thanks to the existence of workspace,
-the \textbf|cargo| build tool does not create separate target directory for each sub-project, but creates
-a single \verb|target| directory in project root, which contains all the build artifacts and intermediate files.
+The main directory contains \verb|Cargo.toml| file, that is used by the \textbf{cargo} tool. This root file
+defines a workspace, and some configuration profiles for rust compilation. Each directory containing sub-project of
+a library or an executable also contains the \verb|Cargo.toml| file.
 
-The \verb|target| directory is also used to store intermediate files produced by our custom build scripts, that
+The \verb|target| directory contains build artifacts created byu cargo, and is also used to store intermediate files produced by our custom build scripts, that
 will be described in the following section.
 
 \section{Building and deploying}
@@ -1061,34 +1155,33 @@ individual rust projects using \textbf{cargo}, and perform any additional steps 
 This meta-build system, does not have to do anything particularly complex, it only needs to track what projects
 were changed, and depending on that information re-build, and re-deploy them.
 
-These requirements are perfectly satisfied by the ancient \textbf{make} unix tool. So, with make, comes
-the usage of Makefiles, and this project contains 3 of them.
-
-The first make file is global, it loads custom macros and environment configuration from \verb|ops/make/Macros.mk|.
+These requirements are perfectly satisfied by the ancient \textbf{make} unix tool.
+The project root contains the root Makefile, which references supporting makefiles stored in the \verb|ops/make/| directory.
 It contains the \verb|deploy| target, that builds all custom components, creates new docker images from them,
 re-evaluates the kubernetes configuration templates, and finally applies this configuration to currently active kubernetes cluster.
 
+
 \subsubsection{Building a component}
-One build component roughly corresponds to a \textbf{cargo} project, that produces an executable, and a docker container
+One build target roughly corresponds to a \textbf{cargo} project, that produces an executable, and a docker container
 that contains this executable. Implementation of this build process is in \verb|ops/make/App.mk| makefile. This makefile
-invokes cargo in an appropriate subdirectory, it then creates adocker container according to \verb|ops/docker/app.Dockerfile|,
-and emits container name and container tag into a file in \verb|target/docker/| directory, in a format
+invokes cargo in an appropriate subdirectory, it then creates a docker container image according to \verb|ops/docker/app.Dockerfile|,
+and emits container name and container tag into a file in \verb|target/docker/| directory. This information is provided in a format
 that will later be loaded into an environment variable, and used for substitution when building kubernetes
 configuration templates.
 
 \subsection{Kuberentes configuration templating}
 This is very well known drawback of kubernetes. It does not support any kind of templating out of the box.
-There are existing solutions, that solve this issue, but many of them do so with opionated approach, that is coupled
+There are existing solutions, that solve this issue, but many of them do so with opinionated approach, that is coupled
 with some kind of package management.
 
-We elected to perform this templating manually, inside the makefiles implenting the build process. For this purpose,
+We elected to perform this templating manually, inside the makefiles implementing the build process. For this purpose,
 build of each component emits built docker image tag in the format of \verb|{COMPONENT}_IMAGE={IMAGE TAG}|.
 This is then loaded into make environment using the \verb|env| directive. Then, for each file in the \verb|ops/k8s| directory
 the main makefile loads it, performs environment variable substitution using the \verb|envsubst| tool, and saves modified
 file to \verb|target/k8s| directory. There are dependencies between these steps, which are also listed in the makefile, and
 therefore it does not re-build components that were not modified.
 
-Each image of a component is tagged with a special unique information pertaining to applicaiton version. Currently,
+Each image of a component is tagged with a special unique information identifying application version. Currently,
 this is the first 10 characters of the sha256 hash of the binary, but in the future, this should be changed to current
 git commit hash.
 
@@ -1101,10 +1194,12 @@ future should be resolved by moving each system component into separate build ta
 \section{Component implementation}
 Most of the application is written in pure rust, with the exception of the frontend part of the web application, which
 is written in javascript. The project uses multiple advanced features of rust, that have not yet been stabilized, and
-therefore requires a nightly toolchain. Currently, the project uses nigthly toolchain from 2019-04-07.
+therefore requires a nightly toolchain. Currently, the project uses nightly toolchain from 2019-05-01. Main
+reason for usin a nightly toolchain with a specific version is the fact, that the implementation utilizes
+async-await style programming, which has not yet been stabilized, and was recently changed. This features
+should be stabilized in several months.
 
-This requirement is mainly due to usage of async/await feature, that allows writing asynchronous code, with the
-appearance of synchronous code, greatly improving readability. \todo{Example here}.
+\todo{Async await example}
 
 The usage of asynchronous code is prevalent throughout the codebase. Almost every actix actor is written in a way, that requires
 it to send and wait for message response when responding to a message itself. With synchronous code, this would mean, that
@@ -1181,8 +1276,9 @@ automatically killed.
 After the strategy evaluation, the \actor{EvalWorker} returns the result to the load balancer, and it in turn returns it
 to the original request source, which was the \actor{Decision} actor in the \kubecomp{core} component.
 
+\subsubsection{Strat-Eval library}
 The actual strategy evaluation is implemented in \verb|strat-eval| library. This library could be extended to support other types of
-strategies.
+strategies. It implements all concepts related to LUA strategy evaluation outlined in \autoref{design:eval}.
 
 
 \subsection{Bitfinex adapter}
@@ -1193,7 +1289,7 @@ requests a list of available assets, and then subscribes for notifications for e
 After subscribing, the actor starts to receive notifications, that are then promptly translated into OHLC data
 and published to the \actor{Ingest} actor in the \kubecomp{core} component.
 
-Another task, that is performed by this actor, is the serving of wallet balance and trade requests from the
+Another task that is performed by this actor is the serving of wallet balance and trade requests from the
 trader actor. These request are translated into REST API calls, that are performed by the http client implemented
 in \verb|actix-web| library.
 
@@ -1204,17 +1300,32 @@ extending the system to support additional exchange should be extremely easy.
 
 The bitfinex adapter is also managed ky kubernetes deployment and exposed by a service.
 
-\todo{Implemented in deps library - apis }
-\todo{Other exchanges similar}
+\subsubsection{API access implementation}
+Acces to exchange APIs is implemented in the \verb|apis| library in the \verb|code/deps| directory. This library implements
+primitives that could be shared between different exhange adapters, and contains a \verb|bitfinex| submodule that contains
+definitions of types received from API calls, and implementations of these API calls as  asynchronous rust functions.
+
+This pattern of implementation of specific API exchange in a submodule will be continued when extending the system
+with other exchange adapters.
 
 
 \subsection{Persistence}
 This component is responsible for storing OHLC and user data. As mentioned earlier, we elected to use PostgreSQL
 with the TimescaleDB extension as the primary storage solution. This currently runs in a single large docker
 container, that is also managed by kubernetes deployment and exposed by a service. This could pose a problem,
-since usage of only one database instance provides a single point of failure. This issue could by fixed by sharding the
+since usage of only one database instance provides a single point of failure. We could potentially resolve
+this issue by utilizing multiple DBMS instances that would be synchronized using Postgres' streaming replication.
+
+However, this approach would only allow components to read data in an event of a unavailability of the master 
+database. Writing new data ito the database would not be possible, since Postgres does not provide multi-master
+solution to streaming replication.
+
+Another approach considered was the use of distributed database. We chose to use ScyllaDB. This distributed database
+is re-implementation of Cassandra DBMS. 
+
+This issue could by fixed by sharding the
 database with simple streaming replication, but that approach would only ensure readability of data during issue
-with the masterserver, and would not allow writing of new data.
+with the master server, and would not allow writing of new data.
 
 Probbly the only solution to this issue is the usage of distributed database, in the form of PostgreSQL with the
 citus extension, or using another database, like scyllaDb
@@ -1244,7 +1355,7 @@ set of worker actors, whenever they receive a request matching said URI. The lib
 of path and query parameters and request bodies. Another core part of the library interface is the programmer defined
 state, that can be attached to a running web server. This state can be then retrieved inside every handler function.
 
-Our implementation uses it to store handle to database acces actors, which are then used for retrieving data.
+Our implementation uses it to store handle to database access actors, which are then used for retrieving data.
 This is implemented using the \textbf{Database} wrapper struct, that was described earlier.
 
 Most of the implemented endpoints act as a simple interface to the database, that performs some validation, but there
@@ -1282,7 +1393,7 @@ the \verb|await| macro.
 
 Then, the strategy is retrieved from database, and \verb|require_cond| macro is used for ensuring that user can only access strategies that he owns.
 
-Finally, the strategy is serialized wrapped in the \verb|Json| struct, that marks performs serialization into Json in the
+Finally, the strategy is serialized wrapped in the \verb|Json| struct, that performs serialization into Json in the
 \verb|respond_to| method.
 
 \section{Web application frontend}
@@ -1290,21 +1401,20 @@ As mentioned earlier, the frontend application is implemented as a react single 
 This approach was chosen after a long series of experiments with multiple approaches to web applications.
 
 The first tried approach was completely server-side rendered site that utilizes static html forms for
-submitting data. While this approach did work, the problem was extremely poor UX, and convoluted
-very complex generated forms that utilized hidden fields in order to preserve information
+submitting data. While this approach did work, the problem was extremely poor UX, and very complex generated forms that utilized hidden fields in order to preserve information
 for form submission.
 
 The completely server-side generated site was then progressively rewritten into combined
 application, that used forms for submitting data, but utilized custom web components
 based \verb|LitElement| library to reduce complexity and provide some amount of dynamic behavior, improving
 user experience. However, there were problems with this approach too. The user experience still did not meet the
-standards expected by modern users, and the application logic was now in 2 languages distributed accros 2 codebases,
-greatly reducing speed of development.
+standards expected by modern users, and the application logic was now in 2 languages distributed acros 2 codebases,
+greatly complicating futher development.
 
 After both of these approaches failed, we elected to rewrite the web interface part of the system from scratch.
 This time, the backend was rewritten to the form of a REST API described earlier, and the frontend application
 was rewritten in React. We also decided to use Redux\todo{Footnote} to manage applicaton state,
-and Material-UI library to provide set of base components, foregoing any kind of complex template.
+and Material-UI library to provide set of base components, foregoing any kind of complex UI template.
 
 \subsection{React}
 As mentioned earlier, React is javascript library for writing user interfaces, that utilizes custom JSX syntax.
@@ -1317,7 +1427,7 @@ the \verb|app| prefix, and this generated index file imports resources from the 
 refers to individual files of compiled react application.
 
 \subsection{Components \& Routing}
-The application is divided into several components, each root component roughly corresponding to single
+The application is divided into several root components, each root component roughly corresponding to single
 'page' of the application. Because the server provides \verb|index.html| for every URI under the \verb|/app| prefix, the
 routing between indivudual components that reside under this prefix is performed in the browser using the
 \verb|react-router| library. This library switches rendered component based on current path.
@@ -1388,7 +1498,7 @@ Core component used in our custom components is the \verb|Paper| component, whic
 with the appearance of an elevated piece of paper. This concept of an elevated surface is also at the core of
 Material design guidelines.
 
-Each custom component is implemented as a list of these \verb|Paper| surfaces, each one holding sime kind of information.
+Each custom component is implemented as a list of these \verb|Paper| surfaces, each one holding some kind of information.
 Most commonly, these surfaces contains tables that show existing entities of a given type, along with a button to add new entity.
 
 \subsubsection{EditDialog}
@@ -1396,7 +1506,7 @@ The creation and editing of data entities is performed by editing a set of field
 form. During development, this pattern of a modal dialog with form organically appeared at multiple points, and therefore we decided to implement a
 single component that would replace individual forms.
 
-This resulted in the implementation of \textbf|EditDialog| component, which performs editing of a javascript object according
+This resulted in the implementation of \textbf{EditDialog} react component, which performs editing of a javascript object according
 to properties passed into it.
 
 %@formatter:off

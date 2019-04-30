@@ -4,6 +4,10 @@ version = "0.1.0"
 authors = ["Michal Hornický <semtexzv@gmail.com>"]
 edition = "2018"
 
+[features]
+default = []
+scylla = ["cdrs", "cdrs_helpers_derive"]
+
 [dependencies]
 common = {path = "../../common"}
 serde = "*"
@@ -15,8 +19,8 @@ r2d2="*"
 r2d2-diesel="*"
 
 
-cdrs = { version = "2" }
-cdrs_helpers_derive = "*"
+cdrs = { version = "*", optional = true}
+cdrs_helpers_derive = { version = "*", optional = true }
 
 
 validator={ version = "*", default-features=false}

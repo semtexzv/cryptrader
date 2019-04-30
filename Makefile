@@ -18,7 +18,7 @@ deploy: build-k8s $(DOCKER_FILES)
 	kubectl apply -f $(K8S_BUILD_DIR)
 
 ./target/docker/%: .PHONY
-	APP_NAME=$* $(MAKE) -C . -f ./ops/make/App.mk ./target/docker/$*
+	APP_NAME=$* $(MAKE) -C . -f ./code/$*/Makefile ./target/docker/$*
 
 $(K8S_BUILD_DIR):
 	@mkdir -p $(K8S_BUILD_DIR)
