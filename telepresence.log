@@ -8242,3 +8242,865 @@
 4187.6  27 | 2019-05-08T21:55:08+0000 [stdout#info] Result for b'www.youtube.com' is ['172.217.22.14', '172.217.18.110', '172.217.18.174', '216.58.207.78', '172.217.16.206', '172.217.16.142', '172.217.21.206', '172.217.21.238', '216.58.207.46', '216.58.206.14', '172.217.23.174', '172.217.22.110', '172.217.22.46', '216.58.208.46']
 4187.9 TEL | [175] Running: sudo -n echo -n
 4188.0 TEL | [175] ran in 0.07 secs.
+4189.0  36 | c : DNS request from ('192.168.0.94', 57751) to None: 42 bytes
+4189.0  36 | c : DNS request from ('192.168.0.94', 57751) to None: 42 bytes
+4189.1  27 | 2019-05-08T21:55:09+0000 [stdout#info] A query: b'1-edge-chat.facebook.com'
+4189.1  27 | 2019-05-08T21:55:09+0000 [stdout#info] AAAA query, sending back A instead: b'1-edge-chat.facebook.com'
+4189.1  27 | 2019-05-08T21:55:09+0000 [stdout#info] A query: b'1-edge-chat.facebook.com'
+4189.1  27 | 2019-05-08T21:55:09+0000 [stdout#info] Result for b'1-edge-chat.facebook.com' is ['185.60.216.15']
+4189.1  27 | 2019-05-08T21:55:09+0000 [stdout#info] Result for b'1-edge-chat.facebook.com' is ['185.60.216.15']
+4195.0  36 | c : DNS request from ('192.168.0.94', 42732) to None: 46 bytes
+4195.0  36 | c : DNS request from ('192.168.0.94', 42732) to None: 46 bytes
+4195.0  36 | c : DNS request from ('192.168.0.94', 60903) to None: 46 bytes
+4195.0  36 | c : DNS request from ('192.168.0.94', 42499) to None: 34 bytes
+4195.0  36 | c : DNS request from ('192.168.0.94', 42499) to None: 34 bytes
+4195.0  27 | 2019-05-08T21:55:15+0000 [stdout#info] A query: b'scontent-prg1-1.xx.fbcdn.net'
+4195.0  27 | 2019-05-08T21:55:15+0000 [stdout#info] AAAA query, sending back A instead: b'scontent-prg1-1.xx.fbcdn.net'
+4195.0  27 | 2019-05-08T21:55:15+0000 [stdout#info] A query: b'scontent-prg1-1.xx.fbcdn.net'
+4195.0  27 | 2019-05-08T21:55:15+0000 [stdout#info] A query: b'scontent-prg1-1.xx.fbcdn.net'
+4195.0  27 | 2019-05-08T21:55:15+0000 [stdout#info] A query: b'www.facebook.com'
+4195.0  27 | 2019-05-08T21:55:15+0000 [stdout#info] AAAA query, sending back A instead: b'www.facebook.com'
+4195.0  27 | 2019-05-08T21:55:15+0000 [stdout#info] A query: b'www.facebook.com'
+4195.0  27 | 2019-05-08T21:55:15+0000 [stdout#info] Result for b'scontent-prg1-1.xx.fbcdn.net' is ['157.240.30.27']
+4195.1  27 | 2019-05-08T21:55:15+0000 [stdout#info] Result for b'scontent-prg1-1.xx.fbcdn.net' is ['157.240.30.27']
+4195.1  27 | 2019-05-08T21:55:15+0000 [stdout#info] Result for b'scontent-prg1-1.xx.fbcdn.net' is ['157.240.30.27']
+4195.1  27 | 2019-05-08T21:55:15+0000 [stdout#info] Result for b'www.facebook.com' is ['185.60.216.35']
+4195.1  27 | 2019-05-08T21:55:15+0000 [stdout#info] Result for b'www.facebook.com' is ['185.60.216.35']
+4199.6  36 | c : DNS request from ('192.168.0.94', 49897) to None: 33 bytes
+4199.6  36 | c : DNS request from ('192.168.0.94', 49897) to None: 33 bytes
+4199.6  27 | 2019-05-08T21:55:20+0000 [stdout#info] A query: b'www.netflix.com'
+4199.6  27 | 2019-05-08T21:55:20+0000 [stdout#info] AAAA query, sending back A instead: b'www.netflix.com'
+4199.6  27 | 2019-05-08T21:55:20+0000 [stdout#info] A query: b'www.netflix.com'
+4199.7  27 | 2019-05-08T21:55:20+0000 [stdout#info] Result for b'www.netflix.com' is ['54.171.187.60', '52.30.103.23', '54.154.201.43', '52.49.6.246', '52.31.246.79', '34.246.63.0', '34.251.239.113', '52.50.212.245']
+4199.7  27 | 2019-05-08T21:55:20+0000 [stdout#info] Result for b'www.netflix.com' is ['34.252.114.84', '52.31.45.232', '54.72.48.211', '34.241.48.195', '52.30.134.73', '52.51.179.14', '52.16.94.177', '52.51.252.175']
+4203.4 TEL | (proxy checking local liveness)
+4203.4  27 | 2019-05-08T21:55:24+0000 [Poll#info] Checkpoint
+4204.7  36 | c : DNS request from ('192.168.0.94', 39678) to None: 66 bytes
+4204.7  36 | c : DNS request from ('192.168.0.94', 39678) to None: 66 bytes
+4204.7  36 | c : DNS request from ('192.168.0.94', 50856) to None: 47 bytes
+4204.7  36 | c : DNS request from ('192.168.0.94', 50856) to None: 47 bytes
+4204.7  36 | c : DNS request from ('192.168.0.94', 50309) to None: 58 bytes
+4204.7  36 | c : DNS request from ('192.168.0.94', 50309) to None: 58 bytes
+4204.7  36 | c : DNS request from ('192.168.0.94', 52438) to None: 33 bytes
+4204.7  36 | c : DNS request from ('192.168.0.94', 36379) to None: 29 bytes
+4204.7  36 | c : DNS request from ('192.168.0.94', 53664) to None: 31 bytes
+4204.7  36 | c : DNS request from ('192.168.0.94', 53664) to None: 31 bytes
+4204.7  36 | c : DNS request from ('192.168.0.94', 58973) to None: 40 bytes
+4204.7  36 | c : DNS request from ('192.168.0.94', 58973) to None: 40 bytes
+4204.7  27 | 2019-05-08T21:55:25+0000 [stdout#info] A query: b'cloud-cdn-digitalocean-com.global.ssl.fastly.net'
+4204.7  27 | 2019-05-08T21:55:25+0000 [stdout#info] AAAA query, sending back A instead: b'cloud-cdn-digitalocean-com.global.ssl.fastly.net'
+4204.7  27 | 2019-05-08T21:55:25+0000 [stdout#info] A query: b'cloud-cdn-digitalocean-com.global.ssl.fastly.net'
+4204.7  27 | 2019-05-08T21:55:25+0000 [stdout#info] A query: b'd2t77mnxyo7adj.cloudfront.net'
+4204.7  27 | 2019-05-08T21:55:25+0000 [stdout#info] AAAA query, sending back A instead: b'd2t77mnxyo7adj.cloudfront.net'
+4204.7  27 | 2019-05-08T21:55:25+0000 [stdout#info] A query: b'd2t77mnxyo7adj.cloudfront.net'
+4204.7  27 | 2019-05-08T21:55:25+0000 [stdout#info] A query: b'security.nyc3.cdn.digitaloceanspaces.com'
+4204.7  27 | 2019-05-08T21:55:25+0000 [stdout#info] AAAA query, sending back A instead: b'security.nyc3.cdn.digitaloceanspaces.com'
+4204.7  27 | 2019-05-08T21:55:25+0000 [stdout#info] A query: b'security.nyc3.cdn.digitaloceanspaces.com'
+4204.7  27 | 2019-05-08T21:55:25+0000 [stdout#info] A query: b'use.typekit.net'
+4204.7  27 | 2019-05-08T21:55:25+0000 [stdout#info] A query: b't.castle.io'
+4204.7  27 | 2019-05-08T21:55:25+0000 [stdout#info] A query: b'p.typekit.net'
+4204.7  27 | 2019-05-08T21:55:25+0000 [stdout#info] AAAA query, sending back A instead: b'p.typekit.net'
+4204.7  27 | 2019-05-08T21:55:25+0000 [stdout#info] A query: b'p.typekit.net'
+4204.7  27 | 2019-05-08T21:55:25+0000 [stdout#info] A query: b'cloud.digitalocean.com'
+4204.7  27 | 2019-05-08T21:55:25+0000 [stdout#info] AAAA query, sending back A instead: b'cloud.digitalocean.com'
+4204.7  27 | 2019-05-08T21:55:25+0000 [stdout#info] A query: b'cloud.digitalocean.com'
+4204.8  27 | 2019-05-08T21:55:25+0000 [stdout#info] Result for b'cloud-cdn-digitalocean-com.global.ssl.fastly.net' is ['151.101.113.194']
+4204.8  27 | 2019-05-08T21:55:25+0000 [stdout#info] Result for b'cloud-cdn-digitalocean-com.global.ssl.fastly.net' is ['151.101.113.194']
+4204.9  27 | 2019-05-08T21:55:25+0000 [stdout#info] Result for b'use.typekit.net' is ['23.38.53.224']
+4204.9  27 | 2019-05-08T21:55:25+0000 [stdout#info] Result for b'd2t77mnxyo7adj.cloudfront.net' is ['13.35.254.75', '13.35.254.201', '13.35.254.16', '13.35.254.85']
+4204.9  27 | 2019-05-08T21:55:25+0000 [stdout#info] Result for b'd2t77mnxyo7adj.cloudfront.net' is ['13.35.254.85', '13.35.254.201', '13.35.254.75', '13.35.254.16']
+4204.9  27 | 2019-05-08T21:55:25+0000 [stdout#info] Result for b'cloud.digitalocean.com' is ['104.16.24.4', '104.16.25.4']
+4204.9  27 | 2019-05-08T21:55:25+0000 [stdout#info] Result for b't.castle.io' is ['52.20.91.212', '54.173.182.130', '34.226.48.178']
+4204.9  27 | 2019-05-08T21:55:25+0000 [stdout#info] Result for b'p.typekit.net' is ['23.38.53.224']
+4204.9  27 | 2019-05-08T21:55:25+0000 [stdout#info] Result for b'cloud.digitalocean.com' is ['104.16.25.4', '104.16.24.4']
+4204.9  27 | 2019-05-08T21:55:25+0000 [stdout#info] Result for b'p.typekit.net' is ['23.38.53.224']
+4204.9  27 | 2019-05-08T21:55:25+0000 [stdout#info] Result for b'security.nyc3.cdn.digitaloceanspaces.com' is ['205.185.216.10', '205.185.216.42']
+4205.0  27 | 2019-05-08T21:55:25+0000 [stdout#info] Result for b'security.nyc3.cdn.digitaloceanspaces.com' is ['205.185.216.42', '205.185.216.10']
+4207.9  36 | c : DNS request from ('192.168.0.94', 36420) to None: 33 bytes
+4207.9  36 | c : DNS request from ('192.168.0.94', 36420) to None: 33 bytes
+4207.9  27 | 2019-05-08T21:55:28+0000 [stdout#info] A query: b'use.typekit.net'
+4207.9  27 | 2019-05-08T21:55:28+0000 [stdout#info] AAAA query, sending back A instead: b'use.typekit.net'
+4207.9  27 | 2019-05-08T21:55:28+0000 [stdout#info] A query: b'use.typekit.net'
+4207.9  27 | 2019-05-08T21:55:28+0000 [stdout#info] Result for b'use.typekit.net' is ['23.38.53.224']
+4207.9  27 | 2019-05-08T21:55:28+0000 [stdout#info] Result for b'use.typekit.net' is ['23.38.53.224']
+4208.7  36 | c : DNS request from ('192.168.0.94', 37345) to None: 29 bytes
+4208.7  36 | c : DNS request from ('192.168.0.94', 37345) to None: 29 bytes
+4208.7  27 | 2019-05-08T21:55:29+0000 [stdout#info] A query: b't.castle.io'
+4208.7  27 | 2019-05-08T21:55:29+0000 [stdout#info] AAAA query, sending back A instead: b't.castle.io'
+4208.7  27 | 2019-05-08T21:55:29+0000 [stdout#info] A query: b't.castle.io'
+4208.7  36 | c : DNS request from ('192.168.0.94', 49075) to None: 27 bytes
+4208.7  36 | c : DNS request from ('192.168.0.94', 49075) to None: 27 bytes
+4208.7  27 | 2019-05-08T21:55:29+0000 [stdout#info] Result for b't.castle.io' is ['34.226.48.178', '52.20.91.212', '54.173.182.130']
+4208.7  27 | 2019-05-08T21:55:29+0000 [stdout#info] Result for b't.castle.io' is ['52.20.91.212', '34.226.48.178', '54.173.182.130']
+4208.7  36 | c : DNS request from ('192.168.0.94', 37699) to None: 27 bytes
+4208.8  27 | 2019-05-08T21:55:29+0000 [stdout#info] A query: b'unpkg.com'
+4208.8  27 | 2019-05-08T21:55:29+0000 [stdout#info] Result for b'unpkg.com' is ['104.16.124.175', '104.16.125.175', '104.16.123.175', '104.16.122.175', '104.16.126.175']
+4208.8  27 | 2019-05-08T21:55:29+0000 [stdout#info] AAAA query, sending back A instead: b'unpkg.com'
+4208.8  27 | 2019-05-08T21:55:29+0000 [stdout#info] A query: b'unpkg.com'
+4208.8  27 | 2019-05-08T21:55:29+0000 [stdout#info] Result for b'unpkg.com' is ['104.16.123.175', '104.16.122.175', '104.16.125.175', '104.16.124.175', '104.16.126.175']
+4208.8  27 | 2019-05-08T21:55:29+0000 [stdout#info] A query: b'unpkg.com'
+4208.9  27 | 2019-05-08T21:55:29+0000 [stdout#info] Result for b'unpkg.com' is ['104.16.126.175', '104.16.122.175', '104.16.124.175', '104.16.125.175', '104.16.123.175']
+4209.1  36 | c : DNS request from ('192.168.0.94', 52554) to None: 36 bytes
+4209.1  36 | c : DNS request from ('192.168.0.94', 52554) to None: 36 bytes
+4209.1  36 | c : DNS request from ('192.168.0.94', 44620) to None: 37 bytes
+4209.1  36 | c : DNS request from ('192.168.0.94', 44620) to None: 37 bytes
+4209.1  36 | c : DNS request from ('192.168.0.94', 53666) to None: 36 bytes
+4209.1  36 | c : DNS request from ('192.168.0.94', 40453) to None: 39 bytes
+4209.1  36 | c : DNS request from ('192.168.0.94', 40453) to None: 39 bytes
+4209.1  27 | 2019-05-08T21:55:29+0000 [stdout#info] A query: b'cdn.optimizely.com'
+4209.1  27 | 2019-05-08T21:55:29+0000 [stdout#info] AAAA query, sending back A instead: b'cdn.optimizely.com'
+4209.1  27 | 2019-05-08T21:55:29+0000 [stdout#info] A query: b'cdn.optimizely.com'
+4209.1  27 | 2019-05-08T21:55:29+0000 [stdout#info] A query: b'cdn.siftscience.com'
+4209.1  27 | 2019-05-08T21:55:29+0000 [stdout#info] AAAA query, sending back A instead: b'cdn.siftscience.com'
+4209.1  27 | 2019-05-08T21:55:29+0000 [stdout#info] A query: b'cdn.siftscience.com'
+4209.1  27 | 2019-05-08T21:55:29+0000 [stdout#info] A query: b'cdn.optimizely.com'
+4209.1  27 | 2019-05-08T21:55:29+0000 [stdout#info] A query: b'js-agent.newrelic.com'
+4209.2  27 | 2019-05-08T21:55:29+0000 [stdout#info] AAAA query, sending back A instead: b'js-agent.newrelic.com'
+4209.2  27 | 2019-05-08T21:55:29+0000 [stdout#info] A query: b'js-agent.newrelic.com'
+4209.2  27 | 2019-05-08T21:55:29+0000 [stdout#info] Result for b'cdn.optimizely.com' is ['23.210.249.30']
+4209.2  27 | 2019-05-08T21:55:29+0000 [stdout#info] Result for b'cdn.siftscience.com' is ['13.35.250.252']
+4209.3  27 | 2019-05-08T21:55:29+0000 [stdout#info] Result for b'cdn.optimizely.com' is ['23.210.249.30']
+4209.3  27 | 2019-05-08T21:55:29+0000 [stdout#info] Result for b'cdn.optimizely.com' is ['23.210.249.30']
+4209.3  27 | 2019-05-08T21:55:29+0000 [stdout#info] Result for b'cdn.siftscience.com' is ['13.35.250.252']
+4209.3  36 | c : DNS request from ('192.168.0.94', 45821) to None: 39 bytes
+4209.3  36 | c : DNS request from ('192.168.0.94', 45821) to None: 39 bytes
+4209.3  27 | 2019-05-08T21:55:29+0000 [stdout#info] Result for b'js-agent.newrelic.com' is ['151.101.14.110']
+4209.3  27 | 2019-05-08T21:55:29+0000 [stdout#info] Result for b'js-agent.newrelic.com' is ['151.101.14.110']
+4209.3  36 | c : DNS request from ('192.168.0.94', 39482) to None: 39 bytes
+4209.3  27 | 2019-05-08T21:55:29+0000 [stdout#info] A query: b'hexagon-analytics.com'
+4209.4  27 | 2019-05-08T21:55:30+0000 [stdout#info] AAAA query, sending back A instead: b'hexagon-analytics.com'
+4209.4  27 | 2019-05-08T21:55:30+0000 [stdout#info] A query: b'hexagon-analytics.com'
+4209.4  27 | 2019-05-08T21:55:30+0000 [stdout#info] A query: b'hexagon-analytics.com'
+4209.4  27 | 2019-05-08T21:55:30+0000 [stdout#info] Result for b'hexagon-analytics.com' is ['34.200.173.100', '54.147.196.95', '52.86.3.36', '34.202.131.248']
+4209.4  27 | 2019-05-08T21:55:30+0000 [stdout#info] Result for b'hexagon-analytics.com' is ['34.202.131.248', '54.147.196.95', '34.200.173.100', '52.86.3.36']
+4209.5  27 | 2019-05-08T21:55:30+0000 [stdout#info] Result for b'hexagon-analytics.com' is ['34.200.173.100', '52.86.3.36', '34.202.131.248', '54.147.196.95']
+4210.0  36 | c : DNS request from ('192.168.0.94', 37370) to None: 37 bytes
+4210.0  36 | c : DNS request from ('192.168.0.94', 37370) to None: 37 bytes
+4210.0  27 | 2019-05-08T21:55:30+0000 [stdout#info] A query: b'notif-push.9gag.com'
+4210.0  27 | 2019-05-08T21:55:30+0000 [stdout#info] AAAA query, sending back A instead: b'notif-push.9gag.com'
+4210.0  27 | 2019-05-08T21:55:30+0000 [stdout#info] A query: b'notif-push.9gag.com'
+4210.0  27 | 2019-05-08T21:55:30+0000 [stdout#info] Result for b'notif-push.9gag.com' is ['35.171.109.1', '52.205.88.78', '34.225.82.27', '54.84.209.186']
+4210.0  27 | 2019-05-08T21:55:30+0000 [stdout#info] Result for b'notif-push.9gag.com' is ['34.225.82.27', '52.205.88.78', '35.171.109.1', '54.84.209.186']
+4210.1  36 | c : DNS request from ('192.168.0.94', 43720) to None: 37 bytes
+4210.1  36 | c : DNS request from ('192.168.0.94', 43720) to None: 37 bytes
+4210.1  36 | c : DNS request from ('192.168.0.94', 36662) to None: 37 bytes
+4210.1  27 | 2019-05-08T21:55:30+0000 [stdout#info] A query: b'notif-push.9gag.com'
+4210.1  27 | 2019-05-08T21:55:30+0000 [stdout#info] AAAA query, sending back A instead: b'notif-push.9gag.com'
+4210.1  27 | 2019-05-08T21:55:30+0000 [stdout#info] A query: b'notif-push.9gag.com'
+4210.2  27 | 2019-05-08T21:55:30+0000 [stdout#info] Result for b'notif-push.9gag.com' is ['54.84.209.186', '34.225.82.27', '35.171.109.1', '52.205.88.78']
+4210.2  27 | 2019-05-08T21:55:30+0000 [stdout#info] Result for b'notif-push.9gag.com' is ['54.84.209.186', '52.205.88.78', '34.225.82.27', '35.171.109.1']
+4210.2  27 | 2019-05-08T21:55:30+0000 [stdout#info] A query: b'notif-push.9gag.com'
+4210.2  27 | 2019-05-08T21:55:30+0000 [stdout#info] Result for b'notif-push.9gag.com' is ['35.171.109.1', '34.225.82.27', '52.205.88.78', '54.84.209.186']
+4210.2  36 | c : DNS request from ('192.168.0.94', 59165) to None: 31 bytes
+4210.2  36 | c : DNS request from ('192.168.0.94', 59165) to None: 31 bytes
+4210.2  27 | 2019-05-08T21:55:30+0000 [stdout#info] A query: b'js.stripe.com'
+4210.2  27 | 2019-05-08T21:55:30+0000 [stdout#info] AAAA query, sending back A instead: b'js.stripe.com'
+4210.2  27 | 2019-05-08T21:55:30+0000 [stdout#info] A query: b'js.stripe.com'
+4210.3  27 | 2019-05-08T21:55:30+0000 [stdout#info] Result for b'js.stripe.com' is ['151.101.12.176']
+4210.3  27 | 2019-05-08T21:55:30+0000 [stdout#info] Result for b'js.stripe.com' is ['151.101.12.176']
+4210.3  36 | c : DNS request from ('192.168.0.94', 46094) to None: 37 bytes
+4210.3  36 | c : DNS request from ('192.168.0.94', 46094) to None: 37 bytes
+4210.3  36 | c : DNS request from ('192.168.0.94', 46001) to None: 37 bytes
+4210.3  27 | 2019-05-08T21:55:30+0000 [stdout#info] A query: b'secure.gravatar.com'
+4210.3  27 | 2019-05-08T21:55:30+0000 [stdout#info] AAAA query, sending back A instead: b'secure.gravatar.com'
+4210.3  27 | 2019-05-08T21:55:30+0000 [stdout#info] A query: b'secure.gravatar.com'
+4210.3  27 | 2019-05-08T21:55:30+0000 [stdout#info] A query: b'secure.gravatar.com'
+4210.4  36 | c : DNS request from ('192.168.0.94', 34865) to None: 37 bytes
+4210.4  36 | c : DNS request from ('192.168.0.94', 34865) to None: 37 bytes
+4210.4  27 | 2019-05-08T21:55:31+0000 [stdout#info] Result for b'secure.gravatar.com' is ['192.0.73.2']
+4210.4  27 | 2019-05-08T21:55:31+0000 [stdout#info] Result for b'secure.gravatar.com' is ['192.0.73.2']
+4210.4  27 | 2019-05-08T21:55:31+0000 [stdout#info] Result for b'secure.gravatar.com' is ['192.0.73.2']
+4210.4  27 | 2019-05-08T21:55:31+0000 [stdout#info] A query: b'logx.optimizely.com'
+4210.4  27 | 2019-05-08T21:55:31+0000 [stdout#info] AAAA query, sending back A instead: b'logx.optimizely.com'
+4210.4  27 | 2019-05-08T21:55:31+0000 [stdout#info] A query: b'logx.optimizely.com'
+4210.5  27 | 2019-05-08T21:55:31+0000 [stdout#info] Result for b'logx.optimizely.com' is ['52.71.116.66', '52.5.6.23', '52.55.60.73', '52.6.137.235', '52.44.187.74', '52.44.226.206', '52.5.235.79', '52.71.150.180']
+4210.5  27 | 2019-05-08T21:55:31+0000 [stdout#info] Result for b'logx.optimizely.com' is ['34.198.82.42', '34.204.229.100', '54.236.114.14', '34.200.85.35', '34.197.251.40', '54.164.74.111', '34.202.243.136', '34.198.88.172']
+4210.9  36 | c : DNS request from ('192.168.0.94', 54621) to None: 33 bytes
+4210.9  36 | c : DNS request from ('192.168.0.94', 54621) to None: 33 bytes
+4210.9  36 | c : DNS request from ('192.168.0.94', 53682) to None: 37 bytes
+4210.9  36 | c : DNS request from ('192.168.0.94', 53682) to None: 37 bytes
+4211.0  36 | c : DNS request from ('192.168.0.94', 50126) to None: 37 bytes
+4211.0  27 | 2019-05-08T21:55:31+0000 [stdout#info] A query: b'bam.nr-data.net'
+4211.0  27 | 2019-05-08T21:55:31+0000 [stdout#info] AAAA query, sending back A instead: b'bam.nr-data.net'
+4211.0  27 | 2019-05-08T21:55:31+0000 [stdout#info] A query: b'bam.nr-data.net'
+4211.0  36 | c : DNS request from ('192.168.0.94', 33565) to None: 27 bytes
+4211.0  36 | c : DNS request from ('192.168.0.94', 33565) to None: 27 bytes
+4211.0  27 | 2019-05-08T21:55:31+0000 [stdout#info] A query: b'notif-push.9gag.com'
+4211.0  36 | c : DNS request from ('192.168.0.94', 53956) to None: 27 bytes
+4211.0  27 | 2019-05-08T21:55:31+0000 [stdout#info] AAAA query, sending back A instead: b'notif-push.9gag.com'
+4211.0  27 | 2019-05-08T21:55:31+0000 [stdout#info] A query: b'notif-push.9gag.com'
+4211.0  27 | 2019-05-08T21:55:31+0000 [stdout#info] A query: b'notif-push.9gag.com'
+4211.0  27 | 2019-05-08T21:55:31+0000 [stdout#info] Result for b'bam.nr-data.net' is ['162.247.242.20', '162.247.242.19', '162.247.242.21', '162.247.242.18']
+4211.1  27 | 2019-05-08T21:55:31+0000 [stdout#info] Result for b'bam.nr-data.net' is ['162.247.242.19', '162.247.242.20', '162.247.242.18', '162.247.242.21']
+4211.1  27 | 2019-05-08T21:55:31+0000 [stdout#info] A query: b'i1.wp.com'
+4211.1  27 | 2019-05-08T21:55:31+0000 [stdout#info] AAAA query, sending back A instead: b'i1.wp.com'
+4211.1  27 | 2019-05-08T21:55:31+0000 [stdout#info] A query: b'i1.wp.com'
+4211.1  27 | 2019-05-08T21:55:31+0000 [stdout#info] A query: b'i1.wp.com'
+4211.1  27 | 2019-05-08T21:55:31+0000 [stdout#info] Result for b'notif-push.9gag.com' is ['34.225.82.27', '52.205.88.78', '54.84.209.186', '35.171.109.1']
+4211.1  27 | 2019-05-08T21:55:31+0000 [stdout#info] Result for b'notif-push.9gag.com' is ['52.205.88.78', '54.84.209.186', '35.171.109.1', '34.225.82.27']
+4211.2  27 | 2019-05-08T21:55:31+0000 [stdout#info] Result for b'notif-push.9gag.com' is ['54.84.209.186', '34.225.82.27', '52.205.88.78', '35.171.109.1']
+4211.2  27 | 2019-05-08T21:55:31+0000 [stdout#info] Result for b'i1.wp.com' is ['192.0.77.2']
+4211.2  27 | 2019-05-08T21:55:31+0000 [stdout#info] Result for b'i1.wp.com' is ['192.0.77.2']
+4211.2  27 | 2019-05-08T21:55:31+0000 [stdout#info] Result for b'i1.wp.com' is ['192.0.77.2']
+4211.2  36 | c : DNS request from ('192.168.0.94', 52643) to None: 32 bytes
+4211.2  36 | c : DNS request from ('192.168.0.94', 52643) to None: 32 bytes
+4211.3  27 | 2019-05-08T21:55:31+0000 [stdout#info] A query: b'api.segment.io'
+4211.3  27 | 2019-05-08T21:55:31+0000 [stdout#info] Result for b'api.segment.io' is ['34.212.8.190', '35.162.213.85', '54.71.251.45', '54.69.67.204', '54.187.246.64', '54.69.66.94', '54.186.169.50', '54.218.45.31']
+4211.3  27 | 2019-05-08T21:55:31+0000 [stdout#info] AAAA query, sending back A instead: b'api.segment.io'
+4211.3  27 | 2019-05-08T21:55:31+0000 [stdout#info] A query: b'api.segment.io'
+4211.3  27 | 2019-05-08T21:55:31+0000 [stdout#info] Result for b'api.segment.io' is ['52.36.23.100', '52.88.58.102', '34.216.37.109', '52.35.227.82', '52.39.40.169', '52.35.185.7', '52.88.27.109', '52.33.31.189']
+4211.3  36 | c : DNS request from ('192.168.0.94', 51841) to None: 30 bytes
+4211.4  27 | 2019-05-08T21:55:32+0000 [stdout#info] A query: b'q.stripe.com'
+4211.4  27 | 2019-05-08T21:55:32+0000 [stdout#info] Result for b'q.stripe.com' is ['54.187.119.242']
+4211.6  36 | c : DNS request from ('192.168.0.94', 39236) to None: 52 bytes
+4211.6  36 | c : DNS request from ('192.168.0.94', 39236) to None: 52 bytes
+4211.6  36 | c : DNS request from ('192.168.0.94', 60782) to None: 52 bytes
+4211.6  27 | 2019-05-08T21:55:32+0000 [stdout#info] A query: b'marketplace-proxy.digitalocean.com'
+4211.6  27 | 2019-05-08T21:55:32+0000 [stdout#info] AAAA query, sending back A instead: b'marketplace-proxy.digitalocean.com'
+4211.6  27 | 2019-05-08T21:55:32+0000 [stdout#info] A query: b'marketplace-proxy.digitalocean.com'
+4211.6  27 | 2019-05-08T21:55:32+0000 [stdout#info] Result for b'marketplace-proxy.digitalocean.com' is ['104.16.181.15', '104.16.182.15']
+4211.6  27 | 2019-05-08T21:55:32+0000 [stdout#info] A query: b'marketplace-proxy.digitalocean.com'
+4211.6  27 | 2019-05-08T21:55:32+0000 [stdout#info] Result for b'marketplace-proxy.digitalocean.com' is ['104.16.182.15', '104.16.181.15']
+4211.6  36 | c : DNS request from ('192.168.0.94', 49326) to None: 37 bytes
+4211.6  36 | c : DNS request from ('192.168.0.94', 49326) to None: 37 bytes
+4211.7  36 | c : DNS request from ('192.168.0.94', 60942) to None: 37 bytes
+4211.7  27 | 2019-05-08T21:55:32+0000 [stdout#info] Result for b'marketplace-proxy.digitalocean.com' is ['104.16.181.15', '104.16.182.15']
+4211.7  27 | 2019-05-08T21:55:32+0000 [stdout#info] A query: b'notif-push.9gag.com'
+4211.7  27 | 2019-05-08T21:55:32+0000 [stdout#info] AAAA query, sending back A instead: b'notif-push.9gag.com'
+4211.7  27 | 2019-05-08T21:55:32+0000 [stdout#info] A query: b'notif-push.9gag.com'
+4211.7  27 | 2019-05-08T21:55:32+0000 [stdout#info] Result for b'notif-push.9gag.com' is ['52.205.88.78', '35.171.109.1', '34.225.82.27', '54.84.209.186']
+4211.7  27 | 2019-05-08T21:55:32+0000 [stdout#info] Result for b'notif-push.9gag.com' is ['54.84.209.186', '34.225.82.27', '35.171.109.1', '52.205.88.78']
+4211.7  27 | 2019-05-08T21:55:32+0000 [stdout#info] A query: b'notif-push.9gag.com'
+4211.8  27 | 2019-05-08T21:55:32+0000 [stdout#info] Result for b'notif-push.9gag.com' is ['34.225.82.27', '54.84.209.186', '35.171.109.1', '52.205.88.78']
+4211.8  36 | c : DNS request from ('192.168.0.94', 55489) to None: 46 bytes
+4211.8  36 | c : DNS request from ('192.168.0.94', 55489) to None: 46 bytes
+4211.8  36 | c : DNS request from ('192.168.0.94', 41724) to None: 46 bytes
+4211.8  27 | 2019-05-08T21:55:32+0000 [stdout#info] A query: b'websites.cdn.getfeedback.com'
+4211.9  27 | 2019-05-08T21:55:32+0000 [stdout#info] AAAA query, sending back A instead: b'websites.cdn.getfeedback.com'
+4211.9  27 | 2019-05-08T21:55:32+0000 [stdout#info] A query: b'websites.cdn.getfeedback.com'
+4211.9  27 | 2019-05-08T21:55:32+0000 [stdout#info] A query: b'websites.cdn.getfeedback.com'
+4211.9  27 | 2019-05-08T21:55:32+0000 [stdout#info] Result for b'websites.cdn.getfeedback.com' is ['151.101.113.176']
+4211.9  27 | 2019-05-08T21:55:32+0000 [stdout#info] Result for b'websites.cdn.getfeedback.com' is ['151.101.113.176']
+4211.9  27 | 2019-05-08T21:55:32+0000 [stdout#info] Result for b'websites.cdn.getfeedback.com' is ['151.101.113.176']
+4212.1  36 | c : DNS request from ('192.168.0.94', 41107) to None: 34 bytes
+4212.1  36 | c : DNS request from ('192.168.0.94', 41107) to None: 34 bytes
+4212.1  27 | 2019-05-08T21:55:32+0000 [stdout#info] A query: b'm.stripe.network'
+4212.1  27 | 2019-05-08T21:55:32+0000 [stdout#info] Result for b'm.stripe.network' is ['151.101.12.176']
+4212.1  27 | 2019-05-08T21:55:32+0000 [stdout#info] AAAA query, sending back A instead: b'm.stripe.network'
+4212.1  27 | 2019-05-08T21:55:32+0000 [stdout#info] A query: b'm.stripe.network'
+4212.2  27 | 2019-05-08T21:55:32+0000 [stdout#info] Result for b'm.stripe.network' is ['151.101.12.176']
+4212.2  36 | c : DNS request from ('192.168.0.94', 42931) to None: 37 bytes
+4212.2  36 | c : DNS request from ('192.168.0.94', 42931) to None: 37 bytes
+4212.2  36 | c : DNS request from ('192.168.0.94', 53036) to None: 37 bytes
+4212.2  27 | 2019-05-08T21:55:32+0000 [stdout#info] A query: b'notif-push.9gag.com'
+4212.2  27 | 2019-05-08T21:55:32+0000 [stdout#info] AAAA query, sending back A instead: b'notif-push.9gag.com'
+4212.2  27 | 2019-05-08T21:55:32+0000 [stdout#info] A query: b'notif-push.9gag.com'
+4212.2  27 | 2019-05-08T21:55:32+0000 [stdout#info] Result for b'notif-push.9gag.com' is ['34.225.82.27', '52.205.88.78', '35.171.109.1', '54.84.209.186']
+4212.2  27 | 2019-05-08T21:55:32+0000 [stdout#info] A query: b'notif-push.9gag.com'
+4212.2  27 | 2019-05-08T21:55:32+0000 [stdout#info] Result for b'notif-push.9gag.com' is ['35.171.109.1', '54.84.209.186', '34.225.82.27', '52.205.88.78']
+4212.2  27 | 2019-05-08T21:55:32+0000 [stdout#info] Result for b'notif-push.9gag.com' is ['34.225.82.27', '52.205.88.78', '35.171.109.1', '54.84.209.186']
+4212.8  36 | c : DNS request from ('192.168.0.94', 33688) to None: 30 bytes
+4212.8  36 | c : DNS request from ('192.168.0.94', 33688) to None: 30 bytes
+4212.9  27 | 2019-05-08T21:55:33+0000 [stdout#info] A query: b'q.stripe.com'
+4212.9  27 | 2019-05-08T21:55:33+0000 [stdout#info] AAAA query, sending back A instead: b'q.stripe.com'
+4212.9  27 | 2019-05-08T21:55:33+0000 [stdout#info] A query: b'q.stripe.com'
+4212.9  27 | 2019-05-08T21:55:33+0000 [stdout#info] Result for b'q.stripe.com' is ['54.187.159.182']
+4212.9  27 | 2019-05-08T21:55:33+0000 [stdout#info] Result for b'q.stripe.com' is ['54.187.159.182']
+4213.0  36 | c : DNS request from ('192.168.0.94', 53353) to None: 37 bytes
+4213.0  36 | c : DNS request from ('192.168.0.94', 53353) to None: 37 bytes
+4213.0  36 | c : DNS request from ('192.168.0.94', 56994) to None: 37 bytes
+4213.0  36 | c : DNS request from ('192.168.0.94', 36441) to None: 39 bytes
+4213.0  36 | c : DNS request from ('192.168.0.94', 36441) to None: 39 bytes
+4213.1  27 | 2019-05-08T21:55:33+0000 [stdout#info] A query: b'notif-push.9gag.com'
+4213.1  27 | 2019-05-08T21:55:33+0000 [stdout#info] AAAA query, sending back A instead: b'notif-push.9gag.com'
+4213.1  27 | 2019-05-08T21:55:33+0000 [stdout#info] A query: b'notif-push.9gag.com'
+4213.1  27 | 2019-05-08T21:55:33+0000 [stdout#info] Result for b'notif-push.9gag.com' is ['52.205.88.78', '35.171.109.1', '54.84.209.186', '34.225.82.27']
+4213.1  27 | 2019-05-08T21:55:33+0000 [stdout#info] A query: b'notif-push.9gag.com'
+4213.1  27 | 2019-05-08T21:55:33+0000 [stdout#info] A query: b'push.digitalocean.com'
+4213.1  27 | 2019-05-08T21:55:33+0000 [stdout#info] AAAA query, sending back A instead: b'push.digitalocean.com'
+4213.1  27 | 2019-05-08T21:55:33+0000 [stdout#info] A query: b'push.digitalocean.com'
+4213.1  27 | 2019-05-08T21:55:33+0000 [stdout#info] Result for b'notif-push.9gag.com' is ['52.205.88.78', '35.171.109.1', '34.225.82.27', '54.84.209.186']
+4213.1  27 | 2019-05-08T21:55:33+0000 [stdout#info] Result for b'notif-push.9gag.com' is ['52.205.88.78', '35.171.109.1', '34.225.82.27', '54.84.209.186']
+4213.1  27 | 2019-05-08T21:55:33+0000 [stdout#info] Result for b'push.digitalocean.com' is ['104.16.182.15', '104.16.181.15']
+4213.1  27 | 2019-05-08T21:55:33+0000 [stdout#info] Result for b'push.digitalocean.com' is ['104.16.182.15', '104.16.181.15']
+4213.1  36 | c : DNS request from ('192.168.0.94', 49357) to None: 39 bytes
+4213.1  36 | c : DNS request from ('192.168.0.94', 49357) to None: 39 bytes
+4213.1  36 | c : DNS request from ('192.168.0.94', 46054) to None: 39 bytes
+4213.2  27 | 2019-05-08T21:55:33+0000 [stdout#info] A query: b'push.digitalocean.com'
+4213.2  27 | 2019-05-08T21:55:33+0000 [stdout#info] AAAA query, sending back A instead: b'push.digitalocean.com'
+4213.2  27 | 2019-05-08T21:55:33+0000 [stdout#info] A query: b'push.digitalocean.com'
+4213.2  27 | 2019-05-08T21:55:33+0000 [stdout#info] A query: b'push.digitalocean.com'
+4213.2  27 | 2019-05-08T21:55:33+0000 [stdout#info] Result for b'push.digitalocean.com' is ['104.16.181.15', '104.16.182.15']
+4213.3  27 | 2019-05-08T21:55:33+0000 [stdout#info] Result for b'push.digitalocean.com' is ['104.16.182.15', '104.16.181.15']
+4213.3  27 | 2019-05-08T21:55:33+0000 [stdout#info] Result for b'push.digitalocean.com' is ['104.16.182.15', '104.16.181.15']
+4213.5  36 | c : DNS request from ('192.168.0.94', 57190) to None: 32 bytes
+4213.5  36 | c : DNS request from ('192.168.0.94', 57190) to None: 32 bytes
+4213.5  36 | c : DNS request from ('192.168.0.94', 56261) to None: 37 bytes
+4213.5  36 | c : DNS request from ('192.168.0.94', 56261) to None: 37 bytes
+4213.5  27 | 2019-05-08T21:55:34+0000 [stdout#info] A query: b'api.segment.io'
+4213.6  27 | 2019-05-08T21:55:34+0000 [stdout#info] AAAA query, sending back A instead: b'api.segment.io'
+4213.6  27 | 2019-05-08T21:55:34+0000 [stdout#info] A query: b'api.segment.io'
+4213.6  36 | c : DNS request from ('192.168.0.94', 59714) to None: 37 bytes
+4213.6  27 | 2019-05-08T21:55:34+0000 [stdout#info] Result for b'api.segment.io' is ['52.88.58.102', '52.88.27.109', '52.39.40.169', '52.36.23.100', '34.216.37.109', '52.35.227.82', '52.33.31.189', '52.35.185.7']
+4213.6  27 | 2019-05-08T21:55:34+0000 [stdout#info] Result for b'api.segment.io' is ['34.216.37.109', '52.88.27.109', '52.36.23.100', '52.88.58.102', '52.35.185.7', '52.39.40.169', '52.35.227.82', '52.33.31.189']
+4213.6  27 | 2019-05-08T21:55:34+0000 [stdout#info] A query: b'notif-push.9gag.com'
+4213.6  27 | 2019-05-08T21:55:34+0000 [stdout#info] AAAA query, sending back A instead: b'notif-push.9gag.com'
+4213.6  27 | 2019-05-08T21:55:34+0000 [stdout#info] A query: b'notif-push.9gag.com'
+4213.6  27 | 2019-05-08T21:55:34+0000 [stdout#info] Result for b'notif-push.9gag.com' is ['35.171.109.1', '54.84.209.186', '34.225.82.27', '52.205.88.78']
+4213.6  27 | 2019-05-08T21:55:34+0000 [stdout#info] Result for b'notif-push.9gag.com' is ['35.171.109.1', '54.84.209.186', '34.225.82.27', '52.205.88.78']
+4213.6  27 | 2019-05-08T21:55:34+0000 [stdout#info] A query: b'notif-push.9gag.com'
+4213.6  27 | 2019-05-08T21:55:34+0000 [stdout#info] Result for b'notif-push.9gag.com' is ['52.205.88.78', '54.84.209.186', '34.225.82.27', '35.171.109.1']
+4213.7  36 | c : DNS request from ('192.168.0.94', 51105) to None: 33 bytes
+4213.7  36 | c : DNS request from ('192.168.0.94', 51105) to None: 33 bytes
+4213.7  27 | 2019-05-08T21:55:34+0000 [stdout#info] A query: b'www.netflix.com'
+4213.7  27 | 2019-05-08T21:55:34+0000 [stdout#info] AAAA query, sending back A instead: b'www.netflix.com'
+4213.7  27 | 2019-05-08T21:55:34+0000 [stdout#info] A query: b'www.netflix.com'
+4213.8  27 | 2019-05-08T21:55:34+0000 [stdout#info] Result for b'www.netflix.com' is ['52.51.252.175', '34.252.114.84', '52.16.94.177', '52.30.134.73', '52.31.45.232', '54.72.48.211', '52.51.179.14', '34.241.48.195']
+4213.8  27 | 2019-05-08T21:55:34+0000 [stdout#info] Result for b'www.netflix.com' is ['52.51.252.175', '52.30.134.73', '34.241.48.195', '52.31.45.232', '52.16.94.177', '52.51.179.14', '54.72.48.211', '34.252.114.84']
+4214.0  36 | c : DNS request from ('192.168.0.94', 33978) to None: 37 bytes
+4214.0  36 | c : DNS request from ('192.168.0.94', 33978) to None: 37 bytes
+4214.0  36 | c : DNS request from ('192.168.0.94', 49044) to None: 37 bytes
+4214.1  27 | 2019-05-08T21:55:34+0000 [stdout#info] A query: b'notif-push.9gag.com'
+4214.1  27 | 2019-05-08T21:55:34+0000 [stdout#info] Result for b'notif-push.9gag.com' is ['34.225.82.27', '35.171.109.1', '54.84.209.186', '52.205.88.78']
+4214.1  27 | 2019-05-08T21:55:34+0000 [stdout#info] AAAA query, sending back A instead: b'notif-push.9gag.com'
+4214.1  27 | 2019-05-08T21:55:34+0000 [stdout#info] A query: b'notif-push.9gag.com'
+4214.1  27 | 2019-05-08T21:55:34+0000 [stdout#info] A query: b'notif-push.9gag.com'
+4214.1  27 | 2019-05-08T21:55:34+0000 [stdout#info] Result for b'notif-push.9gag.com' is ['34.225.82.27', '52.205.88.78', '54.84.209.186', '35.171.109.1']
+4214.1  27 | 2019-05-08T21:55:34+0000 [stdout#info] Result for b'notif-push.9gag.com' is ['34.225.82.27', '54.84.209.186', '35.171.109.1', '52.205.88.78']
+4214.5  36 | c : DNS request from ('192.168.0.94', 35926) to None: 37 bytes
+4214.5  36 | c : DNS request from ('192.168.0.94', 35926) to None: 37 bytes
+4214.5  36 | c : DNS request from ('192.168.0.94', 60127) to None: 37 bytes
+4214.5  27 | 2019-05-08T21:55:35+0000 [stdout#info] A query: b'notif-push.9gag.com'
+4214.5  27 | 2019-05-08T21:55:35+0000 [stdout#info] AAAA query, sending back A instead: b'notif-push.9gag.com'
+4214.5  27 | 2019-05-08T21:55:35+0000 [stdout#info] A query: b'notif-push.9gag.com'
+4214.5  27 | 2019-05-08T21:55:35+0000 [stdout#info] Result for b'notif-push.9gag.com' is ['54.84.209.186', '52.205.88.78', '34.225.82.27', '35.171.109.1']
+4214.6  27 | 2019-05-08T21:55:35+0000 [stdout#info] A query: b'notif-push.9gag.com'
+4214.6  27 | 2019-05-08T21:55:35+0000 [stdout#info] Result for b'notif-push.9gag.com' is ['52.205.88.78', '34.225.82.27', '54.84.209.186', '35.171.109.1']
+4214.6  27 | 2019-05-08T21:55:35+0000 [stdout#info] Result for b'notif-push.9gag.com' is ['52.205.88.78', '34.225.82.27', '54.84.209.186', '35.171.109.1']
+4214.6  36 | c : DNS request from ('192.168.0.94', 49196) to None: 29 bytes
+4214.6  36 | c : DNS request from ('192.168.0.94', 49196) to None: 29 bytes
+4214.7  27 | 2019-05-08T21:55:35+0000 [stdout#info] A query: b't.castle.io'
+4214.7  27 | 2019-05-08T21:55:35+0000 [stdout#info] AAAA query, sending back A instead: b't.castle.io'
+4214.7  27 | 2019-05-08T21:55:35+0000 [stdout#info] A query: b't.castle.io'
+4214.7  27 | 2019-05-08T21:55:35+0000 [stdout#info] Result for b't.castle.io' is ['52.20.91.212', '34.226.48.178', '54.173.182.130']
+4214.7  27 | 2019-05-08T21:55:35+0000 [stdout#info] Result for b't.castle.io' is ['34.226.48.178', '52.20.91.212', '54.173.182.130']
+4214.7  36 | c : DNS request from ('192.168.0.94', 46494) to None: 30 bytes
+4214.7  36 | c : DNS request from ('192.168.0.94', 46494) to None: 30 bytes
+4214.7  36 | c : DNS request from ('192.168.0.94', 41840) to None: 30 bytes
+4214.7  27 | 2019-05-08T21:55:35+0000 [stdout#info] A query: b'm.stripe.com'
+4214.7  27 | 2019-05-08T21:55:35+0000 [stdout#info] AAAA query, sending back A instead: b'm.stripe.com'
+4214.7  27 | 2019-05-08T21:55:35+0000 [stdout#info] A query: b'm.stripe.com'
+4214.7  27 | 2019-05-08T21:55:35+0000 [stdout#info] Result for b'm.stripe.com' is ['34.211.189.82', '54.186.142.226', '54.201.225.120', '35.162.96.208', '52.27.35.166', '54.148.215.102']
+4214.7  27 | 2019-05-08T21:55:35+0000 [stdout#info] A query: b'm.stripe.com'
+4214.7  27 | 2019-05-08T21:55:35+0000 [stdout#info] Result for b'm.stripe.com' is ['54.186.142.226', '54.201.225.120', '34.211.189.82', '52.27.35.166', '54.148.215.102', '35.162.96.208']
+4214.7  27 | 2019-05-08T21:55:35+0000 [stdout#info] Result for b'm.stripe.com' is ['54.201.225.120', '34.211.189.82', '54.148.215.102', '35.162.96.208', '52.27.35.166', '54.186.142.226']
+4214.7  36 | c : DNS request from ('192.168.0.94', 51646) to None: 33 bytes
+4214.7  36 | c : DNS request from ('192.168.0.94', 51646) to None: 33 bytes
+4214.8  27 | 2019-05-08T21:55:35+0000 [stdout#info] A query: b'bam.nr-data.net'
+4214.8  27 | 2019-05-08T21:55:35+0000 [stdout#info] AAAA query, sending back A instead: b'bam.nr-data.net'
+4214.8  27 | 2019-05-08T21:55:35+0000 [stdout#info] A query: b'bam.nr-data.net'
+4214.8  27 | 2019-05-08T21:55:35+0000 [stdout#info] Result for b'bam.nr-data.net' is ['162.247.242.18', '162.247.242.20', '162.247.242.21', '162.247.242.19']
+4214.8  27 | 2019-05-08T21:55:35+0000 [stdout#info] Result for b'bam.nr-data.net' is ['162.247.242.18', '162.247.242.20', '162.247.242.19', '162.247.242.21']
+4215.3  36 | c : DNS request from ('192.168.0.94', 58794) to None: 30 bytes
+4215.3  36 | c : DNS request from ('192.168.0.94', 58794) to None: 30 bytes
+4215.3  27 | 2019-05-08T21:55:36+0000 [stdout#info] A query: b'm.stripe.com'
+4215.3  27 | 2019-05-08T21:55:36+0000 [stdout#info] AAAA query, sending back A instead: b'm.stripe.com'
+4215.3  27 | 2019-05-08T21:55:36+0000 [stdout#info] A query: b'm.stripe.com'
+4215.4  36 | c : DNS request from ('192.168.0.94', 38733) to None: 37 bytes
+4215.4  36 | c : DNS request from ('192.168.0.94', 38733) to None: 37 bytes
+4215.4  36 | c : DNS request from ('192.168.0.94', 32894) to None: 37 bytes
+4215.4  27 | 2019-05-08T21:55:36+0000 [stdout#info] Result for b'm.stripe.com' is ['54.186.142.226', '54.148.215.102', '35.162.96.208', '34.211.189.82', '54.201.225.120', '52.27.35.166']
+4215.4  27 | 2019-05-08T21:55:36+0000 [stdout#info] Result for b'm.stripe.com' is ['52.27.35.166', '54.186.142.226', '54.148.215.102', '34.211.189.82', '54.201.225.120', '35.162.96.208']
+4215.4  27 | 2019-05-08T21:55:36+0000 [stdout#info] A query: b'notif-push.9gag.com'
+4215.4  27 | 2019-05-08T21:55:36+0000 [stdout#info] AAAA query, sending back A instead: b'notif-push.9gag.com'
+4215.4  27 | 2019-05-08T21:55:36+0000 [stdout#info] A query: b'notif-push.9gag.com'
+4215.4  27 | 2019-05-08T21:55:36+0000 [stdout#info] A query: b'notif-push.9gag.com'
+4215.5  27 | 2019-05-08T21:55:36+0000 [stdout#info] Result for b'notif-push.9gag.com' is ['54.84.209.186', '52.205.88.78', '34.225.82.27', '35.171.109.1']
+4215.5  27 | 2019-05-08T21:55:36+0000 [stdout#info] Result for b'notif-push.9gag.com' is ['52.205.88.78', '35.171.109.1', '54.84.209.186', '34.225.82.27']
+4215.5  27 | 2019-05-08T21:55:36+0000 [stdout#info] Result for b'notif-push.9gag.com' is ['54.84.209.186', '35.171.109.1', '52.205.88.78', '34.225.82.27']
+4215.8  36 | c : DNS request from ('192.168.0.94', 34728) to None: 37 bytes
+4215.8  36 | c : DNS request from ('192.168.0.94', 34728) to None: 37 bytes
+4215.8  36 | c : DNS request from ('192.168.0.94', 38239) to None: 37 bytes
+4215.9  27 | 2019-05-08T21:55:36+0000 [stdout#info] A query: b'notif-push.9gag.com'
+4215.9  27 | 2019-05-08T21:55:36+0000 [stdout#info] AAAA query, sending back A instead: b'notif-push.9gag.com'
+4215.9  27 | 2019-05-08T21:55:36+0000 [stdout#info] A query: b'notif-push.9gag.com'
+4215.9  27 | 2019-05-08T21:55:36+0000 [stdout#info] A query: b'notif-push.9gag.com'
+4215.9  27 | 2019-05-08T21:55:36+0000 [stdout#info] Result for b'notif-push.9gag.com' is ['54.84.209.186', '52.205.88.78', '35.171.109.1', '34.225.82.27']
+4216.0  27 | 2019-05-08T21:55:36+0000 [stdout#info] Result for b'notif-push.9gag.com' is ['34.225.82.27', '54.84.209.186', '35.171.109.1', '52.205.88.78']
+4216.0  27 | 2019-05-08T21:55:36+0000 [stdout#info] Result for b'notif-push.9gag.com' is ['35.171.109.1', '54.84.209.186', '52.205.88.78', '34.225.82.27']
+4216.4  36 | c : DNS request from ('192.168.0.94', 47261) to None: 37 bytes
+4216.4  36 | c : DNS request from ('192.168.0.94', 47261) to None: 37 bytes
+4216.4  36 | c : DNS request from ('192.168.0.94', 48385) to None: 37 bytes
+4216.4  27 | 2019-05-08T21:55:37+0000 [stdout#info] A query: b'notif-push.9gag.com'
+4216.4  27 | 2019-05-08T21:55:37+0000 [stdout#info] AAAA query, sending back A instead: b'notif-push.9gag.com'
+4216.4  27 | 2019-05-08T21:55:37+0000 [stdout#info] A query: b'notif-push.9gag.com'
+4216.4  36 | c : DNS request from ('192.168.0.94', 60722) to None: 30 bytes
+4216.4  36 | c : DNS request from ('192.168.0.94', 60722) to None: 30 bytes
+4216.4  27 | 2019-05-08T21:55:37+0000 [stdout#info] Result for b'notif-push.9gag.com' is ['54.84.209.186', '35.171.109.1', '34.225.82.27', '52.205.88.78']
+4216.5  27 | 2019-05-08T21:55:37+0000 [stdout#info] A query: b'notif-push.9gag.com'
+4216.5  27 | 2019-05-08T21:55:37+0000 [stdout#info] Result for b'notif-push.9gag.com' is ['54.84.209.186', '35.171.109.1', '34.225.82.27', '52.205.88.78']
+4216.5  27 | 2019-05-08T21:55:37+0000 [stdout#info] Result for b'notif-push.9gag.com' is ['34.225.82.27', '54.84.209.186', '35.171.109.1', '52.205.88.78']
+4216.5  27 | 2019-05-08T21:55:37+0000 [stdout#info] A query: b'm.stripe.com'
+4216.5  27 | 2019-05-08T21:55:37+0000 [stdout#info] AAAA query, sending back A instead: b'm.stripe.com'
+4216.5  27 | 2019-05-08T21:55:37+0000 [stdout#info] A query: b'm.stripe.com'
+4216.5  27 | 2019-05-08T21:55:37+0000 [stdout#info] Result for b'm.stripe.com' is ['54.148.215.102', '54.186.142.226', '34.211.189.82', '52.27.35.166', '54.201.225.120', '35.162.96.208']
+4216.5  27 | 2019-05-08T21:55:37+0000 [stdout#info] Result for b'm.stripe.com' is ['54.148.215.102', '54.186.142.226', '52.27.35.166', '35.162.96.208', '34.211.189.82', '54.201.225.120']
+4216.9  36 | c : DNS request from ('192.168.0.94', 41997) to None: 37 bytes
+4216.9  36 | c : DNS request from ('192.168.0.94', 41997) to None: 37 bytes
+4216.9  36 | c : DNS request from ('192.168.0.94', 57046) to None: 37 bytes
+4216.9  27 | 2019-05-08T21:55:37+0000 [stdout#info] A query: b'notif-push.9gag.com'
+4216.9  27 | 2019-05-08T21:55:37+0000 [stdout#info] AAAA query, sending back A instead: b'notif-push.9gag.com'
+4216.9  27 | 2019-05-08T21:55:37+0000 [stdout#info] A query: b'notif-push.9gag.com'
+4216.9  27 | 2019-05-08T21:55:37+0000 [stdout#info] Result for b'notif-push.9gag.com' is ['54.84.209.186', '34.225.82.27', '35.171.109.1', '52.205.88.78']
+4216.9  27 | 2019-05-08T21:55:37+0000 [stdout#info] A query: b'notif-push.9gag.com'
+4216.9  27 | 2019-05-08T21:55:37+0000 [stdout#info] Result for b'notif-push.9gag.com' is ['54.84.209.186', '34.225.82.27', '35.171.109.1', '52.205.88.78']
+4216.9  27 | 2019-05-08T21:55:37+0000 [stdout#info] Result for b'notif-push.9gag.com' is ['52.205.88.78', '54.84.209.186', '35.171.109.1', '34.225.82.27']
+4217.4  36 | c : DNS request from ('192.168.0.94', 58823) to None: 37 bytes
+4217.4  36 | c : DNS request from ('192.168.0.94', 58823) to None: 37 bytes
+4217.4  36 | c : DNS request from ('192.168.0.94', 55833) to None: 32 bytes
+4217.4  36 | c : DNS request from ('192.168.0.94', 55833) to None: 32 bytes
+4217.4  36 | c : DNS request from ('192.168.0.94', 57722) to None: 29 bytes
+4217.4  36 | c : DNS request from ('192.168.0.94', 57722) to None: 29 bytes
+4217.4  36 | c : DNS request from ('192.168.0.94', 35710) to None: 37 bytes
+4217.4  27 | 2019-05-08T21:55:38+0000 [stdout#info] A query: b'notif-push.9gag.com'
+4217.4  27 | 2019-05-08T21:55:38+0000 [stdout#info] AAAA query, sending back A instead: b'notif-push.9gag.com'
+4217.4  27 | 2019-05-08T21:55:38+0000 [stdout#info] A query: b'notif-push.9gag.com'
+4217.5  27 | 2019-05-08T21:55:38+0000 [stdout#info] Result for b'notif-push.9gag.com' is ['34.225.82.27', '52.205.88.78', '54.84.209.186', '35.171.109.1']
+4217.5  27 | 2019-05-08T21:55:38+0000 [stdout#info] A query: b'api.segment.io'
+4217.5  27 | 2019-05-08T21:55:38+0000 [stdout#info] AAAA query, sending back A instead: b'api.segment.io'
+4217.5  27 | 2019-05-08T21:55:38+0000 [stdout#info] A query: b'api.segment.io'
+4217.5  27 | 2019-05-08T21:55:38+0000 [stdout#info] A query: b't.castle.io'
+4217.5  27 | 2019-05-08T21:55:38+0000 [stdout#info] AAAA query, sending back A instead: b't.castle.io'
+4217.5  27 | 2019-05-08T21:55:38+0000 [stdout#info] A query: b't.castle.io'
+4217.5  27 | 2019-05-08T21:55:38+0000 [stdout#info] Result for b'notif-push.9gag.com' is ['52.205.88.78', '35.171.109.1', '34.225.82.27', '54.84.209.186']
+4217.5  27 | 2019-05-08T21:55:38+0000 [stdout#info] A query: b'notif-push.9gag.com'
+4217.5  27 | 2019-05-08T21:55:38+0000 [stdout#info] Result for b'api.segment.io' is ['54.69.67.204', '34.212.8.190', '54.71.251.45', '35.162.213.85', '54.186.169.50', '54.218.45.31', '54.187.246.64', '54.69.66.94']
+4217.5  27 | 2019-05-08T21:55:38+0000 [stdout#info] Result for b't.castle.io' is ['34.226.48.178', '52.20.91.212', '54.173.182.130']
+4217.5  27 | 2019-05-08T21:55:38+0000 [stdout#info] Result for b't.castle.io' is ['52.20.91.212', '34.226.48.178', '54.173.182.130']
+4217.5  27 | 2019-05-08T21:55:38+0000 [stdout#info] Result for b'api.segment.io' is ['52.88.27.109', '52.35.227.82', '52.36.23.100', '34.216.37.109', '52.39.40.169', '52.88.58.102', '52.35.185.7', '52.33.31.189']
+4217.5  27 | 2019-05-08T21:55:38+0000 [stdout#info] Result for b'notif-push.9gag.com' is ['54.84.209.186', '35.171.109.1', '52.205.88.78', '34.225.82.27']
+4217.8  36 | c : DNS request from ('192.168.0.94', 33031) to None: 33 bytes
+4217.8  36 | c : DNS request from ('192.168.0.94', 33031) to None: 33 bytes
+4217.8  27 | 2019-05-08T21:55:38+0000 [stdout#info] A query: b'bam.nr-data.net'
+4217.8  27 | 2019-05-08T21:55:38+0000 [stdout#info] AAAA query, sending back A instead: b'bam.nr-data.net'
+4217.8  27 | 2019-05-08T21:55:38+0000 [stdout#info] A query: b'bam.nr-data.net'
+4217.8  27 | 2019-05-08T21:55:38+0000 [stdout#info] Result for b'bam.nr-data.net' is ['162.247.242.20', '162.247.242.19', '162.247.242.21', '162.247.242.18']
+4217.8  27 | 2019-05-08T21:55:38+0000 [stdout#info] Result for b'bam.nr-data.net' is ['162.247.242.20', '162.247.242.19', '162.247.242.18', '162.247.242.21']
+4217.8  36 | c : DNS request from ('192.168.0.94', 41846) to None: 31 bytes
+4217.8  36 | c : DNS request from ('192.168.0.94', 59505) to None: 39 bytes
+4217.8  36 | c : DNS request from ('192.168.0.94', 38253) to None: 37 bytes
+4217.8  36 | c : DNS request from ('192.168.0.94', 38253) to None: 37 bytes
+4217.9  27 | 2019-05-08T21:55:38+0000 [stdout#info] A query: b'cdn.mxpnl.com'
+4217.9  27 | 2019-05-08T21:55:38+0000 [stdout#info] A query: b'getfeedback.imgix.net'
+4217.9  27 | 2019-05-08T21:55:38+0000 [stdout#info] Result for b'cdn.mxpnl.com' is ['130.211.5.208', '35.186.235.23']
+4217.9  27 | 2019-05-08T21:55:38+0000 [stdout#info] A query: b'www.getfeedback.com'
+4217.9  27 | 2019-05-08T21:55:38+0000 [stdout#info] AAAA query, sending back A instead: b'www.getfeedback.com'
+4217.9  27 | 2019-05-08T21:55:38+0000 [stdout#info] A query: b'www.getfeedback.com'
+4218.0  27 | 2019-05-08T21:55:38+0000 [stdout#info] Result for b'getfeedback.imgix.net' is ['151.101.114.208']
+4218.0  27 | 2019-05-08T21:55:38+0000 [stdout#info] Result for b'www.getfeedback.com' is ['52.22.236.254', '52.201.75.180', '54.173.32.212', '52.45.248.161', '35.172.177.65', '52.203.102.189', '34.232.40.183', '52.71.139.107']
+4218.0  27 | 2019-05-08T21:55:38+0000 [stdout#info] Result for b'www.getfeedback.com' is ['52.201.75.180', '54.173.32.212', '34.232.40.183', '52.45.248.161', '52.203.102.189', '35.172.177.65', '52.71.139.107', '52.22.236.254']
+4218.0 TEL | [176] Running: sudo -n echo -n
+4218.1 TEL | [176] ran in 0.06 secs.
+4218.6  36 | c : DNS request from ('192.168.0.94', 35123) to None: 44 bytes
+4218.6  36 | c : DNS request from ('192.168.0.94', 35123) to None: 44 bytes
+4218.7  27 | 2019-05-08T21:55:39+0000 [stdout#info] A query: b'assets.cdn.getfeedback.com'
+4218.7  27 | 2019-05-08T21:55:39+0000 [stdout#info] AAAA query, sending back A instead: b'assets.cdn.getfeedback.com'
+4218.7  27 | 2019-05-08T21:55:39+0000 [stdout#info] A query: b'assets.cdn.getfeedback.com'
+4218.7  27 | 2019-05-08T21:55:39+0000 [stdout#info] Result for b'assets.cdn.getfeedback.com' is ['151.101.113.176']
+4218.7  27 | 2019-05-08T21:55:39+0000 [stdout#info] Result for b'assets.cdn.getfeedback.com' is ['151.101.113.176']
+4218.8  36 | c : DNS request from ('192.168.0.94', 52400) to None: 31 bytes
+4218.8  36 | c : DNS request from ('192.168.0.94', 52400) to None: 31 bytes
+4218.9  27 | 2019-05-08T21:55:39+0000 [stdout#info] A query: b'cdn.mxpnl.com'
+4218.9  27 | 2019-05-08T21:55:39+0000 [stdout#info] AAAA query, sending back A instead: b'cdn.mxpnl.com'
+4218.9  27 | 2019-05-08T21:55:39+0000 [stdout#info] A query: b'cdn.mxpnl.com'
+4218.9  27 | 2019-05-08T21:55:39+0000 [stdout#info] Result for b'cdn.mxpnl.com' is ['35.186.235.23', '130.211.5.208']
+4218.9  27 | 2019-05-08T21:55:39+0000 [stdout#info] Result for b'cdn.mxpnl.com' is ['35.186.235.23', '130.211.5.208']
+4220.2  36 | c : DNS request from ('192.168.0.94', 50773) to None: 39 bytes
+4220.2  36 | c : DNS request from ('192.168.0.94', 50773) to None: 39 bytes
+4220.3  27 | 2019-05-08T21:55:40+0000 [stdout#info] A query: b'getfeedback.imgix.net'
+4220.3  27 | 2019-05-08T21:55:40+0000 [stdout#info] AAAA query, sending back A instead: b'getfeedback.imgix.net'
+4220.3  27 | 2019-05-08T21:55:40+0000 [stdout#info] A query: b'getfeedback.imgix.net'
+4220.3  27 | 2019-05-08T21:55:41+0000 [stdout#info] Result for b'getfeedback.imgix.net' is ['151.101.114.208']
+4220.4  27 | 2019-05-08T21:55:41+0000 [stdout#info] Result for b'getfeedback.imgix.net' is ['151.101.114.208']
+4220.6  36 | c : DNS request from ('192.168.0.94', 46851) to None: 34 bytes
+4220.6  36 | c : DNS request from ('192.168.0.94', 46851) to None: 34 bytes
+4220.6  27 | 2019-05-08T21:55:41+0000 [stdout#info] A query: b'api.mixpanel.com'
+4220.6  27 | 2019-05-08T21:55:41+0000 [stdout#info] AAAA query, sending back A instead: b'api.mixpanel.com'
+4220.6  27 | 2019-05-08T21:55:41+0000 [stdout#info] A query: b'api.mixpanel.com'
+4220.6  27 | 2019-05-08T21:55:41+0000 [stdout#info] Result for b'api.mixpanel.com' is ['107.178.240.159', '130.211.34.183', '35.186.241.51', '35.190.25.25']
+4220.6  27 | 2019-05-08T21:55:41+0000 [stdout#info] Result for b'api.mixpanel.com' is ['35.190.25.25', '35.186.241.51', '130.211.34.183', '107.178.240.159']
+4221.5  36 | c : DNS request from ('192.168.0.94', 37373) to None: 30 bytes
+4221.5  36 | c : DNS request from ('192.168.0.94', 37373) to None: 30 bytes
+4221.5  27 | 2019-05-08T21:55:42+0000 [stdout#info] A query: b'm.stripe.com'
+4221.5  27 | 2019-05-08T21:55:42+0000 [stdout#info] AAAA query, sending back A instead: b'm.stripe.com'
+4221.5  27 | 2019-05-08T21:55:42+0000 [stdout#info] A query: b'm.stripe.com'
+4221.5  27 | 2019-05-08T21:55:42+0000 [stdout#info] Result for b'm.stripe.com' is ['34.211.189.82', '54.201.225.120', '54.186.142.226', '54.148.215.102', '52.27.35.166', '35.162.96.208']
+4221.5  27 | 2019-05-08T21:55:42+0000 [stdout#info] Result for b'm.stripe.com' is ['54.186.142.226', '35.162.96.208', '54.148.215.102', '52.27.35.166', '34.211.189.82', '54.201.225.120']
+4221.6  36 | c : DNS request from ('192.168.0.94', 50085) to None: 32 bytes
+4221.6  36 | c : DNS request from ('192.168.0.94', 50085) to None: 32 bytes
+4221.6  36 | c : DNS request from ('192.168.0.94', 57819) to None: 29 bytes
+4221.6  36 | c : DNS request from ('192.168.0.94', 57819) to None: 29 bytes
+4221.6  27 | 2019-05-08T21:55:42+0000 [stdout#info] A query: b'api.segment.io'
+4221.6  27 | 2019-05-08T21:55:42+0000 [stdout#info] AAAA query, sending back A instead: b'api.segment.io'
+4221.6  27 | 2019-05-08T21:55:42+0000 [stdout#info] A query: b'api.segment.io'
+4221.6  27 | 2019-05-08T21:55:42+0000 [stdout#info] A query: b't.castle.io'
+4221.6  27 | 2019-05-08T21:55:42+0000 [stdout#info] AAAA query, sending back A instead: b't.castle.io'
+4221.6  27 | 2019-05-08T21:55:42+0000 [stdout#info] A query: b't.castle.io'
+4221.6  27 | 2019-05-08T21:55:42+0000 [stdout#info] Result for b'api.segment.io' is ['54.71.251.45', '34.212.8.190', '35.162.213.85', '54.186.169.50', '54.218.45.31', '54.187.246.64', '54.69.66.94', '54.69.67.204']
+4221.7  27 | 2019-05-08T21:55:42+0000 [stdout#info] Result for b'api.segment.io' is ['34.216.37.109', '52.35.185.7', '52.35.227.82', '52.33.31.189', '52.39.40.169', '52.88.58.102', '52.88.27.109', '52.36.23.100']
+4221.7  27 | 2019-05-08T21:55:42+0000 [stdout#info] Result for b't.castle.io' is ['34.226.48.178', '54.173.182.130', '52.20.91.212']
+4221.7  27 | 2019-05-08T21:55:42+0000 [stdout#info] Result for b't.castle.io' is ['54.173.182.130', '52.20.91.212', '34.226.48.178']
+4226.5  36 | c : DNS request from ('192.168.0.94', 36912) to None: 30 bytes
+4226.5  36 | c : DNS request from ('192.168.0.94', 36912) to None: 30 bytes
+4226.6  27 | 2019-05-08T21:55:47+0000 [stdout#info] A query: b'm.stripe.com'
+4226.6  27 | 2019-05-08T21:55:47+0000 [stdout#info] AAAA query, sending back A instead: b'm.stripe.com'
+4226.6  27 | 2019-05-08T21:55:47+0000 [stdout#info] A query: b'm.stripe.com'
+4226.6  27 | 2019-05-08T21:55:47+0000 [stdout#info] Result for b'm.stripe.com' is ['54.148.215.102', '54.201.225.120', '52.27.35.166', '34.211.189.82', '54.186.142.226', '35.162.96.208']
+4226.6  27 | 2019-05-08T21:55:47+0000 [stdout#info] Result for b'm.stripe.com' is ['54.186.142.226', '35.162.96.208', '52.27.35.166', '34.211.189.82', '54.148.215.102', '54.201.225.120']
+4233.4 TEL | (proxy checking local liveness)
+4233.4  27 | 2019-05-08T21:55:54+0000 [Poll#info] Checkpoint
+4235.0  36 | c : DNS request from ('192.168.0.94', 47906) to None: 33 bytes
+4235.0  36 | c : DNS request from ('192.168.0.94', 47906) to None: 33 bytes
+4235.0  27 | 2019-05-08T21:55:55+0000 [stdout#info] A query: b'www.netflix.com'
+4235.0  27 | 2019-05-08T21:55:55+0000 [stdout#info] AAAA query, sending back A instead: b'www.netflix.com'
+4235.0  27 | 2019-05-08T21:55:55+0000 [stdout#info] A query: b'www.netflix.com'
+4235.0  27 | 2019-05-08T21:55:55+0000 [stdout#info] Result for b'www.netflix.com' is ['52.30.134.73', '34.241.48.195', '52.51.179.14', '52.16.94.177', '52.209.214.74', '34.252.114.84', '52.51.252.175', '52.31.45.232']
+4235.0  27 | 2019-05-08T21:55:55+0000 [stdout#info] Result for b'www.netflix.com' is ['52.51.179.14', '52.51.252.175', '52.16.94.177', '34.252.114.84', '52.209.214.74', '34.241.48.195', '52.30.134.73', '52.31.45.232']
+4235.5  36 | c : DNS request from ('192.168.0.94', 44493) to None: 38 bytes
+4235.5  36 | c : DNS request from ('192.168.0.94', 37598) to None: 26 bytes
+4235.5  36 | c : DNS request from ('192.168.0.94', 44493) to None: 38 bytes
+4235.5  36 | c : DNS request from ('192.168.0.94', 37598) to None: 26 bytes
+4235.5  27 | 2019-05-08T21:55:56+0000 [stdout#info] A query: b'www.digitalocean.com'
+4235.5  27 | 2019-05-08T21:55:56+0000 [stdout#info] A query: b'9gag.com'
+4235.5  27 | 2019-05-08T21:55:56+0000 [stdout#info] AAAA query, sending back A instead: b'www.digitalocean.com'
+4235.5  27 | 2019-05-08T21:55:56+0000 [stdout#info] A query: b'www.digitalocean.com'
+4235.5  27 | 2019-05-08T21:55:56+0000 [stdout#info] AAAA query, sending back A instead: b'9gag.com'
+4235.5  27 | 2019-05-08T21:55:56+0000 [stdout#info] A query: b'9gag.com'
+4235.5  27 | 2019-05-08T21:55:56+0000 [stdout#info] Result for b'www.digitalocean.com' is ['104.16.25.4', '104.16.24.4']
+4235.5  27 | 2019-05-08T21:55:56+0000 [stdout#info] Result for b'www.digitalocean.com' is ['104.16.24.4', '104.16.25.4']
+4235.6  27 | 2019-05-08T21:55:56+0000 [stdout#info] Result for b'9gag.com' is ['151.101.194.133', '151.101.130.133', '151.101.2.133', '151.101.66.133']
+4235.6  27 | 2019-05-08T21:55:56+0000 [stdout#info] Result for b'9gag.com' is ['151.101.66.133', '151.101.2.133', '151.101.130.133', '151.101.194.133']
+4241.2  36 | c : DNS request from ('192.168.0.94', 56938) to None: 32 bytes
+4241.2  36 | c : DNS request from ('192.168.0.94', 56938) to None: 32 bytes
+4241.2  27 | 2019-05-08T21:56:01+0000 [stdout#info] A query: b'api.segment.io'
+4241.2  27 | 2019-05-08T21:56:01+0000 [stdout#info] AAAA query, sending back A instead: b'api.segment.io'
+4241.2  27 | 2019-05-08T21:56:01+0000 [stdout#info] A query: b'api.segment.io'
+4241.2  27 | 2019-05-08T21:56:01+0000 [stdout#info] Result for b'api.segment.io' is ['52.88.27.109', '52.33.31.189', '34.216.37.109', '52.35.227.82', '52.35.185.7', '52.39.40.169', '52.88.58.102', '52.36.23.100']
+4241.2  27 | 2019-05-08T21:56:01+0000 [stdout#info] Result for b'api.segment.io' is ['54.71.251.45', '54.69.66.94', '54.187.246.64', '54.69.67.204', '34.212.8.190', '35.162.213.85', '54.218.45.31', '54.186.169.50']
+4247.1  36 | c : DNS request from ('192.168.0.94', 40214) to None: 33 bytes
+4247.1  36 | c : DNS request from ('192.168.0.94', 40214) to None: 33 bytes
+4247.2  27 | 2019-05-08T21:56:07+0000 [stdout#info] A query: b'www.netflix.com'
+4247.2  27 | 2019-05-08T21:56:07+0000 [stdout#info] AAAA query, sending back A instead: b'www.netflix.com'
+4247.2  27 | 2019-05-08T21:56:07+0000 [stdout#info] A query: b'www.netflix.com'
+4247.2  27 | 2019-05-08T21:56:07+0000 [stdout#info] Result for b'www.netflix.com' is ['34.241.48.195', '52.51.179.14', '54.72.48.211', '34.252.114.84', '52.30.134.73', '52.209.214.74', '52.16.94.177', '52.51.252.175']
+4247.2  27 | 2019-05-08T21:56:07+0000 [stdout#info] Result for b'www.netflix.com' is ['52.51.252.175', '52.31.45.232', '52.16.94.177', '52.209.214.74', '52.51.179.14', '34.241.48.195', '52.30.134.73', '34.252.114.84']
+4248.1 TEL | [177] Running: sudo -n echo -n
+4248.2 TEL | [177] ran in 0.03 secs.
+4249.2  36 | c : DNS request from ('192.168.0.94', 35969) to None: 42 bytes
+4249.2  36 | c : DNS request from ('192.168.0.94', 35969) to None: 42 bytes
+4249.2  27 | 2019-05-08T21:56:09+0000 [stdout#info] A query: b'www.google-analytics.com'
+4249.3  36 | c : DNS request from ('192.168.0.94', 41091) to None: 32 bytes
+4249.3  36 | c : DNS request from ('192.168.0.94', 41091) to None: 32 bytes
+4249.3  36 | c : DNS request from ('192.168.0.94', 45122) to None: 29 bytes
+4249.3  36 | c : DNS request from ('192.168.0.94', 45122) to None: 29 bytes
+4249.3  27 | 2019-05-08T21:56:09+0000 [stdout#info] AAAA query, sending back A instead: b'www.google-analytics.com'
+4249.3  27 | 2019-05-08T21:56:09+0000 [stdout#info] A query: b'www.google-analytics.com'
+4249.3  27 | 2019-05-08T21:56:09+0000 [stdout#info] Result for b'www.google-analytics.com' is ['172.217.22.110']
+4249.3  27 | 2019-05-08T21:56:09+0000 [stdout#info] Result for b'www.google-analytics.com' is ['172.217.22.110']
+4249.3  27 | 2019-05-08T21:56:09+0000 [stdout#info] A query: b'api.segment.io'
+4249.3  27 | 2019-05-08T21:56:09+0000 [stdout#info] AAAA query, sending back A instead: b'api.segment.io'
+4249.3  27 | 2019-05-08T21:56:09+0000 [stdout#info] A query: b'api.segment.io'
+4249.3  27 | 2019-05-08T21:56:09+0000 [stdout#info] Result for b'api.segment.io' is ['52.35.185.7', '34.216.37.109', '52.33.31.189', '52.88.58.102', '52.39.40.169', '52.36.23.100', '52.35.227.82', '52.88.27.109']
+4249.3  27 | 2019-05-08T21:56:09+0000 [stdout#info] A query: b't.castle.io'
+4249.3  27 | 2019-05-08T21:56:09+0000 [stdout#info] AAAA query, sending back A instead: b't.castle.io'
+4249.3  27 | 2019-05-08T21:56:09+0000 [stdout#info] A query: b't.castle.io'
+4249.3  27 | 2019-05-08T21:56:09+0000 [stdout#info] Result for b'api.segment.io' is ['34.216.37.109', '52.33.31.189', '52.88.58.102', '52.36.23.100', '52.35.227.82', '52.88.27.109', '52.39.40.169', '52.35.185.7']
+4249.4  27 | 2019-05-08T21:56:10+0000 [stdout#info] Result for b't.castle.io' is ['34.226.48.178', '54.173.182.130', '52.20.91.212']
+4249.4  27 | 2019-05-08T21:56:10+0000 [stdout#info] Result for b't.castle.io' is ['54.173.182.130', '52.20.91.212', '34.226.48.178']
+4249.7  36 | c : DNS request from ('192.168.0.94', 53225) to None: 41 bytes
+4249.7  36 | c : DNS request from ('192.168.0.94', 53225) to None: 41 bytes
+4249.7  27 | 2019-05-08T21:56:10+0000 [stdout#info] A query: b'stats.g.doubleclick.net'
+4249.7  27 | 2019-05-08T21:56:10+0000 [stdout#info] Result for b'stats.g.doubleclick.net' is ['64.233.167.155', '64.233.167.157', '64.233.167.156', '64.233.167.154']
+4249.7  27 | 2019-05-08T21:56:10+0000 [stdout#info] AAAA query, sending back A instead: b'stats.g.doubleclick.net'
+4249.7  27 | 2019-05-08T21:56:10+0000 [stdout#info] A query: b'stats.g.doubleclick.net'
+4249.7  27 | 2019-05-08T21:56:10+0000 [stdout#info] Result for b'stats.g.doubleclick.net' is ['64.233.167.155', '64.233.167.154', '64.233.167.157', '64.233.167.156']
+4249.7  36 | c : DNS request from ('192.168.0.94', 59984) to None: 32 bytes
+4249.7  36 | c : DNS request from ('192.168.0.94', 59984) to None: 32 bytes
+4249.8  27 | 2019-05-08T21:56:10+0000 [stdout#info] A query: b'www.google.com'
+4249.8  27 | 2019-05-08T21:56:10+0000 [stdout#info] AAAA query, sending back A instead: b'www.google.com'
+4249.8  27 | 2019-05-08T21:56:10+0000 [stdout#info] A query: b'www.google.com'
+4249.8  27 | 2019-05-08T21:56:10+0000 [stdout#info] Result for b'www.google.com' is ['216.58.210.4']
+4249.8  27 | 2019-05-08T21:56:10+0000 [stdout#info] Result for b'www.google.com' is ['216.58.210.4']
+4249.8  36 | c : DNS request from ('192.168.0.94', 49704) to None: 31 bytes
+4249.8  36 | c : DNS request from ('192.168.0.94', 49704) to None: 31 bytes
+4249.9  27 | 2019-05-08T21:56:10+0000 [stdout#info] A query: b'www.google.cz'
+4249.9  27 | 2019-05-08T21:56:10+0000 [stdout#info] AAAA query, sending back A instead: b'www.google.cz'
+4249.9  27 | 2019-05-08T21:56:10+0000 [stdout#info] A query: b'www.google.cz'
+4249.9  27 | 2019-05-08T21:56:10+0000 [stdout#info] Result for b'www.google.cz' is ['216.58.206.3']
+4249.9  27 | 2019-05-08T21:56:10+0000 [stdout#info] Result for b'www.google.cz' is ['172.217.16.163']
+4251.5  36 | c : DNS request from ('192.168.0.94', 56092) to None: 30 bytes
+4251.5  36 | c : DNS request from ('192.168.0.94', 56092) to None: 30 bytes
+4251.6  27 | 2019-05-08T21:56:12+0000 [stdout#info] A query: b'm.stripe.com'
+4251.6  27 | 2019-05-08T21:56:12+0000 [stdout#info] AAAA query, sending back A instead: b'm.stripe.com'
+4251.6  27 | 2019-05-08T21:56:12+0000 [stdout#info] A query: b'm.stripe.com'
+4251.6  27 | 2019-05-08T21:56:12+0000 [stdout#info] Result for b'm.stripe.com' is ['54.201.225.120', '54.148.215.102', '34.211.189.82', '54.186.142.226', '35.162.96.208', '52.27.35.166']
+4251.6  27 | 2019-05-08T21:56:12+0000 [stdout#info] Result for b'm.stripe.com' is ['35.162.96.208', '54.148.215.102', '34.211.189.82', '52.27.35.166', '54.186.142.226', '54.201.225.120']
+4262.3  36 | c : DNS request from ('192.168.0.94', 52187) to None: 33 bytes
+4262.3  36 | c : DNS request from ('192.168.0.94', 52187) to None: 33 bytes
+4262.3  27 | 2019-05-08T21:56:22+0000 [stdout#info] A query: b'www.netflix.com'
+4262.3  27 | 2019-05-08T21:56:23+0000 [stdout#info] AAAA query, sending back A instead: b'www.netflix.com'
+4262.3  27 | 2019-05-08T21:56:23+0000 [stdout#info] A query: b'www.netflix.com'
+4262.3  27 | 2019-05-08T21:56:23+0000 [stdout#info] Result for b'www.netflix.com' is ['54.72.48.211', '34.241.48.195', '52.30.134.73', '34.252.114.84', '52.209.214.74', '52.16.94.177', '52.51.252.175', '52.51.179.14']
+4262.4  27 | 2019-05-08T21:56:23+0000 [stdout#info] Result for b'www.netflix.com' is ['52.51.179.14', '54.72.48.211', '52.51.252.175', '52.209.214.74', '34.241.48.195', '34.252.114.84', '52.30.134.73', '52.16.94.177']
+4263.4 TEL | (proxy checking local liveness)
+4263.4  27 | 2019-05-08T21:56:24+0000 [Poll#info] Checkpoint
+4278.2 TEL | [178] Running: sudo -n echo -n
+4278.3  36 | c : DNS request from ('192.168.0.94', 40551) to None: 32 bytes
+4278.3  36 | c : DNS request from ('192.168.0.94', 40551) to None: 32 bytes
+4278.3 TEL | [178] ran in 0.07 secs.
+4278.3  36 | c : DNS request from ('192.168.0.94', 44607) to None: 32 bytes
+4278.3  27 | 2019-05-08T21:56:38+0000 [stdout#info] A query: b'notif.9gag.com'
+4278.3  27 | 2019-05-08T21:56:38+0000 [stdout#info] AAAA query, sending back A instead: b'notif.9gag.com'
+4278.3  27 | 2019-05-08T21:56:38+0000 [stdout#info] A query: b'notif.9gag.com'
+4278.3  27 | 2019-05-08T21:56:38+0000 [stdout#info] Result for b'notif.9gag.com' is ['54.80.244.183', '35.171.12.215']
+4278.3  27 | 2019-05-08T21:56:38+0000 [stdout#info] Result for b'notif.9gag.com' is ['54.80.244.183', '35.171.12.215']
+4278.3  27 | 2019-05-08T21:56:38+0000 [stdout#info] A query: b'notif.9gag.com'
+4278.4  27 | 2019-05-08T21:56:39+0000 [stdout#info] Result for b'notif.9gag.com' is ['54.80.244.183', '35.171.12.215']
+4278.9  36 | c : DNS request from ('192.168.0.94', 49301) to None: 34 bytes
+4278.9  36 | c : DNS request from ('192.168.0.94', 49301) to None: 34 bytes
+4279.0  27 | 2019-05-08T21:56:39+0000 [stdout#info] A query: b'www.facebook.com'
+4279.0  27 | 2019-05-08T21:56:39+0000 [stdout#info] AAAA query, sending back A instead: b'www.facebook.com'
+4279.0  27 | 2019-05-08T21:56:39+0000 [stdout#info] A query: b'www.facebook.com'
+4279.0  27 | 2019-05-08T21:56:39+0000 [stdout#info] Result for b'www.facebook.com' is ['185.60.216.35']
+4279.0  27 | 2019-05-08T21:56:39+0000 [stdout#info] Result for b'www.facebook.com' is ['185.60.216.35']
+4289.6  36 | c : DNS request from ('192.168.0.94', 46289) to None: 40 bytes
+4289.6  36 | c : DNS request from ('192.168.0.94', 46289) to None: 40 bytes
+4289.6  27 | 2019-05-08T21:56:50+0000 [stdout#info] A query: b'cloud.digitalocean.com'
+4289.6  27 | 2019-05-08T21:56:50+0000 [stdout#info] AAAA query, sending back A instead: b'cloud.digitalocean.com'
+4289.6  27 | 2019-05-08T21:56:50+0000 [stdout#info] A query: b'cloud.digitalocean.com'
+4289.6  27 | 2019-05-08T21:56:50+0000 [stdout#info] Result for b'cloud.digitalocean.com' is ['104.16.24.4', '104.16.25.4']
+4289.6  27 | 2019-05-08T21:56:50+0000 [stdout#info] Result for b'cloud.digitalocean.com' is ['104.16.24.4', '104.16.25.4']
+4290.0  36 | c : DNS request from ('192.168.0.94', 55210) to None: 42 bytes
+4290.0  36 | c : DNS request from ('192.168.0.94', 55210) to None: 42 bytes
+4290.1  27 | 2019-05-08T21:56:50+0000 [stdout#info] A query: b'1-edge-chat.facebook.com'
+4290.1  27 | 2019-05-08T21:56:50+0000 [stdout#info] AAAA query, sending back A instead: b'1-edge-chat.facebook.com'
+4290.1  27 | 2019-05-08T21:56:50+0000 [stdout#info] A query: b'1-edge-chat.facebook.com'
+4290.1  27 | 2019-05-08T21:56:50+0000 [stdout#info] Result for b'1-edge-chat.facebook.com' is ['185.60.216.15']
+4290.1  27 | 2019-05-08T21:56:50+0000 [stdout#info] Result for b'1-edge-chat.facebook.com' is ['185.60.216.15']
+4290.5  36 | c : DNS request from ('192.168.0.94', 51897) to None: 32 bytes
+4290.5  36 | c : DNS request from ('192.168.0.94', 51897) to None: 32 bytes
+4290.5  36 | c : DNS request from ('192.168.0.94', 43162) to None: 29 bytes
+4290.5  36 | c : DNS request from ('192.168.0.94', 43162) to None: 29 bytes
+4290.6  27 | 2019-05-08T21:56:51+0000 [stdout#info] A query: b'api.segment.io'
+4290.6  27 | 2019-05-08T21:56:51+0000 [stdout#info] AAAA query, sending back A instead: b'api.segment.io'
+4290.6  27 | 2019-05-08T21:56:51+0000 [stdout#info] A query: b'api.segment.io'
+4290.6  27 | 2019-05-08T21:56:51+0000 [stdout#info] Result for b'api.segment.io' is ['54.187.246.64', '52.42.209.140', '54.148.84.7', '52.88.95.9', '52.33.69.177', '54.149.15.64', '52.37.21.144', '54.186.169.50']
+4290.6  27 | 2019-05-08T21:56:51+0000 [stdout#info] A query: b't.castle.io'
+4290.6  27 | 2019-05-08T21:56:51+0000 [stdout#info] AAAA query, sending back A instead: b't.castle.io'
+4290.6  27 | 2019-05-08T21:56:51+0000 [stdout#info] A query: b't.castle.io'
+4290.7  27 | 2019-05-08T21:56:51+0000 [stdout#info] Result for b'api.segment.io' is ['54.244.22.169', '54.69.247.77', '54.191.153.101', '54.148.79.75', '54.70.148.32', '54.201.218.185', '54.149.37.140', '54.200.56.166']
+4290.7  27 | 2019-05-08T21:56:51+0000 [stdout#info] Result for b't.castle.io' is ['54.173.182.130', '52.20.91.212', '34.226.48.178']
+4290.7  27 | 2019-05-08T21:56:51+0000 [stdout#info] Result for b't.castle.io' is ['52.20.91.212', '34.226.48.178', '54.173.182.130']
+4291.1  36 | c : DNS request from ('192.168.0.94', 33193) to None: 33 bytes
+4291.1  36 | c : DNS request from ('192.168.0.94', 33193) to None: 33 bytes
+4291.2  27 | 2019-05-08T21:56:51+0000 [stdout#info] A query: b'bam.nr-data.net'
+4291.2  27 | 2019-05-08T21:56:51+0000 [stdout#info] AAAA query, sending back A instead: b'bam.nr-data.net'
+4291.2  27 | 2019-05-08T21:56:51+0000 [stdout#info] A query: b'bam.nr-data.net'
+4291.2  27 | 2019-05-08T21:56:51+0000 [stdout#info] Result for b'bam.nr-data.net' is ['162.247.242.19', '162.247.242.20', '162.247.242.18', '162.247.242.21']
+4291.2  27 | 2019-05-08T21:56:51+0000 [stdout#info] Result for b'bam.nr-data.net' is ['162.247.242.19', '162.247.242.18', '162.247.242.20', '162.247.242.21']
+4291.5  36 | c : DNS request from ('192.168.0.94', 40277) to None: 30 bytes
+4291.5  36 | c : DNS request from ('192.168.0.94', 40277) to None: 30 bytes
+4291.5  27 | 2019-05-08T21:56:52+0000 [stdout#info] A query: b'm.stripe.com'
+4291.6  27 | 2019-05-08T21:56:52+0000 [stdout#info] AAAA query, sending back A instead: b'm.stripe.com'
+4291.6  27 | 2019-05-08T21:56:52+0000 [stdout#info] A query: b'm.stripe.com'
+4291.6  27 | 2019-05-08T21:56:52+0000 [stdout#info] Result for b'm.stripe.com' is ['34.211.189.82', '54.148.215.102', '35.162.96.208', '54.201.225.120', '52.27.35.166', '54.186.142.226']
+4291.6  27 | 2019-05-08T21:56:52+0000 [stdout#info] Result for b'm.stripe.com' is ['54.186.142.226', '52.27.35.166', '35.162.96.208', '54.148.215.102', '34.211.189.82', '54.201.225.120']
+4293.4 TEL | (proxy checking local liveness)
+4293.4  27 | 2019-05-08T21:56:54+0000 [Poll#info] Checkpoint
+4296.3  36 | c : DNS request from ('192.168.0.94', 35434) to None: 32 bytes
+4296.3  36 | c : DNS request from ('192.168.0.94', 35434) to None: 32 bytes
+4296.3  36 | c : DNS request from ('192.168.0.94', 47771) to None: 29 bytes
+4296.3  36 | c : DNS request from ('192.168.0.94', 47771) to None: 29 bytes
+4296.4  27 | 2019-05-08T21:56:57+0000 [stdout#info] A query: b'api.segment.io'
+4296.4  27 | 2019-05-08T21:56:57+0000 [stdout#info] AAAA query, sending back A instead: b'api.segment.io'
+4296.4  27 | 2019-05-08T21:56:57+0000 [stdout#info] A query: b'api.segment.io'
+4296.4  27 | 2019-05-08T21:56:57+0000 [stdout#info] A query: b't.castle.io'
+4296.4  27 | 2019-05-08T21:56:57+0000 [stdout#info] AAAA query, sending back A instead: b't.castle.io'
+4296.4  27 | 2019-05-08T21:56:57+0000 [stdout#info] A query: b't.castle.io'
+4296.4  27 | 2019-05-08T21:56:57+0000 [stdout#info] Result for b'api.segment.io' is ['54.187.246.64', '54.148.84.7', '52.42.209.140', '52.37.21.144', '52.88.95.9', '54.186.169.50', '52.33.69.177', '54.149.15.64']
+4296.5  27 | 2019-05-08T21:56:57+0000 [stdout#info] Result for b'api.segment.io' is ['54.244.22.169', '54.149.37.140', '54.70.148.32', '54.201.218.185', '54.200.56.166', '54.69.247.77', '54.191.153.101', '54.148.79.75']
+4296.5  27 | 2019-05-08T21:56:57+0000 [stdout#info] Result for b't.castle.io' is ['54.173.182.130', '34.226.48.178', '52.20.91.212']
+4296.5  27 | 2019-05-08T21:56:57+0000 [stdout#info] Result for b't.castle.io' is ['52.20.91.212', '34.226.48.178', '54.173.182.130']
+4296.9  36 | c : DNS request from ('192.168.0.94', 44044) to None: 30 bytes
+4296.9  36 | c : DNS request from ('192.168.0.94', 44044) to None: 30 bytes
+4296.9  27 | 2019-05-08T21:56:57+0000 [stdout#info] A query: b'm.stripe.com'
+4296.9  27 | 2019-05-08T21:56:57+0000 [stdout#info] AAAA query, sending back A instead: b'm.stripe.com'
+4296.9  27 | 2019-05-08T21:56:57+0000 [stdout#info] A query: b'm.stripe.com'
+4296.9  27 | 2019-05-08T21:56:57+0000 [stdout#info] Result for b'm.stripe.com' is ['35.162.96.208', '52.27.35.166', '54.201.225.120', '54.186.142.226', '34.211.189.82', '54.148.215.102']
+4296.9  27 | 2019-05-08T21:56:57+0000 [stdout#info] Result for b'm.stripe.com' is ['52.27.35.166', '34.211.189.82', '54.201.225.120', '35.162.96.208', '54.186.142.226', '54.148.215.102']
+4306.9  36 | c : DNS request from ('192.168.0.94', 39560) to None: 32 bytes
+4306.9  36 | c : DNS request from ('192.168.0.94', 39560) to None: 32 bytes
+4306.9  36 | c : DNS request from ('192.168.0.94', 48676) to None: 29 bytes
+4306.9  36 | c : DNS request from ('192.168.0.94', 48676) to None: 29 bytes
+4306.9  27 | 2019-05-08T21:57:07+0000 [stdout#info] A query: b'api.segment.io'
+4306.9  27 | 2019-05-08T21:57:07+0000 [stdout#info] AAAA query, sending back A instead: b'api.segment.io'
+4306.9  27 | 2019-05-08T21:57:07+0000 [stdout#info] A query: b'api.segment.io'
+4306.9  27 | 2019-05-08T21:57:07+0000 [stdout#info] A query: b't.castle.io'
+4306.9  27 | 2019-05-08T21:57:07+0000 [stdout#info] AAAA query, sending back A instead: b't.castle.io'
+4306.9  27 | 2019-05-08T21:57:07+0000 [stdout#info] A query: b't.castle.io'
+4307.0  27 | 2019-05-08T21:57:07+0000 [stdout#info] Result for b'api.segment.io' is ['54.149.37.140', '54.191.153.101', '54.148.79.75', '54.69.247.77', '54.244.22.169', '54.200.56.166', '54.201.218.185', '54.70.148.32']
+4307.0  27 | 2019-05-08T21:57:07+0000 [stdout#info] Result for b't.castle.io' is ['52.20.91.212', '54.173.182.130', '34.226.48.178']
+4307.0  27 | 2019-05-08T21:57:07+0000 [stdout#info] Result for b'api.segment.io' is ['52.37.21.144', '52.88.95.9', '52.42.209.140', '54.186.169.50', '54.187.246.64', '52.33.69.177', '54.148.84.7', '54.149.15.64']
+4307.0  27 | 2019-05-08T21:57:07+0000 [stdout#info] Result for b't.castle.io' is ['52.20.91.212', '34.226.48.178', '54.173.182.130']
+4307.1  36 | c : DNS request from ('192.168.0.94', 33899) to None: 30 bytes
+4307.1  36 | c : DNS request from ('192.168.0.94', 33899) to None: 30 bytes
+4307.1  36 | c : DNS request from ('192.168.0.94', 57867) to None: 33 bytes
+4307.1  36 | c : DNS request from ('192.168.0.94', 57867) to None: 33 bytes
+4307.1  27 | 2019-05-08T21:57:07+0000 [stdout#info] A query: b'm.stripe.com'
+4307.1  27 | 2019-05-08T21:57:07+0000 [stdout#info] AAAA query, sending back A instead: b'm.stripe.com'
+4307.1  27 | 2019-05-08T21:57:07+0000 [stdout#info] A query: b'm.stripe.com'
+4307.1  27 | 2019-05-08T21:57:07+0000 [stdout#info] A query: b'bam.nr-data.net'
+4307.1  27 | 2019-05-08T21:57:07+0000 [stdout#info] AAAA query, sending back A instead: b'bam.nr-data.net'
+4307.1  27 | 2019-05-08T21:57:07+0000 [stdout#info] A query: b'bam.nr-data.net'
+4307.1  27 | 2019-05-08T21:57:07+0000 [stdout#info] Result for b'm.stripe.com' is ['52.27.35.166', '54.201.225.120', '54.148.215.102', '35.162.96.208', '34.211.189.82', '54.186.142.226']
+4307.1  27 | 2019-05-08T21:57:07+0000 [stdout#info] Result for b'm.stripe.com' is ['34.211.189.82', '54.148.215.102', '35.162.96.208', '54.186.142.226', '54.201.225.120', '52.27.35.166']
+4307.2  27 | 2019-05-08T21:57:07+0000 [stdout#info] Result for b'bam.nr-data.net' is ['162.247.242.21', '162.247.242.20', '162.247.242.18', '162.247.242.19']
+4307.2  27 | 2019-05-08T21:57:07+0000 [stdout#info] Result for b'bam.nr-data.net' is ['162.247.242.20', '162.247.242.19', '162.247.242.21', '162.247.242.18']
+4307.8  36 | c : DNS request from ('192.168.0.94', 48978) to None: 33 bytes
+4307.8  36 | c : DNS request from ('192.168.0.94', 48978) to None: 33 bytes
+4307.9  27 | 2019-05-08T21:57:08+0000 [stdout#info] A query: b'www.netflix.com'
+4307.9  27 | 2019-05-08T21:57:08+0000 [stdout#info] Result for b'www.netflix.com' is ['34.246.63.0', '34.251.239.113', '54.154.201.43', '52.30.103.23', '52.50.212.245', '54.171.187.60', '52.31.246.79', '52.49.6.246']
+4307.9  27 | 2019-05-08T21:57:08+0000 [stdout#info] AAAA query, sending back A instead: b'www.netflix.com'
+4307.9  27 | 2019-05-08T21:57:08+0000 [stdout#info] A query: b'www.netflix.com'
+4307.9  27 | 2019-05-08T21:57:08+0000 [stdout#info] Result for b'www.netflix.com' is ['52.35.125.204', '52.40.16.103', '52.24.119.28', '52.89.137.136', '54.68.141.65', '52.36.31.140', '54.187.237.76', '52.35.228.185']
+4308.3 TEL | [179] Running: sudo -n echo -n
+4308.3 TEL | [179] ran in 0.06 secs.
+4309.8  36 | c : DNS request from ('192.168.0.94', 58249) to None: 33 bytes
+4309.8  36 | c : DNS request from ('192.168.0.94', 58249) to None: 33 bytes
+4309.9  27 | 2019-05-08T21:57:10+0000 [stdout#info] A query: b'www.netflix.com'
+4309.9  27 | 2019-05-08T21:57:10+0000 [stdout#info] AAAA query, sending back A instead: b'www.netflix.com'
+4309.9  27 | 2019-05-08T21:57:10+0000 [stdout#info] A query: b'www.netflix.com'
+4309.9  27 | 2019-05-08T21:57:10+0000 [stdout#info] Result for b'www.netflix.com' is ['52.35.228.185', '52.89.137.136', '52.36.31.140', '54.68.141.65', '52.35.125.204', '52.40.16.103', '54.187.237.76', '52.24.119.28']
+4309.9  27 | 2019-05-08T21:57:10+0000 [stdout#info] Result for b'www.netflix.com' is ['52.40.16.103', '52.35.228.185', '54.187.237.76', '52.35.125.204', '52.89.137.136', '52.24.119.28', '52.36.31.140', '54.68.141.65']
+4310.4  36 | c : DNS request from ('192.168.0.94', 57979) to None: 42 bytes
+4310.4  36 | c : DNS request from ('192.168.0.94', 57979) to None: 42 bytes
+4310.4  27 | 2019-05-08T21:57:11+0000 [stdout#info] A query: b'www.google-analytics.com'
+4310.4  36 | c : DNS request from ('192.168.0.94', 56482) to None: 32 bytes
+4310.4  36 | c : DNS request from ('192.168.0.94', 56482) to None: 32 bytes
+4310.4  36 | c : DNS request from ('192.168.0.94', 38927) to None: 29 bytes
+4310.4  36 | c : DNS request from ('192.168.0.94', 38927) to None: 29 bytes
+4310.4  27 | 2019-05-08T21:57:11+0000 [stdout#info] Result for b'www.google-analytics.com' is ['216.58.208.46']
+4310.4  27 | 2019-05-08T21:57:11+0000 [stdout#info] AAAA query, sending back A instead: b'www.google-analytics.com'
+4310.4  27 | 2019-05-08T21:57:11+0000 [stdout#info] A query: b'www.google-analytics.com'
+4310.4  27 | 2019-05-08T21:57:11+0000 [stdout#info] Result for b'www.google-analytics.com' is ['216.58.208.46']
+4310.5  27 | 2019-05-08T21:57:11+0000 [stdout#info] A query: b'api.segment.io'
+4310.5  27 | 2019-05-08T21:57:11+0000 [stdout#info] AAAA query, sending back A instead: b'api.segment.io'
+4310.5  27 | 2019-05-08T21:57:11+0000 [stdout#info] A query: b'api.segment.io'
+4310.5  27 | 2019-05-08T21:57:11+0000 [stdout#info] A query: b't.castle.io'
+4310.5  27 | 2019-05-08T21:57:11+0000 [stdout#info] AAAA query, sending back A instead: b't.castle.io'
+4310.5  27 | 2019-05-08T21:57:11+0000 [stdout#info] A query: b't.castle.io'
+4310.5  27 | 2019-05-08T21:57:11+0000 [stdout#info] Result for b't.castle.io' is ['52.20.91.212', '34.226.48.178', '54.173.182.130']
+4310.5  36 | c : DNS request from ('192.168.0.94', 36169) to None: 41 bytes
+4310.5  36 | c : DNS request from ('192.168.0.94', 36169) to None: 41 bytes
+4310.6  27 | 2019-05-08T21:57:11+0000 [stdout#info] Result for b't.castle.io' is ['34.226.48.178', '52.20.91.212', '54.173.182.130']
+4310.6  27 | 2019-05-08T21:57:11+0000 [stdout#info] Result for b'api.segment.io' is ['52.33.69.177', '52.42.209.140', '52.37.21.144', '52.88.95.9', '54.187.246.64', '54.186.169.50', '54.149.15.64', '54.148.84.7']
+4310.6  27 | 2019-05-08T21:57:11+0000 [stdout#info] Result for b'api.segment.io' is ['54.70.148.32', '54.244.22.169', '54.200.56.166', '54.149.37.140', '54.191.153.101', '54.148.79.75', '54.69.247.77', '54.201.218.185']
+4310.6  27 | 2019-05-08T21:57:11+0000 [stdout#info] A query: b'stats.g.doubleclick.net'
+4310.6  27 | 2019-05-08T21:57:11+0000 [stdout#info] AAAA query, sending back A instead: b'stats.g.doubleclick.net'
+4310.6  27 | 2019-05-08T21:57:11+0000 [stdout#info] A query: b'stats.g.doubleclick.net'
+4310.6  27 | 2019-05-08T21:57:11+0000 [stdout#info] Result for b'stats.g.doubleclick.net' is ['64.233.166.157', '64.233.166.156', '64.233.166.155', '64.233.166.154']
+4310.6  27 | 2019-05-08T21:57:11+0000 [stdout#info] Result for b'stats.g.doubleclick.net' is ['64.233.166.155', '64.233.166.157', '64.233.166.156', '64.233.166.154']
+4310.6  36 | c : DNS request from ('192.168.0.94', 46787) to None: 32 bytes
+4310.6  36 | c : DNS request from ('192.168.0.94', 46787) to None: 32 bytes
+4310.7  27 | 2019-05-08T21:57:11+0000 [stdout#info] A query: b'www.google.com'
+4310.7  27 | 2019-05-08T21:57:11+0000 [stdout#info] AAAA query, sending back A instead: b'www.google.com'
+4310.7  27 | 2019-05-08T21:57:11+0000 [stdout#info] A query: b'www.google.com'
+4310.7  27 | 2019-05-08T21:57:11+0000 [stdout#info] Result for b'www.google.com' is ['172.217.16.196']
+4310.7  27 | 2019-05-08T21:57:11+0000 [stdout#info] Result for b'www.google.com' is ['172.217.21.196']
+4310.9  36 | c : DNS request from ('192.168.0.94', 56258) to None: 31 bytes
+4310.9  36 | c : DNS request from ('192.168.0.94', 56258) to None: 31 bytes
+4310.9  27 | 2019-05-08T21:57:11+0000 [stdout#info] A query: b'www.google.cz'
+4311.0  27 | 2019-05-08T21:57:11+0000 [stdout#info] Result for b'www.google.cz' is ['216.58.206.3']
+4311.0  27 | 2019-05-08T21:57:11+0000 [stdout#info] AAAA query, sending back A instead: b'www.google.cz'
+4311.0  27 | 2019-05-08T21:57:11+0000 [stdout#info] A query: b'www.google.cz'
+4311.0  27 | 2019-05-08T21:57:11+0000 [stdout#info] Result for b'www.google.cz' is ['216.58.208.35']
+4312.1  36 | c : DNS request from ('192.168.0.94', 40376) to None: 30 bytes
+4312.1  36 | c : DNS request from ('192.168.0.94', 40376) to None: 30 bytes
+4312.1  27 | 2019-05-08T21:57:12+0000 [stdout#info] A query: b'm.stripe.com'
+4312.1  27 | 2019-05-08T21:57:12+0000 [stdout#info] AAAA query, sending back A instead: b'm.stripe.com'
+4312.1  27 | 2019-05-08T21:57:12+0000 [stdout#info] A query: b'm.stripe.com'
+4312.1  27 | 2019-05-08T21:57:12+0000 [stdout#info] Result for b'm.stripe.com' is ['54.186.142.226', '52.27.35.166', '54.201.225.120', '34.211.189.82', '35.162.96.208', '54.148.215.102']
+4312.1  27 | 2019-05-08T21:57:12+0000 [stdout#info] Result for b'm.stripe.com' is ['34.211.189.82', '54.201.225.120', '52.27.35.166', '35.162.96.208', '54.148.215.102', '54.186.142.226']
+4313.1  36 | Connection to 127.0.0.1 closed by remote host.
+4313.2  36 | >> iptables -t nat -D OUTPUT -j sshuttle-12300
+4313.2  36 | >> iptables -t nat -D PREROUTING -j sshuttle-12300
+4313.2  36 | >> iptables -t nat -F sshuttle-12300
+4313.2  36 | >> iptables -t nat -X sshuttle-12300
+4313.3  36 | c : fatal: server died with error code 255
+4313.4 TEL | [36] sshuttle: exit 99
+4313.4 TEL | END SPAN runner.py:625(wait_for_exit) 4275.1s
+4313.4 >>> | 
+4313.4 >>> | Background process (sshuttle) exited with return code 99. Command was:
+4313.4 >>> |   sshuttle-telepresence -v --dns --method nat -e 'ssh -F /dev/null -oStrictHostKeyChecking=no -oUserKnownHostsFile=/dev/null' -r telepresence@127.0.0.1:43141 --to-ns 127.0.0.1:9053 10.244.3.0/24 10.245.0.0/16 10.244.1.0/24
+4313.4 >>> | 
+4313.4 >>> | Recent output was:
+4313.4 >>> |   c : DNS request from ('192.168.0.94', 56258) to None: 31 bytes
+4313.4 >>> |   c : DNS request from ('192.168.0.94', 56258) to None: 31 bytes
+4313.4 >>> |   c : DNS request from ('192.168.0.94', 40376) to None: 30 bytes
+4313.4 >>> |   c : DNS request from ('192.168.0.94', 40376) to None: 30 bytes
+4313.4 >>> |   Connection to 127.0.0.1 closed by remote host.
+4313.4 >>> |   >> iptables -t nat -D OUTPUT -j sshuttle-12300
+4313.4 >>> |   >> iptables -t nat -D PREROUTING -j sshuttle-12300
+4313.4 >>> |   >> iptables -t nat -F sshuttle-12300
+4313.4 >>> |   >> iptables -t nat -X sshuttle-12300
+4313.4 >>> |   c : fatal: server died with error code 255
+4313.4 >>> | 
+4313.4 >>> | 
+4313.4 >>> | Proxy to Kubernetes exited. This is typically due to a lost connection.
+4313.4 >>> | 
+4313.4 TEL | EXITING with status code 255
+4313.4 >>> | Exit cleanup in progress
+4313.4 TEL | (Cleanup) Terminate local process
+4313.4 TEL | Killing local process...
+4313.4 TEL | (Cleanup) Kill BG process [36] sshuttle
+4313.4 TEL | (Cleanup) Unmount remote filesystem
+4313.4 TEL | [180] Running: fusermount -z -u /tmp/tel-f6cy5dnr/fs
+4313.4 180 | fusermount: entry for /tmp/tel-f6cy5dnr/fs not found in /etc/mtab
+4313.4 TEL | [180] exit 1 in 0.01 secs.
+4313.4 TEL | (Cleanup) Unmount remote filesystem failed:
+4313.4 TEL | (Cleanup)   Command '['fusermount', '-z', '-u', '/tmp/tel-f6cy5dnr/fs']' returned non-zero exit status 1.
+4313.4 TEL | (Cleanup) Kill BG process [33] SSH port forward (socks and proxy poll)
+4313.4 TEL | [33] SSH port forward (socks and proxy poll): exit 0
+4313.4 TEL | (Cleanup) Kill Web server for proxy poll
+4313.4 TEL | (Cleanup) Kill BG process [28] kubectl port-forward
+4313.4 TEL | [28] kubectl port-forward: exit -15
+4313.4 TEL | (Cleanup) Kill BG process [27] kubectl logs
+4313.4 TEL | [27] kubectl logs: exit -15
+4313.4 TEL | Background process (kubectl logs) exited with return code -15. Command was:
+4313.4 TEL |   kubectl --context do-fra1-main --namespace default logs -f telepresence-1557348320-6926117-18807-69bfbd8986-6gjgh --container telepresence-1557348320-6926117-18807 --tail=10
+4313.4 TEL | 
+4313.4 TEL | Recent output was:
+4313.4 TEL |   2019-05-08T21:57:11+0000 [stdout#info] A query: b'www.google.cz'
+4313.4 TEL |   2019-05-08T21:57:11+0000 [stdout#info] Result for b'www.google.cz' is ['216.58.206.3']
+4313.4 TEL |   2019-05-08T21:57:11+0000 [stdout#info] AAAA query, sending back A instead: b'www.google.cz'
+4313.4 TEL |   2019-05-08T21:57:11+0000 [stdout#info] A query: b'www.google.cz'
+4313.4 TEL |   2019-05-08T21:57:11+0000 [stdout#info] Result for b'www.google.cz' is ['216.58.208.35']
+4313.4 TEL |   2019-05-08T21:57:12+0000 [stdout#info] A query: b'm.stripe.com'
+4313.4 TEL |   2019-05-08T21:57:12+0000 [stdout#info] AAAA query, sending back A instead: b'm.stripe.com'
+4313.4 TEL |   2019-05-08T21:57:12+0000 [stdout#info] A query: b'm.stripe.com'
+4313.4 TEL |   2019-05-08T21:57:12+0000 [stdout#info] Result for b'm.stripe.com' is ['54.186.142.226', '52.27.35.166', '54.201.225.120', '34.211.189.82', '35.162.96.208', '54.148.215.102']
+4313.4 TEL |   2019-05-08T21:57:12+0000 [stdout#info] Result for b'm.stripe.com' is ['34.211.189.82', '54.201.225.120', '52.27.35.166', '35.162.96.208', '54.148.215.102', '54.186.142.226']
+4313.5 TEL | (Cleanup) Delete new deployment
+4313.5 >>> | Cleaning up Deployment telepresence-1557348320-6926117-18807
+4313.5 TEL | [181] Running: kubectl --context do-fra1-main --namespace default delete --ignore-not-found svc,deploy --selector=telepresence=fb186e5a5f7740e5b9b026b0a8f6d33f
+4314.3 181 | deployment.extensions "telepresence-1557348320-6926117-18807" deleted
+4314.3 TEL | [181] ran in 0.87 secs.
+4314.3 TEL | (Cleanup) Show version notice
+4314.3 >>> | 
+4314.3 >>> | Telepresence 0.99 is available (you're running 0.98-11-ga30a3e4). https://www.telepresence.io/reference/changelog
+4314.3 TEL | (Cleanup) Kill sudo privileges holder
+4314.3 TEL | (Cleanup) Stop time tracking
+4314.3 TEL | END SPAN main.py:40(main) 4314.3s
+4314.3 TEL | (Cleanup) Remove temporary directory
+4314.3 TEL | (Cleanup) Save caches
+4314.4 TEL | (sudo privileges holder thread exiting)
