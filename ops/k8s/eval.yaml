@@ -39,7 +39,7 @@ items:
       name: eval
       labels: { app: trader, layer: eval, type: worker }
     spec:
-      replicas: 3
+      replicas: 8
       selector: { matchLabels: { app: trader, layer: eval, type: worker }}
       template:
         metadata: { labels: { app: trader, layer: eval, type: worker } }
