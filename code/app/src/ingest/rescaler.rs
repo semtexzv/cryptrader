@@ -63,9 +63,6 @@ impl Handler<OhlcUpdate> for Rescaler {
                         let new_ohlc = Ohlc::combine_with_time(min_time, iter.map(|(k, v)| v));
                         let mut update = OhlcUpdate::new(msg.spec.clone(), new_ohlc);
 
-                        if cfg!(feature = "measure") {
-                            log_measurement(MeasureInfo::OhlcUpdate { update_id: update.id });
-                        }
 
                         update.spec.set_period(*p);
                         update.stable = msg.stable;

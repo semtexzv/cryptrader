@@ -191,10 +191,7 @@ impl Ingest {
                 let data = data.clone();
                 for (tick, uuid) in filtered.iter().zip(ids) {
                     if cfg!(feature = "measure") {
-                        log_measurement(MeasureInfo::OhlcUpdate {
-                            update_id: uuid
-                        });
-                        log_measurement(MeasureInfo::OhlcSaved {
+                        log_measurement(MeasureInfo::SaveDuration {
                             update_id: uuid,
                             save_duration: Instant::now().duration_since(t1),
                         })

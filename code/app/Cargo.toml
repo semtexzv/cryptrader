@@ -14,6 +14,7 @@ path = "../common"
 [dependencies]
 clap = { version = "*", default-features=false }
 serde = { version ="*" }
+csv = "1"
 
 actix-comm = { path = "../deps/actix-comm" }
 actix-arch = { path = "../deps/actix-arch" }

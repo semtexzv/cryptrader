@@ -7,6 +7,10 @@ use std::time::Duration;
 use chrono::NaiveDateTime;
 use uuid::Uuid;
 
+
+use futures_retry::{RetryPolicy, FutureRetry};
+
+
 #[derive(Debug, Serialize, Deserialize)]
 pub struct TradingRequestSpec {
     pub ohlc: OhlcSpec,
@@ -95,10 +99,11 @@ impl Handler<OhlcUpdate> for Decider {
                 let msg = msg.clone();
                 let spec: &TradingRequestSpec = spec;
                 info!("Should eval {:?} on {:?}", spec, msg.clone().spec);
+                let eval_id = Uuid::new_v4();
                 let req = EvalRequest {
                     strat_id: spec.strat_id,
                     #[cfg(feature = "measure")]
-                    eval_id: Uuid::new_v4(),
+                    eval_id,
                     spec: spec.ohlc.clone(),
                     last: msg.clone().ohlc.time,
                 };
@@ -113,23 +118,31 @@ impl Handler<OhlcUpdate> for Decider {
                 let period = spec.ohlc.period().to_string();
 
                 if cfg!(feature = "measure") {
-                    log_measurement(MeasureInfo::EvalDispatched {
+                    log_measurement(MeasureInfo::EvalDispatch {
                         update_id: msg.id,
-                        eval_id: req.eval_id,
+                        eval_id: eval_id,
                     });
                 }
 
-                let fut = wrap_future(self.eval_svc.send(req.clone()));
+
+                fn eval_retry_policy(e: RemoteError) -> RetryPolicy<RemoteError> {
+                    if let RemoteError::Timeout = e {
+                        return RetryPolicy::ForwardError(e);
+                    }
+                    RetryPolicy::Repeat
+                }
+
+                let svc = self.eval_svc.clone();
+                let eval = FutureRetry::new(move || {
+                    svc.send(req.clone())
+                }, eval_retry_policy);
+
+                let fut = wrap_future(eval);
 
                 let t1 = Instant::now();
 
                 let fut = fut.and_then(move |res, this: &mut Self, ctx| {
                     info!("Evaluated to {:?}", res);
-                    if cfg!(feature = "measure") {
-                        log_measurement(MeasureInfo::EvalFinished {
-                            eval_id: req.eval_id
-                        });
-                    }
                     let (ok, error) = match res {
                         Ok(ref decision) => {
                             if let Some(trader) = trader {
@@ -141,7 +154,7 @@ impl Handler<OhlcUpdate> for Decider {
                                     position: *decision,
                                 };
                                 let sent = this.pos_svc.send(pos);
-                                let sent = sent.map(|r| {
+                                let sent = sent.map(move |r| {
                                     warn!("Trade resulted in : {:?}", r);
                                     ()
                                 });

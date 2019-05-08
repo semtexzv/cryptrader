@@ -1,6 +1,7 @@
 #![feature(box_syntax, try_blocks, associated_type_defaults)]
 #![feature(await_macro,  async_await)]
 #![feature(impl_trait_in_bindings)]
+#![feature(checked_duration_since)]
 #![allow(dead_code, unused_variables, unused_imports, unreachable_code, deprecated)]
 
 pub mod prelude;
@@ -77,7 +78,7 @@ fn main() {
             }
 
             "eval-worker" => {
-                for i in 0..4 {
+                for i in 0..8 {
                     let _ = crate::eval::EvalWorker::new(actix_comm::new_handle(), db.clone());
                 }
             }

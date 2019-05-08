@@ -113,18 +113,3 @@ impl MessageWrapper {
         Ok(decoded)
     }
 }
-
-/*
-pub trait MessageSourceAddr {
-    fn register<M>(&self, rec: Recipient<M>)
-        where M: RemoteMessage + Remotable,
-              M::Result: Remotable;
-}
-
-pub trait MessageDestAddr {
-    fn remote_send<M>(&self, msg: M) -> actix::dev::RecipientRequest<SendRequest<M>>
-        where M: RemoteMessage + Remotable,
-              M::Result: Remotable;
-}
-
-*/

@@ -67,7 +67,7 @@ market in which the designed system will operate also is a cryuptocurrency marke
 \subsection{Gekko}
 On the lower end of the spectrum, there is a simple application written in javascript called Gekko\footnote{https://gekko.wizb.it/}.
 This application is open source and runs on top of the Node.js. The application can import historical data,
-and use this historical data to backtest\todo{Footnote} created strategies. The strategies are written in Javascript, with the support
+and use this historical data to backtest\footnote{https://en.wikipedia.org/wiki/Backtesting} created strategies. The strategies are written in Javascript, with the support
 of a simple library that contains implementations of financial indicators, that are commonly used with these types
 of trading strategies.
 
@@ -267,7 +267,7 @@ with the Actix\cite{web:actix} library.
 \section{Rust}
 Rust is a new programming language developed by Mozilla. It was created as a response to many shortcomings of existing low level
 languages such as C and C++. While these languages have crucial place in programming landscape, providing the highest performance and
-degree of control over hardware, they are outdated, unergonomic and unsafe ( particularly with respect to concurrency)\todo{Cite}. On opposite
+degree of control over hardware, they are outdated, unergonomic and unsafe ( particularly with respect to concurrency). On opposite
 side of this equation , are managed languages, that are highly ergonomic, and seem to contain most innovation in this space.
 
 Rust language aims to position itself among the low level languages, bringing new and exciting features to this space.
@@ -475,10 +475,8 @@ is interested whether the future has completed. Implementations of this method s
 the work represented by the \trait{Future}.
 
 This design means that Rust futures are pull-based, as opposed to push-based implementations ( eg. Javascripts promises).
-Our implementation heavily relies on this feature of Rust.
-
-\todo{Actix built on top of this}
-\todo{Mentin tokio lib}
+Our implementation heavily relies on this feature of Rust due to the fact, that the Actix library, which provides
+basic architectural blocks of our system, is based on futures.
 
 \subsection{Build system and package manager}
 One area that low level languages are extremely outdated compared more high-level languages is modularity and code reuse.
@@ -629,7 +627,6 @@ Basic used primitives are:
 
 
 \section{Web applications}
-\todo{Low level details ?}
 Another aspect of the designed system is user access to this system. Because the system will be distributed, and will run
 in cloud environment, there is only one usable approach to implementation of the user-facing side of the system.
 We will have to provide a web interface. There are several possible approaches for implementing such interfaces. The primary
@@ -658,18 +655,15 @@ System is designed as a collection of loosely coupled components, running inside
 can be distributed across many computing nodes. Basic diagram of intended architecture can be found in \autoref{img:arch}.
 
 Each component will be implemented as a set of actors that run inside a single process and communicate with other components
-over ZeroMQ using both Request reply and Pub-Sub communication patterns.
+over ZeroMQ using both Request reply and Pub-Sub communication patterns. We will utilize Kubernetes' internal DNS for purposes of
+service discovery. The actual communication protocol will be implemented in \verb|actix-comm| library that is described in \autoref{section:actix_comm}.
 
-The actual communication protocol will be implemented in \verb|actix-comm| library that is described in \autoref{section:actix_comm}.
-
-\todo{Reword, mention React more}
-The user facing part of the system will be a web application, that will be also implemented using the Rust language and
-\verb|actix-web| library for the back-end and \verb|React| for the front end. This library builds upon the \verb|actix| library mentioned earlier, and provides
-
+The user facing part of the system will be implemented as a web application. This application will utilize a simple API implemented
+using \verb|actix-web| library. The actual web application itself will be in a form of Single-page application.
 
 \begin{figure}[H]
-    \includegraphics[width=\textwidth]{obrazky-figures/Deployment Diagram1.png}
-    \caption{Basic architecture}
+    \includegraphics[width=\textwidth]{obrazky-figures/comp.png}
+    \caption{Component diagram of basic architecture}
     \label{img:arch}
 \end{figure}
 
@@ -694,7 +688,7 @@ Application is divided into several components:
 \end{itemize}
 
 \begin{figure}[H]
-    \includegraphics[width=\textwidth]{obrazky-figures/Service communication diagram.png}
+    \includegraphics[width=\textwidth]{obrazky-figures/serv_comm.png}
     \caption{Service communication diagram}
     \label{img:service_comm}
 \end{figure}
@@ -782,14 +776,30 @@ Then, upon receiving the response, the \actor{Request} actor uses provided metad
 channel from its local state, and uses it to notify originating code about the response.
 
 \subsection{Message format, actor state}
-\todo{Type erasure, message stored as a type name + json/Msgpack data}
-\todo{If name not found, message not understood}
-\todo{Fast, simple}
+Since we are using a language with extremely strong static type system, we decided to leverage this type syystem in much
+of the library implementation. This reliance on static typing has made a whole class of errors impossible, but there
+are some drawbacks to this approach. Since the data we send over the network is jsut a sequence of bytes, and our system
+deals exclusively in strongly typed messages, we must solve the problem of serializing and deserializing messages into bytes.
+
+\subsubsection{Serialization}
+The serialization was very simple to solve. We utilized the \verb|serde| library, which is main data serialization and deserialization
+library in rust, and supprts many data formats. For the development purposes, we utilize JSON as a serialized data format,
+but for production use, we aim to replace it with MsgPack in order to reduce serialization overhead.
+
+\subsubsection{Deserialization}
+The main problem of deserialziation was determining what datatype should a message be deserialized into.
+We solved this by including unique type identifier with each message sent over the network, This identifier relies
+on information provided by standard library intrinsic function, which utilizes data provided by compiler.
+Using this information, and a clever trick utilizing type erasure we were able to safely bridge typed and untyped
+parts of this library.
 
 \subsubsection{Actor state}
-\todo{Identifier tokens, currently int}
-\todo{Channels , rx is provided as asynchronous reply, tx stored internally}
-\todo{Rx is also a future, a lot of futures used}
+Each actor in this library stores notification tokens representing running tasks inside its state. Each request also
+has a unique numeric identifier associated with it. This identifier is sent over the network, and expected to be
+send along with the response. After receiving the identifier, the local actor finds notification token associated
+with it, and uses it to notify user code about request completion.
+
+These notification tokens are implemented in form of single-shot channels provided by the \verb|futures| library.
 
 \subsection{Actix-arch}
 Is a library that was built on top of \verb|actix-comm| simplify development of individual components. It contains implementations
@@ -857,9 +867,29 @@ and work units, communication using 2 service handlers.
 Another crucial aspect of designed system is the storage of both the financial data and general system data.
 These 2 types of data have different storage requirements.
 
-\subsection{Financial data}
-\todo{Move this earlier ?}
-Financial data received from exchanges is in the form of several prices and volume that is aggregated over a time interval.
+
+\subsection{System data}
+We use this term to describe data that denotes the system state. This means User accounts, and data associated with
+these accounts. This set of data can bea easily mapped onto the relational model, and therefore we chose to store it
+in relational database.
+
+There are several very popular relational databases, each with their own advantages and disadvantages. We elected to
+use PostgreSQL\footnote{https://www.postgresql.org/} because of its vibrant open source community, custom extensions, and support of large
+part of modern SQL standards \cite{sql_comp}.
+
+The system data is described by following ER diagram:
+\begin{figure}[H]
+    \includegraphics[width=\textwidth]{obrazky-figures/ERD.png}
+    \caption{Entity-Relationship diagram of system data}
+    \label{img:arch}
+\end{figure}
+
+\subsection{Asset data}
+\label{section:ohlc}
+Along with the system data, we also need to store information about individual assets that we receive from exchanges.
+This data has a particular format. It consists of periodic updates about an asset, with each update containing several
+prices and some additional information.
+
 These prices are:
 \begin{itemize}
     \item{Open - } Price, that was used in first transaction in this time interval
@@ -867,81 +897,74 @@ These prices are:
     \item{Low - }  Lowest price that was used in transaction in this interval
     \item{Close -} Price, that was used in last transaction in this time interval
 \end{itemize}
+
 In adition the these price, each interval is associated with its starting timestamp, and cumulative volume
 of executed trades. We will refer to this type of data as OHLC data, based on the OHLC chart which is used for displaying
-these datasets (\todo{Footnote https://www.investopedia.com/terms/o/ohlcchart.asp}).
+these datasets \footnote{https://www.investopedia.com/terms/o/ohlcchart.asp}.
 
-There are several requirements put on storage solution that will be used for storing the OHLC data, mainly stemming from
-amount of this data, and operations that must be performed on it.
+There are several requirements put on storage solution that will be used for storing the OHLC data. Since this data is received periodically,
+every minute, and is received for each asset, the chosen storage solution will have to support large insert rates. For example,
+even if we support only the Bitfinex\footnote{https://www.bitfinex.com/} exchange, we will have to store OHLC data for more than 200 assets,
+most of which are updated every 20 seconds. This puts a requirement of 10 inserted rows per second onto our storage solution.
 
-The chosen storage solution will have to support large ingest rates. For most basic implementation, supporting bitfinex exchange,
-we will have to store OHLC data for almost 100 assets, most of which are updated every 10 seconds. This would mean
-the insert rate of 10 rows per second.
+Another aspect is retrieval of the data. We need to be able to retrieve several hundred rows from last inserted data with
+low latency, and retrieve older data without hard latency requirements. Also, we need to perform periodical maintenance
+of the data set for the purpose of effective strategy execution (eg. filling missing data points). This task would be
+much easier, if we had full SQL support.
 
-Another aspect is periodic retrieval of latest data for evaluation of strategies. This retrieval is not a simple load from database,
-the stored data will have to be cleaned up,
-\todo{Insert missing mpoints}
 
-\subsection{Application data}
-For storing application data, we have to store data that conforms to relational model.
-\todo{ERD HERE}
-This ERD diagram shows basic data model of the system. This data model utilizes several foreign keys, and will require
-a relational database for storage.
+\subsection{Evaluated storage architectures}
+As mentioned earlier, we chose to utilize PostgreSQL to store system data. This decision was mainly influenced by the
+ability to use modern SQL, and the ability to extend the database with custom, and commercial extensions.
 
-\subsection{Evaluated storage solutions}
-In order to store application data, we just have to use a relational database. These databases are most common types of databases used,
-and have extensive tooling built to support them. For the purposes of this application the \textbf{PostgreSQL} databases was chosen.
-This is an open source database which supports most of the modern SQL, and probably the only competitor to Oracle's offering
-in terms of functionality. One of the most exciting features of this database is support of extensions, that transform
-this simple relational database into general purpose storage solution. Some of the database extensions are
+As for the storage of asset data, if we have to satisfy constraints outlined earlier, we have several choices. These
+choices will have to support large insert rates, fast retrieval of latest data, and preserve these properties even
+when amount of stored data grow to the point when it can no longer be stored in memory. These requirements are common
+among applications that deal with a steady stream of time dependant data ( also called time-series data).
+
+The conceptual architectures that satisfy these requirements are:
 \begin{itemize}
-    \item Citus - Adds support for clustered deployments, in which several instances of PostgreSQL databases store
-    data - improving redundancy and performance
-    \item TimescaleDB - Improves upon built-in table partitioning, and adds custom storage engine optimized
-    for time-series datasets.
-    \item CStore - Adds columnar store, which can be used for storing data in ORC format.
+    \item{Cloud database} - Utilizes a database provided by external provider, that is optimized
+    for large workloads.
+    \item{Distributed database} - This approach utilizes a distributed - multi-master database,
+    that allows us to utilize several machines for storing and retrieving data
+
+    \item{Relational database with shared tables} - This approach utilizes relational database, in which
+    we store the data in several sub-tables of limited size. Insert rates are improved, because indexes
+    are smaller.
 \end{itemize}
-Thanks to these features, the \textbf{PostgreSQL} was chosen as a database for storing application data.
 
-However, the storage solution for storing OHLC data has different requirements. The chosen solution will have
-to support large insert rates mentioned earlier, fast retrieval of newly inserted subset of data, and preservation
-of these properties over time, when amount of stored data grows past the amount that could be stored in memory.
+\subsection{Evaluated solutions}
+We evaluated several technologies, each based on an architecture outlined earlier.
+\subsubsection{Cloud database}
+As for external databases provided by cloud providers, we evaluated Google's and Amazon's offering.
+Google provides their Cloud Bigtable database, that potentially could be used for our purposes. It provides
+apache HBase API, and is basically a key-value store. But, even if it provides very impressive perofrmance,
+the pricing of this technology is very steep, and thus we elected to not use this technology for now.
 
-These requirements are common among the applications that deal with a steady stream of time-dependent data, also called
-time-series data.
+Last year amazon announced their Timestream database, that seems it could possibly support our usecase, but this
+technology is till in beta, and not available to public. In the future, we might revisit this technology.
 
-There are several approaches to storing time-series data. We could store it as a normal postgresql table.
-This would ensure avaiability of analytical functions for working with data in the database engine, removing the
-need to implement it in application. But the drawback of this approach is scalability. While \textbf{PostgreSQL} is
-among the most peroformant database today, its performance quicky degrades with large tables\todo{Cite timescaledb research on
-ingest rates}. Most common solution to this problem is table partitioning, that creates sub-tables for our time-series
-data table, and divides data into these subtables based on the temporal dimension. However, this requires additional
-tooling and management.
+\subsubsection{Distributed database}
+We evaluated Cassandra, and ScyllaDB distributed databases. Both of these technologies
+provide same API, each of them provides impressive performance, and ability to scale to multiple nodes.
+However, ScyllaDB has lower memory requirements and lower latencies, thus it was preferred.
 
-Another approach is to use a distributed database with multiple nodes. Then, the data would be partitioned across multiple nodes,
-with some degree of redundancy. Therefore, inserts and reads both can be easily parallelized, and we would gain redundancy,
-preserving data in case of node failure. Drawback of this approach is the overhead, that will use of multiple nodes incur.
-\textbf{ScyllaDB} was evaluated as an alternative, that utilizes the distriubuted approach.
+Both of these databases support only subset of SQL, which we found lacking. However, the
+performance achieved vas very impressive, and if, in the future, we need to achieve better performance,
+the migration to ScyllaDB would be a great way to achieve it.
+\subsubsection{Relational database}
+Since we are using PostgreSQL for storing system data, we could also store the asset data in this database.
+This would greatly simplify the system. However, in order to achieve performance figures required, we need to
+utilize table partitioning. We evaluated TimescaleDB extension, that implements table partitioning,
+and provides extensive suite of supporting functions for working with time-series data.
 
-But, after considering these multiple approaches, we have decided to use \textbf{PostgreSQL} with the \textbf{TimescaleDB}
-extension for storing OHLC data. The \textbf{TimescaleDB} extension targets time-series data storage, making it ideal for our needs.
-It creates a \textit{hypertable} concept, that is an abstraction over standard table, perfrorming automatic partitioning over
-temporal dimension, and optionally over several hash dimensions. It also provides to analytical functions for working with time
-series data (eg. \verb|time_bucket| that allows working with data over different timescales). Thanks to the
-customized storage engine and automatic partitioning, this extension solves the main problem of reduced performance
-for large databases.
+\subsubsection{Chosen technologies}
+The ease of use, and relatively satisfying performance made the PostgreSQL + TimescaleDB combination the
+chosen technology for storing the asset data. If this solution does not provide adequate peroformance
+in the future, we will probably migrate to using ScyllaDB, along with separate component for data maintenance,
+that is currently performed by utilizing andvanced SQL queries with PostgreSQL.
 
-However, if this approach fails, there is experimental \textbf{ScyllaDB} storage layer for storing OHLC data,
-that seems to provide same performance as current \textbf{PostgreSQL} storage layer.
-
-\todo{SCYLLADB DOES NOT HAVE PROPER SQL - }
-\todo {ERD}
-\todo{Postgresql with timescaledb}
-\todo{Hypertable - sharding}
-\todo{Currently more htan enough, we'll see about future}
-
-\todo{Experimental Scylladb backend}
-\todo{Not in production, postgresql more than enough}
 
 \section{Web}
 As mentioned earlier, we elected to implement the web application with the single-page approach. This requires dividing
@@ -962,7 +985,7 @@ the Backend part of the application is relatively small.
 For implementation of the Frontend part of the application, we evaluated several popular technologies.
 
 \subsubsection{Polymer}
-Is a library developed by Google. It utilizes custom webcomponents\todo{Cite}, Shadow DOM \todo{Cite} and HTML Templating\todo{Cite} technologies
+Is a library developed by Google. It utilizes custom webcomponents\footnote{https://www.webcomponents.org/}, Shadow DOM and HTML Templating technologies
 to achieve remarkable set of functionality with only a small extension build upon common web standards, that all major
 browsers implement. This technology is based on the \verb|lit-html| library, which can be used for creating HTML templates directly from
 javascript. However, using polymer requires custom command line tool, in order to build applications made with this technology.
@@ -1075,20 +1098,20 @@ currently evaluation actor, reducing the amount of available actors for strategy
 sufficient amount of attempts, this would leave no available actors, and then, the system would be unable
 to function.
 
+
+To ensure this attack is not possible, we limit number of LUA instructions that a particular strategy can execute.
+This is done by utilizing the \verb|debug.sethook| function.
 \subsection{Access to information}
 Method for strategy evaluation described so far should provide safe, and performant
 way for users to write custom code, that can be run inside our system. However, we must allow this code to access the
 financial data, and provide some kind of library for supporting the strategies.
 
 We expose a vector of OHLC data items inside the \verb|__ohlc| global variable. Each item in this vector
-has methods to access individual prices described in the \todo{autoref OHLC definition}.
+has methods to access individual prices described in the \autoref{section:ohlc}.
 
 We also expose a set of functions implementing indicators for Technical analysis\footnote{https://en.wikipedia.org/wiki/Technical\_analysis}.
 These are available inside the \verb|ta| global table.
 
-
-To ensure this attack is not possible, we limit number of LUA instructions that a particular strategy can execute.
-This is done by utilizing the \verb|debug.sethook| function.
 
 \section{Evaluation}
 Since users can crate multiple strategies, and then apply these trategies to multiple different assets on different exchanges,
@@ -1301,8 +1324,8 @@ extending the system to support additional exchange should be extremely easy.
 The bitfinex adapter is also managed ky kubernetes deployment and exposed by a service.
 
 \subsubsection{API access implementation}
-Acces to exchange APIs is implemented in the \verb|apis| library in the \verb|code/deps| directory. This library implements
-primitives that could be shared between different exhange adapters, and contains a \verb|bitfinex| submodule that contains
+Access to exchange APIs is implemented in the \verb|apis| library in the \verb|code/deps| directory. This library implements
+primitives that could be shared between different exchange adapters, and contains a \verb|bitfinex| submodule that contains
 definitions of types received from API calls, and implementations of these API calls as  asynchronous rust functions.
 
 This pattern of implementation of specific API exchange in a submodule will be continued when extending the system
@@ -1320,38 +1343,54 @@ However, this approach would only allow components to read data in an event of a
 database. Writing new data ito the database would not be possible, since Postgres does not provide multi-master
 solution to streaming replication.
 
-Another approach considered was the use of distributed database. We chose to use ScyllaDB. This distributed database
-is re-implementation of Cassandra DBMS. 
+However, if we used fully distributed database like ScyllaDB, we leverage its multi-master capabilities, and
+along with increased performance obtain some data redundancy.
 
-This issue could by fixed by sharding the
-database with simple streaming replication, but that approach would only ensure readability of data during issue
-with the master server, and would not allow writing of new data.
+During the implementation of persistence component, we have evaluated both of these approaches. For now,
+we have elected to utilize PostgreSQL with TimescaleDB as a primary storage solution for both system and asset data.
+This greatly simplified the development and managment of this component. However, if at any point in the future
+this approach does not fulfill our performance requirements, we have implemented minimal connectior to ScyllaDB, that
+can be swapped with PostgreSQL implementation for storing and retrieving asset data with virtually no downtime.
 
-Probbly the only solution to this issue is the usage of distributed database, in the form of PostgreSQL with the
-citus extension, or using another database, like scyllaDb
+
+\begin{figure}[H]
+    \includegraphics[width=\textwidth]{obrazky-figures/db_diag.png}
+    \caption{Database structure diagram}
+    \label{img:arch}
+\end{figure}
+
 
 \subsubsection{Access}
-The access to the database, is implemented by the \verb|db| library
+The access to the database, is implemented by the \verb|db| library in the \verb|code/deps| subdirectory.
+This library utilizes the \verb|diesel| library
+to access the database and generate queries. We could call this library an ORM(Object-Relational Mapper).
+However, it operates on a lower level than most ORM solutions.
 
+One drawback of diesel is the inherently synchronous nature of database adapters provided by this library.
+In order for this component to effectively work with other components, we first must provide an asynchronous interface
+to the database. There are 2 key techniques we utilize.
 
-\todo{Persistence - ERD}
-\todo{Needs to be first do better understand other components}
+First of all, each component does  not have only one connection to the database, We utilize the \verb|r2d2| library
+to create a pool of reusable connections. Then, in order to execute queries concurrently, we run database queries
+in dedicated actors. These actors utilize Actix's \textbf{SyncContext} instead of normal \textbf{Context}. The main difference
+is that when using \textbf{SyncContext}, each actor runs in separate thread, and runs synchronously, while responding to
+messages with asynchronous \textbf{Futures}. Each component runs at least 4 of these actors.
 
-\todo{Implemented in the DB library}
-\todo{Uses diesel for query generation}
-\todo{Synchronous - uses R2d2 for connection pooling and SyncActors for concurrent access to DB}
-\todo{Describe the Database wrapper struct}
-
+For ease of development, we created the \textbf{Database} struct, that encapsulates all this behavior, and provides
+a set of asynchronous methods, which implement required actions. Most of these method implement common actions
+from the CRUD pattern (Create-Read-update-Delete), which creates a lot of redundancy. We aim to reduce this redundancy
+by implementing generic \textbf{Repository} pattern. However, due to diesel's heavy use of complex traits, we
+were unable to do so within this thesis' time frame.
 
 \subsection{Web component}
-This system component implements the REST API neccesary to acces the system. This API is then
+This system component implements the REST API necessary to access the system. This API is then
 in turn used by the frontend web application. In theory, this API could be published for consumption by
 other developers, that wish to extend our system.
 
 The API is implemented using the \verb|actix-web| library, that utilizes the actor model to its fullest,
-being one of the fastest HTTP library in the world\todo{Cite techempower benchmark}. This library
-allows programmer to attach individual functions to HTTP URIs, and these funcitons are then invoked by a
-set of worker actors, whenever they receive a request matching said URI. The library also performas automatic parsing
+being one of the fastest HTTP library in the world\cite{techempower_benchmark}. This library
+allows programmer to attach individual functions to HTTP URIs, and these functions are then invoked by a
+set of worker actors, whenever they receive a request matching said URI. The library also performs automatic parsing
 of path and query parameters and request bodies. Another core part of the library interface is the programmer defined
 state, that can be attached to a running web server. This state can be then retrieved inside every handler function.
 
@@ -1359,11 +1398,10 @@ Our implementation uses it to store handle to database access actors, which are 
 This is implemented using the \textbf{Database} wrapper struct, that was described earlier.
 
 Most of the implemented endpoints act as a simple interface to the database, that performs some validation, but there
-are some custom logic\todo{Describe assignments}
+are some custom logic.
 
 This part of the system heavily relies upon the async-await style of programming, that requires the nightly compiler.
 Every single handler method is implemented as an async function, that internally calls several other async functions.
-
 
 %@formatter:off
 \begin{code}[language=rust,label={web_handler},caption={Example web handler function}]
@@ -1413,7 +1451,7 @@ greatly complicating futher development.
 
 After both of these approaches failed, we elected to rewrite the web interface part of the system from scratch.
 This time, the backend was rewritten to the form of a REST API described earlier, and the frontend application
-was rewritten in React. We also decided to use Redux\todo{Footnote} to manage applicaton state,
+was rewritten in React. We also decided to use Redux\footnote{https://redux.js.org/} to manage application state,
 and Material-UI library to provide set of base components, foregoing any kind of complex UI template.
 
 \subsection{React}
@@ -1464,7 +1502,7 @@ that ensures only one route from a set of route elements is active at one time. 
 with the set of inner routes contains the individual pages.s
 
 \subsection{Redux}
-Another important aspect of the web applicaiton was the storage, and management of state. The earler attempts failed
+Another important aspect of the web applicaiton was the storage, and management of state. The earlier attempts failed
 because the management of state was untenable with growing application complexity.
 the \verb|Redux| library was developed precisely to solve this problem.
 As described earlier, the library is based on the \textbf{Flow} architecture pattern, that is based on 3 core concepts.
@@ -1490,9 +1528,9 @@ This library provided simple ORM-like experience, and definitely made the develo
 
 \subsection{Material-UI}
 This library was chosen as a base library of components, upon which our custom components were built.
-It implements commonly needed components that conform to Google's Material design guidelines\todo{Cite}.
+It implements commonly needed components that conform to Google's Material design guidelines\footnote{https://material.io/design/}.
 THese components are also written with first class support of mobile devices, opening up the pathway for
-making our web application into a Progressive Web Application\todo{Footnote PWA}.
+making our web application into a Progressive Web Application\footnote{https://en.wikipedia.org/wiki/Progressive\_web\_applications}.
 
 Core component used in our custom components is the \verb|Paper| component, which creates a surface
 with the appearance of an elevated piece of paper. This concept of an elevated surface is also at the core of
@@ -1553,22 +1591,19 @@ account. It uses databinding to to pass properties, and callback functions into 
 
 \chapter{Testing and evaluation}
 This chapter aims to describe the methodology that was used for evaluating the implemented system, and project results
-as a whole. Another goal is to outline authors experience with the used technolgies, and provide some guidelines for future
+as a whole. Another goal is to outline authors experience with the used technologies, and provide some guidelines for future
 projects of this type.
 
 \section{Testing}
 While 2 primary implementation languages of this project (Rust + React Javascript) have excellent support for unit testing,
-this approach for ensuring software correctness was used in minimal capacity. The most thoroughly tested part of this project
-were the \verb|actix_comm| and a \verb|actix_arch| library, that were implemented to serve as a layer between ZeroMQ, Actix
-and our system.
-\todo{Code coverage table here}
+this approach for ensuring software correctness was used in minimal capacity.
 
 To properly test the individual components and ensure their correct behavior, another approach was chosen. because of the
-fact, that the project uses kubernetes for managmennt, and deployment of the implemented system, allowed us to create
+fact, that the project uses kubernetes for management, and deployment of the implemented system, allowed us to create
 separate testing environment. The system was then primarily deployed into this environment, and was observed.
 This approach allowed us to observe the system in virtually the same environment, in which it will be deployed.
 Several complex behaviors arisen from interaction of individual components were observed, and subsequently fixed.
-We wouldnt be able to observe these issues without all the components integrated together, so subjectivelly, we
+We wouldn't be able to observe these issues without all the components integrated together, so subjectively, we
 feel that the chosen approach was correct.
 
 \subsubsection{Example case - Silent disconnects}
@@ -1578,8 +1613,8 @@ The ZeroMQ library has a complex internal networking layer, that utilizes severa
 for managing them.
 
 Our \verb|actix_net| uses ZeroMQ, and uses several different virtual socket types provided by it. These sockets
-are long-lived. They should stay open during the whol time the compoonent runs. However, in the kubernetes environment,
-components can be killed at virtually any time. This poses a problem. For ROuter and PUB socket types that were
+are long-lived. They should stay open during the whole time the component runs. However, in the kubernetes environment,
+components can be killed at virtually any time. This poses a problem. For Router and PUB socket types that were
 used in serviceHandler and publisher actors respectively, the ZeroMQ library does not detect disconnects, or detects
 them after some time.
 
@@ -1588,7 +1623,7 @@ destabilized the whole system. THe component that was affected the most, was the
 component, which could not detect missing OHLC updates, since it was a binding SUB socket that created a SUB topology.
 
 The approach, that we chose to fix this issue was to use features of the TCP protocol implementation know as Keepalive.
-This feature is so called, because it can be usd to keep a TCP conection alive and well, and determine when it was dropped from the other side.
+This feature is so called, because it can be usd to keep a TCP connection alive and well, and determine when it was dropped from the other side.
 
 The primary mechanism for performing this service is to periodically send empty TCP packets, that must be acknowledged from
 the other side. If a sequence of packets is not acknowledged in some pre-defined time, the connection is considered closd
@@ -1622,7 +1657,7 @@ custom metrics specific to our application, that would allow us to better unders
 
 \section{Implementation evaluation}
 The need for low latency, scalability and predictable performance was one of the driving forces for multiple key decisions in this project.
-The implemtation language, communication technology, deployent strategy were all chosen in order to achieve these goals.
+The implementation language, communication technology, deployment strategy were all chosen in order to achieve these goals.
 This section aims to evaluate, whether we achieved these goals.
 
 \subsection{Measurement methodology}
@@ -1635,41 +1670,114 @@ we are measuring on the scale of milliseconds.
 \subsubsection{Latency measurements}
 First step to allow for measuring latency is annotating a data update with unique identifier, which will be passed on throughout the system.
 The components will the use this identifier to uniquely identify all messages associated with a particular update.
-Then, throuchout normal system function, each component in the system will send messages denoting the state of a particular message along with its identifier
+Then, throughout normal system function, each component in the system will send messages denoting the state of a particular message along with its identifier
 to measuring component. This approach might add some latency, but considering that several of the processing steps
 take several milliseconds, it should be precise enough for our purposes.
 
 \subsubsection{Scalability measurements}
 The scalability measurement is closely associated with the latency measurement. We measured the scalability of the system
-by adding virtual strategies and corresponding assingments to the system, increasing the load put upon it. Then , we measured,
+by adding virtual strategies and corresponding assignments to the system, increasing the load put upon it. Then , we measured,
 how the system latency was affected. With the increase in computing requirements, the computing resources
 available to the kubernetes cluster were also increased.
 
 \section{Performance measurements}
-The performance measurements were taken in production environment
+The performance measurements were taken in production environment. We utilized custom component described earlier. This component aggregated
+messages from all other components, marking each event with the timestamp, the moment it was received. Then, after some time\todo{1 hour}, this
+data was processed in memory, and written into a CSV file, that was then copied from the docker container this component was
+running inside. After obtaining the measured data, some basic statistical analysis was performed.
+
+\subsection{Collected information}
+Since the core metrics we are interested in are the individual latencies. We collect latencies of individual steps locally, and
+aggregate the results on the \actor{Measure} component. The data was collected using several configurations and system loads.
+These configurations are:
+
+\begin{table}[H]
+    \begin{tabular}{|l|l|l|l|l|}
+        \hline
+        \# of nodes & \# of worker pods & Database configuration & \# of evaluations per minute \# of assignments \\ \hline
+
+        2 & 2 & 500MB RAM, 1 vCPU & ~50 & 200 \\ \hline
+        %
+        4 & 8 & 1G RAM, 1.5 vCPU & 200 & 800 \\ \hline
+        8 & 16 & 2G RAM, 2vCPU & 1000 & 4000 \\ \hline
+    \end{tabular}
+    \caption{System configurations}
+\end{table}
+\newpage
+The strategy used for testing is the following:
+
+
+%@formatter:off
+\begin{code}[language={[5.2]Lua},label={test_strategy},caption={Example strategy}]
+-- Fast exponential moving average closely follows price while smoothing out
+-- random swings
+local ema_fast = ta.ema(3)
+-- Slow exponential moving average tracks longer term trend
+local ema_slow = ta.ema(29)
+
+-- We use RSI to determine when an asset is overbought or oversold
+local rsi = ta.rsi(14)
+
+-- Triggering signal for buying and selling
+local buy_signal = ema_fast() > ema_slow() * 1.001
+local sell_signal = ema_fast() < ema_slow() * 0.999
+
+-- RSA guards for overbought or oversold markets
+local rsi_overbought = rsi() > 80
+local rsi_oversold = rsi() < 20
+
+--
+if buy_signal and not rsi_overbought then
+    return 'long'
+elseif sell_signal and not rsi_oversold then
+    return 'short'
+else
+    return 'neutral'
+end
+\end{code}
+%@formatter:on
 \section{Results}
+
 
 \todo{Results - Performance figures}
 
+\section{Failures}
+While we can point to many positive aspects of the system, we would be remiss, if we wouldn't take its failures
+into consideration as well.
+
+\subsection{Readability problems}
+While most of the implementation benefited greatly from the use of Rust as primary implementation language, the combination
+of this language, with its very explicit asynchronous style of coding resulted in some sections of the code being
+very hard to read, and therefore understand. We hope, that this drawback is resolved by full migration
+to async-await style programming upon its stabilization within the language.
+
+The system as a whole probably requires a refactoring pass, since it was developed over the course of a year,
+and some decisions taken at the beginning proved to be wrong, and the system had to be adapted.
+
+\subsection{Deployment updates - Disconnects}
+As mentioned in our overview of system testing, the individual components of the system suffered from silent disconnects.
+While this issue was mostly resolved, it points  to a much deeper issue with the use of ZeroMQ as a transport technology.
+It requires management. If we have used simple HTTP based REST api to communicate between components, the disconnections
+would have resulted in individual call failures almost immediately, greatly reducing the instability of the system during
+an upgrade.
+
+However, we hope to fix this issue, by adding multiple ZeroMQ sockets to single communication actor, with some
+of them being used for sending heartbeats and therefore detecting network or component failures.
+
 \chapter{Conclusion \& Future work}
-The title of this thesis is a Design and development of distributed system that would perform a specific function.
-Most of the work performed so far was design of the system, and implementation of supporting technologies. The
-future development plan starts with finishing the \verb|actix-comm| library. Then, designing and implementing a persistence
-service that would resolve bottlenecks found in current solution.
+The aim of this thesis was design and creation of a distributed system with with very specific constraints.
+These constraints aimed our approach to the system, and affected our choice of technologies.
 
-After issues with this part of the system are resolved, the next step will be implementation of the strategy evaluation service,
-and implementation of order execution functionality into exchange service. These 2 changes will make the system able to perform its
-primary function, that being automatic trading based on a strategy.
+The system was implemented as a distributed application with a Single-page application as web frontend. We utilized
+ZeroMQ for communication, and based the general system architecture on the actor model.
 
-Next step will be the implementation
-of the web application that will make the system implemented in previous step accessible to users. This involves the implementation of user management,
-and inclusion of user data into the rest of the system.
+As part of this thesis, we have designed and implemented 2 libraries (\verb|actix-comm| and \verb|actix-net|), which
+will released as open-source into the Actix library ecosystem.
 
-After the web application implementation is complete, the performance of implemented system will be measured. The target of the measurements
-will be the latency between system receiving new financial data, and system being able to execute orders resulting from
-evaluation of strategies using this new data. The measurements will be performed with different amount of
-load on the system, but the system configuration will not be changed. The expected result of these measurements is the
-invariance of system latency based on system load.
+We measured the performance achieved by the system depending on the load being put on it, and its ability to scale to
+utilize more computational resources in accordance with the rise in system load.
 
+The system designed was submitted into the Excel@FIT student conference. The feedback provided by attendees of this
+conference was invaluable, and will certainly influence the future of the system.
 
-
+\todo{Future}

@@ -48,6 +48,7 @@ pub use chrono;
 pub use uuid;
 
 pub use futures::{self, prelude::*, future};
+pub use futures_retry;
 
 pub type Result<T, E = Error> = std::result::Result<T, E>;
 

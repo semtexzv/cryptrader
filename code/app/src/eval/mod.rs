@@ -71,12 +71,13 @@ impl Handler<ServiceRequest<EvalService>> for EvalWorker {
 
         let strat = self.db.single_strategy(req.strat_id);
 
+
+        let t1 = Instant::now();
         if cfg!(feature = "measure") {
-            log_measurement(MeasureInfo::EvalReceived {
-                eval_id: req.eval_id
+            log_measurement(MeasureInfo::EvalStart {
+                eval_id: req.eval_id,
             });
         }
-        let t1 = Instant::now();
 
         // Thousand ohlc candles ought to be enough for everyone
         let data = self.db.ohlc_history_backfilled(req.spec.clone(), req.last - (req.spec.period().seconds() * 1000));
@@ -89,7 +90,7 @@ impl Handler<ServiceRequest<EvalService>> for EvalWorker {
             let data = data.into_iter().map(|x| (x.time, x)).collect();
 
             if cfg!(feature = "measure") {
-                log_measurement(MeasureInfo::EvalDataLookup {
+                log_measurement(MeasureInfo::DataLookupDuration {
                     eval_id: req.eval_id,
                     lookup_duration: Instant::now().duration_since(t1),
                 });
@@ -100,7 +101,7 @@ impl Handler<ServiceRequest<EvalService>> for EvalWorker {
             let (res, time) = measure_time(|| strat_eval::eval(data, strat.body));
 
             if cfg!(feature = "measure") {
-                log_measurement(MeasureInfo::EvalExecute {
+                log_measurement(MeasureInfo::ExecuteDuration {
                     eval_id: req.eval_id,
                     eval_duration: Duration::from_millis(time as _),
                 });

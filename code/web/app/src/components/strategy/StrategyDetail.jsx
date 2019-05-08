@@ -183,8 +183,8 @@ function mapStoreToProps(state, props) {
     return {
         ...props,
         strategy: getStrategySelector(id)(state.data),
-        evaluations: sess.Evaluation.all().toRefArray(),
-        assignments: sess.Assignment.all().toRefArray(),
+        evaluations: sess.Evaluation.all().toRefArray().filter(e => e.strategy_id == id),
+        assignments: sess.Assignment.all().toRefArray().filter(e => e.strategy_id == id),
     };
 }
 
