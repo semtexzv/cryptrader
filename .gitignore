@@ -6,3 +6,4 @@ out/
 build/
 **/node_modules/
 **/.cache
+.Rproj.user

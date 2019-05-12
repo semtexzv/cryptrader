@@ -1,3 +1,5 @@
+BUILD_TYPE=Release
+
 include ops/make/Macros.mk
 
 MAKEFLAGS += -j 4

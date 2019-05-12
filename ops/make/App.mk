@@ -1,3 +1,5 @@
+
+export BUILD_TYPE=release
 include ops/make/Macros.mk
 
 $(call require,BUILD_TYPE)

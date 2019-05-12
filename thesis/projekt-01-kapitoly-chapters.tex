@@ -259,7 +259,7 @@ non-managed language.
 
 On the other side of the equation, we evaluated CAF \footnote{https://actor-framework.org/} framework for C++, but ultimately
 we decided against the use of this library and language. We decided against this approach because of the complexity of this
-framework, and inherent unsafety in C++. 
+framework, and inherent unsafety in C++.
 
 In order to avoid these issues, we decided to use  Rust\cite{Blandy:2015:RPL:3019371} programming language along
 with the Actix\cite{web:actix} library.
@@ -431,8 +431,8 @@ at the same time is not allowed, and will result in compiler error. Compiler use
 references do not overlap.
 
 \subsection{Concurrency primitives}
-In addition to ensuring memory safety, the concenpt of ownership and borrowing is also used for preventing data 
-races in concurrent programs. 
+In addition to ensuring memory safety, the concenpt of ownership and borrowing is also used for preventing data
+races in concurrent programs.
 
 Data race occurs when 2 or more threads concurrently access same location of memory, one of these accesses is a write,
 and accesses are unsychronized. These types of bugs are extremely hard to discover, and have lead to death of several medical patients in
@@ -1339,7 +1339,7 @@ container, that is also managed by kubernetes deployment and exposed by a servic
 since usage of only one database instance provides a single point of failure. We could potentially resolve
 this issue by utilizing multiple DBMS instances that would be synchronized using Postgres' streaming replication.
 
-However, this approach would only allow components to read data in an event of a unavailability of the master 
+However, this approach would only allow components to read data in an event of a unavailability of the master
 database. Writing new data ito the database would not be possible, since Postgres does not provide multi-master
 solution to streaming replication.
 
@@ -1692,17 +1692,30 @@ aggregate the results on the \actor{Measure} component. The data was collected u
 These configurations are:
 
 \begin{table}[H]
-    \begin{tabular}{|l|l|l|l|l|}
-        \hline
-        \# of nodes & \# of worker pods & Database configuration & \# of evaluations per minute \# of assignments \\ \hline
-
-        2 & 2 & 800MB RAM, 1 vCPU & ~50 & 200 \\ \hline
-        %
-        4 & 8 & 1.5G RAM, 1.5 vCPU & 200 & 800 \\ \hline
-        8 & 16 & 2G RAM, 2vCPU & 1000 & 4000 \\ \hline
-    \end{tabular}
-    \caption{System configurations}
+    \centering
+    \addtolength{\leftskip} {-2cm}
+    \addtolength{\rightskip}{-2cm}
+\begin{tabular}{|c|c|c|l|c|c|c|c|}
+\hline
+\multirow{2}{*}{Configuration} & \multicolumn{3}{c|}{Node configuration}                                                                                  & \multirow{2}{*}{\begin{tabular}[c]{@{}c@{}}Database \\ configuration\end{tabular}} & \multirow{2}{*}{\begin{tabular}[c]{@{}c@{}}Core\\ configuration\end{tabular}} & \multicolumn{2}{c|}{Worker configuration}                                                           \\ \cline{2-4} \cline{7-8}
+& \#                 & Type                                                                       & Cost                   &                                                                                    &                                                                               & \#                 & Type                                                                           \\ \hline
+C1.0                           & \multirow{2}{*}{2} & \multirow{5}{*}{\begin{tabular}[c]{@{}c@{}}2 CPU \\ 2 GB ram\end{tabular}} & \multirow{2}{*}{\$40}  & \begin{tabular}[c]{@{}c@{}}1 CPU\\ 0.5GB RAM\end{tabular}                          & \multirow{2}{*}{\begin{tabular}[c]{@{}c@{}}200 mCPU\\ 120 MB\end{tabular}}    & 2                  & \multirow{3}{*}{\begin{tabular}[c]{@{}c@{}}150 mCPU\\  80 MB RAM\end{tabular}} \\ \cline{1-1} \cline{5-5} \cline{7-7}
+C1.5                           &                    &                                                                            &                        & \begin{tabular}[c]{@{}c@{}}1.5 CPU\\ 1G RAM\end{tabular}                           &                                                                               & 3                  &                                                                                \\ \cline{1-2} \cline{4-7}
+C2.0                           & \multirow{3}{*}{4} &                                                                            & \multirow{3}{*}{\$80}  & \multirow{3}{*}{\begin{tabular}[c]{@{}c@{}}1.5 CPU\\ 1.5 GB RAM\end{tabular}}      & \multirow{2}{*}{\begin{tabular}[c]{@{}c@{}}200 mCPU\\ 120 MB\end{tabular}}    & \multirow{5}{*}{8} &                                                                                \\ \cline{1-1} \cline{8-8}
+C2.1                           &                    &                                                                            &                        &                                                                                    &                                                                               &                    & \multirow{4}{*}{\begin{tabular}[c]{@{}c@{}}300 mCPU\\ 150 MB RAM\end{tabular}} \\ \cline{1-1} \cline{6-6}
+C2.2                           &                    &                                                                            &                        &                                                                                    & \multirow{3}{*}{\begin{tabular}[c]{@{}c@{}}400 mCPU\\ 150 MB\end{tabular}}    &                    &                                                                                \\ \cline{1-5}
+\multirow{2}{*}{C3.0}          & 4                  & \begin{tabular}[c]{@{}c@{}}2 CPU\\ 2 GB ram\end{tabular}                   & \multirow{2}{*}{\$120} & \multirow{2}{*}{\begin{tabular}[c]{@{}c@{}}2 CPU\\ 2 GB RAM\end{tabular}}          &                                                                               &                    &                                                                                \\ \cline{2-3}
+& 1                  & \begin{tabular}[c]{@{}c@{}}4 CPU\\  8 GB ram\end{tabular}                  &                        &                                                                                    &                                                                               &                    &                                                                                \\ \hline
+\end{tabular}
 \end{table}
+
+
+As you can see, we started with a simple configuration utilizing 2 nodes, and limiting resources available to individual components. Then,
+as we increased load put upon the system, we increased the number of nodes, and increased resources available to individual components
+accordingly.
+
+
+
 \newpage
 The strategy used for testing is the following:
 
@@ -1736,10 +1749,93 @@ else
 end
 \end{code}
 %@formatter:on
+\newpage
 \section{Results}
 
 
-\todo{Results - Performance figures}
+
+\begin{figure}[H]
+    \includegraphics[width=\textwidth]{obrazky-figures/agg.png}
+    \caption{Aggregate performance measurements}
+    \label{img:measure_agg}
+\end{figure}
+The \autoref{img:measure_agg} shows measured latencies for data passing through whole system for multiple configrations and
+number of assignments. The x axis stands for specific measurement, and the Y axis shows latency of the system. The graph
+also contains values of average and maximum latencies measured.
+
+Up to 4000 assignments, we were able to achieve the sub-second latency for majority of cases when the system was properly configured.
+However, we were not able to achieve the neccesary latency for each configuration. To determine which part of the system
+was bottleneck in which configuration, we measured different stages of the system separately.
+
+These stages are:
+\begin{itemize}
+    \item{Save} - Duration of saving newly received data into the database
+    \item{Dispatch} - Duration between sending a evaluation request, and worker processing this request
+    \item{Load} - Duration of lading historical data from database
+    \item{Exec} - Duration of actual strategy execution
+\end{itemize}
+
+Graphs for these stages are below:
+\begin{figure}[H]
+    \includegraphics[width=\textwidth]{obrazky-figures/save.png}
+    \caption{Saving data performance measurements}
+    \label{img:measure_save}
+\end{figure}
+\begin{figure}[H]
+    \includegraphics[width=\textwidth]{obrazky-figures/dispatch.png}
+    \caption{Data dispatch performance measurements}
+    \label{img:measure_dispatch}
+\end{figure}
+
+\begin{figure}[H]
+    \includegraphics[width=\textwidth]{obrazky-figures/load.png}
+    \caption{Loading data performance measurements performance measurements}
+    \label{img:measure_load}
+\end{figure}
+
+
+\begin{figure}[H]
+    \includegraphics[width=\textwidth]{obrazky-figures/exec.png}
+    \caption{Execution performance measurements}
+    \label{img:measure_exec}
+\end{figure}
+
+
+If we examine these graphs in detail, we can discern how configuration changes affected te system.
+
+\subsubsection{C 1.0}
+This is a base configuration. In this configuration the system performed adequately for up to 800 assignments.
+However, when the system had to evaluate 2000 assignments per minute, the dispatch duration skyrocketed.
+This means, that the system did not have enough workers evaluating strategies
+\subsubsection{C 2.0}
+In this configuration, we added new nodes, and increased the amount of evaluation workers from 3 to 8. This reduced
+the dispatch duration conisderably. However, the load duration increased to more than 1 second. The reason for this
+increase is unknown.
+\subsubsection{C 2.1}
+In this configuration, we increased the amount of CPU and RAM available ot each worker, with this change, the
+total system latency had fallen to sub-second latencies again, and stayed there for loads of up to 4000 assignments.
+\subsubsection{C 2.2}
+In this configuration, we increased resources available to core component. This did not affect the system in a significant way.
+\subsubsection{C 3.0}
+In this configuration, we added a larger node specifically for Database. This change allowed us to support
+
+
+
+
+
+
+If we examine these results in detail, we get a clearer picture of the problem. The first problem, with our system
+we found was the database.
+
+\subsection{Database bottlenecks}
+For several hundred users, the chosen database solution provides adequate performance. However, if we start to increase the number
+of users into the thousands, the database is no longer available to provide historical data for individual workers fast enough.
+This, in turn slows down dispatching of new requests since existing workers are busy loading data from database, and therefore the
+load balancing component must wait for new workers to become available. The actual strategy execution stage has relatibvely
+stable latency.
+
+To solve this problem, we will have to increase the number of available workers even further, and introduce some kind of
+local cache for historical data that would reduce the database pressure.
 
 \section{Failures}
 While we can point to many positive aspects of the system, we would be remiss, if we wouldn't take its failures
@@ -1763,6 +1859,35 @@ an upgrade.
 
 However, we hope to fix this issue, by adding multiple ZeroMQ sockets to single communication actor, with some
 of them being used for sending heartbeats and therefore detecting network or component failures.
+
+\section{Impact of selected technologies}
+Due to design constraints, we have elected to use rather uncommon set of technologies. Now, after measuring system
+performance, we can evaluate, how these choices affected our results
+
+\subsubsection{ZeroMQ}
+We elected to use ZeroMQ instead of using raw TCP sockets or higher level approach of using HTTP.
+This choice brought low latency messaging, which ultimately was overshadowed by general system latency. However, the
+different socket types proved useful for implementing custom communication patterns. Ultimately, we
+believe, that the choice of ZeroMQ was a right one, and in the future, when the system is more optimized, its benefits
+will overshadow the initial difficulties encountered.
+
+\subsubsection{Rust}
+The choice of Rust for main implementation language was primarily influenced by availability of very good library
+implementing The actor model (Actix), low overhead and primitives for asynchronous programming. Thanks to the
+use of this language, all components of the system require very low amounts of RAM, most of which
+is consumed by kubernetes. The use of Actix somewhat reduced the readability of code, but allowed us to create
+fully asynchronous components, which increased system throughput considerably.
+
+Overall, we regard this choice as a good one. With some updates to the language which should be available soon (Await syntax\todo{footnote})
+we should be eable to increase the readability of the code, while preserving all the benefits.
+
+\subsubsection{Lua}
+Based on measurements we collected over large amount of strategy executions, we can safley say, that the implementation
+of strategies  in LUA was a good choice. The evaluation workers showed very stable latency, and thanks to the use of this language,
+we were able to create a sandbox, securing the system from this attack vector.
+
+\subsubsection{Postgres}
+And finally, the choice of PostgreSQL for
 
 \chapter{Conclusion \& Future work}
 The aim of this thesis was design and creation of a distributed system with with very specific constraints.
