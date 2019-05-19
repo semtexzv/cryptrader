@@ -1,4 +1,5 @@
 use crate::prelude::*;
+use itertools::Itertools;
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, PartialOrd)]
 pub struct Ohlc {
@@ -12,13 +13,13 @@ pub struct Ohlc {
 
 
 impl Ohlc {
-    pub fn combine_with_time<'a>(time: i64, values: impl Iterator<Item=&'a Ohlc>) -> Ohlc {
+    pub fn combine_with_time(time: i64, values: impl Iterator<Item=Ohlc>) -> Ohlc {
         let mut res = Ohlc::combine(values);
         res.time = time;
         return res;
     }
 
-    pub fn combine<'a>(values: impl Iterator<Item=&'a Ohlc>) -> Ohlc {
+    pub fn combine(values: impl Iterator<Item=Ohlc>) -> Ohlc {
         let mut time = 0;
         let mut open = 0.0;
         let mut high = 0.0;
@@ -45,10 +46,54 @@ impl Ohlc {
         };
     }
 
+    pub fn backfill(values: impl Iterator<Item=Ohlc>, period: OhlcPeriod) -> Vec<Ohlc> {
+        let mut last = None::<Ohlc>;
+        let mut res = vec![];
+        let secs = period.seconds();
+        for v in values {
+            if let Some(last) = last {
+                if last.time != v.time - period.seconds() {
+                    for i in 0..(last.time - v.time) / period.seconds() {
+                        res.push(Ohlc {
+                            time: last.time + i * secs,
+                            open: last.close,
+                            high: last.close,
+                            low: last.close,
+                            close: last.close,
+                            vol: 0.0,
+                        });
+                    }
+                }
+            }
+            last = Some(v.clone());
+            res.push(v);
+        }
+
+        return res;
+    }
+
+    pub fn rescale(values: impl Iterator<Item=Ohlc>, period: OhlcPeriod) -> Vec<Ohlc> {
+        let count = period.seconds() / 60;
+        let chunks = values.chunks(count as usize);
+
+        chunks.into_iter().map(|c| {
+            Ohlc::combine(c)
+        }).collect()
+    }
+
     /*
-    pub fn rescale<'a>(values: impl Iterator<Item=&'a Ohlc>, period: OhlcPeriod) -> Vec<Ohlc> {
-        let period = period.seconds() / 60;
-        unimplemented!()
+    pub fn rescale(values: &[Ohlc], period: &OhlcPeriod) -> Vec<Ohlc> {
+        if *period == OhlcPeriod::Min1 {
+            return Vec::from(values);
+        }
+        let count = period.seconds() / 60;
+        let chunks = values.chunks(count as usize);
+
+        let mut res = vec![];
+        for c in chunks {
+            res.push(Ohlc::combine(c.iter()));
+        }
+        return res;
     }
     */
 }

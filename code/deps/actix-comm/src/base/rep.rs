@@ -73,7 +73,7 @@ impl Reply {
     fn handle_message(&mut self, ctx: &mut Context<Self>, identity: Identity, msg: MessageWrapper) {
         match msg {
             MessageWrapper::Hello => {
-                debug!("Received hello");
+                //debug!("Received hello");
             }
             MessageWrapper::Request(typ, id, data) => {
                 if let Some(handler) = self.registry.get(&typ) {

@@ -72,6 +72,10 @@ impl<S: ServiceInfo> LoadBalancer<S> {
             handler.register(ctx.address().recipient());
             worker_handler.register(ctx.address().recipient());
 
+            ctx.run_interval(Duration::from_secs(10), |this: &mut Self, ctx| {
+                info!("Workers: {:?} , requests: {:?}, waiting: {:?}", this.workers.len(), this.running.len(), this.waiting.len());
+            });
+
             LoadBalancer {
                 handler,
                 worker_handler,
@@ -92,16 +96,16 @@ impl<S: ServiceInfo> LoadBalancer<S> {
 
     fn worker_available(&mut self) -> ResponseActFuture<Self, WorkerReply<S>, RemoteError> {
         let (tx, rx) = oneshot::<WorkerReply<S>>();
-        debug!("Worker available");
+        //debug!("Worker available");
 
         if let Some((work, sender)) = self.waiting.pop_front() {
-            debug!("Dispatching immediately");
+            //debug!("Dispatching immediately");
             let id = self.new_work_id();
             tx.send(WorkerReply::Work(id, work)).unwrap();
             self.running.insert(id, sender);
             return box wrap_future(rx.unwrap_err().set_err(RemoteError::MailboxClosed));
         } else {
-            debug!("Parking worker");
+            //debug!("Parking worker");
             let worker_id = self.new_worker_id();
             self.workers.insert(worker_id, tx);
 
@@ -110,11 +114,11 @@ impl<S: ServiceInfo> LoadBalancer<S> {
                 let next = match res {
                     Ok(a) => Ok(a),
                     Err(ref e) if e.is_inner() => {
-                        debug!("Worker reply error occured : {:?}", e);
+                        //debug!("Worker reply error occured : {:?}", e);
                         Err(RemoteError::Other(e.to_string()))
                     }
                     Err(_) => {
-                        debug!("No work available - releasing worker");
+                        //debug!("No work available - releasing worker");
                         Ok(WorkerReply::NothingYet)
                     }
                 };
@@ -138,9 +142,9 @@ impl<S: ServiceInfo> Handler<ServiceRequest<WorkerServiceInfo<S>>> for LoadBalan
                 return rx;
             }
             WorkerRequest::WorkDone(id, resp) => {
-                debug!("Work {:?} is done, returning to requester", id);
-                let tx = self.running.remove(&id).unwrap();
-                tx.send(resp).unwrap();
+                if let Some(tx) = self.running.remove(&id) {
+                    tx.send(resp).unwrap();
+                }
                 return self.worker_available();
             }
         }
@@ -151,16 +155,16 @@ impl<S: ServiceInfo> Handler<ServiceRequest<S>> for LoadBalancer<S> {
     type Result = actix::Response<S::ResponseType, RemoteError>;
 
     fn handle(&mut self, msg: ServiceRequest<S>, _ctx: &mut Self::Context) -> Self::Result {
-        debug!("Work request available");
+        //debug!("Work request available");
         let id = self.new_work_id();
         let (tx, rx) = oneshot::<S::ResponseType>();
 
         if let Some((_, worker)) = self.workers.pop_first() {
-            debug!("Dispatching immediately");
+            // debug!("Dispatching immediately");
             worker.send(WorkerReply::Work(id, msg.0)).unwrap();
             self.running.insert(id, tx);
         } else {
-            debug!("parking work request");
+            //debug!("parking work request");
             self.waiting.push_back((msg.0, tx));
         }
         return Response::r#async(rx.map_err(|_e| RemoteError::MailboxClosed));

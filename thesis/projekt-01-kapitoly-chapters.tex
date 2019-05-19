@@ -8,8 +8,6 @@
 \newcommand{\actor}[1]{\textbf{#1}}
 \newcommand{\msg}[1]{{#1}}
 
-\chapter*{Abstract}
-\label{abstract}
 
 
 \chapter{Introduction}
@@ -39,7 +37,7 @@ and systems created with these technologies can be easily secured, are scalable 
 for developers creating them compared to more monolithic architectures.
 
 \section{Objectives}
-This thesis is concerned with creation of a system for algorithmic trading. This system was concieved
+This thesis is concerned with creation of a system for algorithmic trading. This system was conceived
 as a distributed application. Usage of distributed was chosen in order to minimize cost of
 approach should help with performance requirements,
 and the difficulty of implementing such complex system. The system should be designed with latest technological advances in mind, and
@@ -62,7 +60,7 @@ to large distributed deployments with web interface that connect to largest stoc
 We chose to look at a few solutions from different part of this spectrum in order to better understand the requirements
 that will be placed upon the designed system. All evaluated solutions perform algorithmic trading of cryptocurrencies.
 While restricting our research to this small part of global markets might affect our findings, the primary
-market in which the designed system will operate also is a cryuptocurrency market.
+market in which the designed system will operate also is a cryptocurrency market.
 
 \subsection{Gekko}
 On the lower end of the spectrum, there is a simple application written in javascript called Gekko\footnote{https://gekko.wizb.it/}.
@@ -102,7 +100,7 @@ The amount of this variance is called \textbf{volatility}.
 Historically, the exchanges were physical, mainly used for trading stocks, and
 were called stock exchanges. They were physical locations , where individual traders met, and traded one asset for another.
 Primarily, these trades consisted of stocks or goods against money. Another type of trade is when 2 parties trade one currency for another.
-Exchanges specializing in these types of trades are called \textbf{FOREX} (Foreign exchange) markets.
+Exchanges specializing in these types of trades are called FOREX (Foreign exchange) markets.
 
 Most recent of exchange types, is the cryptocurrency exchange. These exchanges are almost always purely virtual. All trading is performed
 via web interface. The main advantage for our purposes is the ease of use of these exchanges, and their modern features.
@@ -261,7 +259,7 @@ On the other side of the equation, we evaluated CAF \footnote{https://actor-fram
 we decided against the use of this library and language. We decided against this approach because of the complexity of this
 framework, and inherent unsafety in C++.
 
-In order to avoid these issues, we decided to use  Rust\cite{Blandy:2015:RPL:3019371} programming language along
+In order to avoid these issues, we decided to use Rust\cite{Blandy:2015:RPL:3019371} programming language along
 with the Actix\cite{web:actix} library.
 
 \section{Rust}
@@ -294,7 +292,7 @@ also supports expressive pattern matching using the \verb|match| expression. How
 
 \subsection{Features}
 The requirements influenced the design of the language in a significant way. It started out as general purpose programming
-language with functional features, very similar to ML, and due to its use for the implemetatio of the Servo browser, it acquired some features that make it excellent
+language with functional features, very similar to ML, and due to its use for the implemetation of the Servo browser, it acquired some features that make it excellent
 systems programming language. These features are:
 
 \begin{itemize}
@@ -331,18 +329,18 @@ Below is an example of a simple trait.
 
 %@formatter:off
 \begin{code}[language=rust,label={ord_trait},caption={Trait definition}]
-    pub trait Ord: Eq + PartialOrd<Self> {
-        fn cmp(&self, other: &Self) -> Ordering;
-        fn max(self, other: Self) -> Self where Self: Sized {
-            if other >= self { other } else { self }
-        }
+pub trait Ord: Eq + PartialOrd<Self> {
+    fn cmp(&self, other: &Self) -> Ordering;
+    fn max(self, other: Self) -> Self where Self: Sized {
+        if other >= self { other } else { self }
     }
+}
 \end{code}
 %@formatter:on
 
 \autoref{ord_trait} Shows definition of an Ord trait that defines complete ordering over implementors type. This trait specifies Additional constraints for implementing types
 (Also called supertrait constraints). Every type that implements Ord, must also implement Eq, and PartialOrd trait with generic
-argument of impelementing type. The implementor, must provide implementation for \fun{cmp} method, that takes an one argument of implementors type,
+argument of implementing type. The implementor, must provide implementation for \fun{cmp} method, that takes an one argument of implementors type,
 and returns an ordering. The trait definition also specifies \fun{max} method for types, that implement Sized trait, and provides default
 implementation.
 The Self keyword is used to refer to implementing type in the trait definition.
@@ -350,17 +348,17 @@ Traits can also be generic, accepting type parameters, such as the PartialOrd tr
 
 %@formatter:off
 \begin{code}[language=rust,label={ord_impl},caption={Trait implementation}]
-    impl Ord for bool {
-        fn cmp(&self, other : &bool) -> Ordering {
-            if self & !other {
-                return Ordering::Greater;
-            }
-            if self == other {
-                return Ordering::Equal;
-            }
-            return Ordering::Less;
+impl Ord for bool {
+    fn cmp(&self, other : &bool) -> Ordering {
+        if self & !other {
+            return Ordering::Greater;
         }
+        if self == other {
+            return Ordering::Equal;
+        }
+        return Ordering::Less;
     }
+}
 \end{code}
 %@formatter:on
 
@@ -431,7 +429,7 @@ at the same time is not allowed, and will result in compiler error. Compiler use
 references do not overlap.
 
 \subsection{Concurrency primitives}
-In addition to ensuring memory safety, the concenpt of ownership and borrowing is also used for preventing data
+In addition to ensuring memory safety, the concept of ownership and borrowing is also used for preventing data
 races in concurrent programs.
 
 Data race occurs when 2 or more threads concurrently access same location of memory, one of these accesses is a write,
@@ -460,7 +458,6 @@ are represented as associated type on the \trait{Future} trait.
 
 %@formatter:off
 \begin{code}[language=rust,label={future_trait},caption={Future trait}]
-
 pub trait Future {
     type Item;
     type Error;
@@ -513,14 +510,14 @@ The programmer will also have to implement \trait{Handler} trait for every messa
 
 %@formatter:off
 \begin{code}[language=rust,label={handler_trait},caption={Handler trait}]
-    pub trait Handler<M> where Self: Actor, M: Message
-    {
-        type Result: IntoResponse<Self, M>;
+pub trait Handler<M> where Self: Actor, M: Message
+{
+    type Result: IntoResponse<Self, M>;
 
-        /// Method is called for every message received by this Actor
-        fn handle(&mut self, msg: M, ctx: &mut Self::Context) -> Self::Result;
+    /// Method is called for every message received by this Actor
+    fn handle(&mut self, msg: M, ctx: &mut Self::Context) -> Self::Result;
 
-    }
+}
 \end{code}
 %@formatter:on
 
@@ -536,17 +533,17 @@ Or the \fun{Actor::create} starts an actor within current thread.
 
 %@formatter:off
 \begin{code}[language=rust,label={msg_example},caption={Asynchronous message handling example}]
-    impl Handler<IngestUpdate> for Ingest {
-        type Result = Box<Future<Item=usize,Error=()>>;
+impl Handler<IngestUpdate> for Ingest {
+    type Result = Box<Future<Item=usize,Error=()>>;
 
-        fn handle(&mut self, msg: IngestUpdate, ctx: &mut Context<Self>) {
-            Box::new(self.db.send(db::SaveOhlc{
-                id : msg.spec.pair_id().clone(),
-                ohlc : msg.ohlc
-            })
-            .then(|v| if v.is_err() { panic!("DB Error")} else { return Ok(v.count) }))
-        }
+    fn handle(&mut self, msg: IngestUpdate, ctx: &mut Context<Self>) {
+        Box::new(self.db.send(db::SaveOhlc{
+            id : msg.spec.pair_id().clone(),
+            ohlc : msg.ohlc
+        })
+        .then(|v| if v.is_err() { panic!("DB Error")} else { return Ok(v.count) }))
     }
+}
 \end{code}
 %@formatter:on
 
@@ -742,38 +739,41 @@ of a several actors. These actors will respond to a set of messages that are als
 The implementation of additional functionality by creating a set of actors \& messages is is very common within the Actix ecosystem.
 For example, the actix-web library, which is used to implement the web application, is also built with similar approach
 
-The \actor{Request} actor responds to \textbf{SendRequest} message, which denotes a request for sending another, wrapped
-request to remote machine. The \actor{Request} anotates sent request with unique identifier, which is then inside the
-actor state along with an information used for notifying original \textbf{SendRequest} sender about the message response.
+Upon Receiving \msg{SendRequest} message, the \actor{Request} actor sends actual message(which is stored inside the
+\msg{SendRequest}) to a remote machine, along with an unique identifier. It then stores
+this information along with notification token into its state, and returns other half of the notification token.
+This token denotes future response to request that was just send over the network.
 
-the \actor{Reply} actor responds to \textbf{Register} message, which is used for registering another actor
-as a recipient of some message type. Then, whenever the \textbf{Register} actor receivies of said type, the message
+
+The \actor{Reply} actor responds to \textbf{Register} message, which is used for registering another actor
+as a recipient of some message type. Then, whenever the \textbf{Reply} actor receives a message of said type, the message
 is forwarded to registered actor.
 
 The \actor{Publish} \actor{Subscribe} actors operate similarly to \actor{Request}, \actor{Reply} actors respectively,
 but they do not send or receive message responses.
 
 \subsection{Communication protocol}
-Each of the defined communication actors contains one primary ZeroMQ socket, that is used for receiving and sending messages
+Each of the defined communication actors contains one primary ZeroMQ socket that is used for receiving and sending messages
 to other components. The actual communication protocols vary between individual actor types
 \begin{figure}[H]
-    \includegraphics[width=\textwidth]{obrazky-figures/actix-net communication.png}
+    \includegraphics[width=\textwidth]{obrazky-figures/actix_net_comm.png}
     \caption{actix-comm communication}
     \label{img:actix_comm}
 \end{figure}
 
 In \autoref{img:actix_comm} you can see simple sequence diagram containing basic request-reply communication pattern.
-The diagram contains 2 component. The component A contains a  \actor{Request} actor, that is used to send request to component B,
-which contains \actor{Reply} actor and another, programmer defined, custom actor. The user code in component B first
-registers the user actor as a recipient of message type M. Then , the user code in component A sends a SendRequest
-to its actor{Request} actor. It then stores some information about the message into its local state, and sends message
+The diagram contains 2 component. The component A contains a  \actor{Request} actor, that is used to send request to
+component B, which contains \actor{Reply} actor and another, programmer defined, custom actor.
+The user code in component B first
+registers the user actor as a recipient of message type M. Then , the user code in component A sends a \msg{SendRequest}
+to its \actor{Request} actor. It then stores some information about the message into its local state, and sends message
 data along with its type to ZeroMQ socket.
 
 After the \actor{Reply} actor in component B receives this message, it forwards the message to actor registered earlier,
 and upon a response from this actor, it sends response along with metadata received earlier back to ZeroMQ socket.
 
-Then, upon receiving the response, the \actor{Request} actor uses provided metadata to get apropriate notification
-channel from its local state, and uses it to notify originating code about the response.
+Then, upon receiving the response, the \actor{Request} actor uses provided metadata to get appropriate notification
+token from its local state, and uses it to notify originating code about the response.
 
 \subsection{Message format, actor state}
 Since we are using a language with extremely strong static type system, we decided to leverage this type syystem in much
@@ -783,11 +783,11 @@ deals exclusively in strongly typed messages, we must solve the problem of seria
 
 \subsubsection{Serialization}
 The serialization was very simple to solve. We utilized the \verb|serde| library, which is main data serialization and deserialization
-library in rust, and supprts many data formats. For the development purposes, we utilize JSON as a serialized data format,
+library in rust, and supports many data formats. For the development purposes, we utilize JSON as a serialized data format,
 but for production use, we aim to replace it with MsgPack in order to reduce serialization overhead.
 
 \subsubsection{Deserialization}
-The main problem of deserialziation was determining what datatype should a message be deserialized into.
+The main problem of deserialization was determining what datatype should a message be deserialized into.
 We solved this by including unique type identifier with each message sent over the network, This identifier relies
 on information provided by standard library intrinsic function, which utilizes data provided by compiler.
 Using this information, and a clever trick utilizing type erasure we were able to safely bridge typed and untyped
@@ -851,18 +851,17 @@ This will be mainly used in the strategy evaluation component, since this compon
 of the computing load.
 
 This component is implemented as 2 actors: the \actor{LoadBalancer} and \actor{WorkerProxy}, which both have one type
-parameter S that must implement ServiceInfo. Then, the LoadBalancer binds 2 ServiceHandlers to single port.
-The first one is used for receiving service requests from client, and the second one is used for receiving message for workers.
+parameter S that must implement ServiceInfo. The \actor{LoadBalancer} binds 2 ServiceHandlers to single port.
+The first one is used for receiving service requests from client, and the second one is used for receiving messages from workers.
 
-The workerProxy internally contains a \type{ServiceConnection}, that connects to \actor{LoadBalancer}, and periodically subscribes
+The \actor{WorkerProxy} internally contains a \type{ServiceConnection}, that connects to \actor{LoadBalancer}, and periodically subscribes
 for work. If \actor{LoadBalancer} does not have any work available, it sends an empty response to \actor{WorkerProxy},
 or, if available, it sends a work unit to this worker. The \actor{WorkerProxy} then sends received work to internal
 worker implementation, and after finishing, sends result to \actor{LoadBalancer} as a separate request, that is also used
 for requesting more work units.
-\todo{Diagram, cant explain this in words only}
-Therefore, the \actor{LoadBalancer} therefore serves as a load balancing broker, which performs rendezvous between available workers
-and work units, communication using 2 service handlers.
 
+Therefore, the \actor{LoadBalancer} therefore serves as a load balancing broker, which performs rendezvous between
+available workers and work units.
 \section{Data storage}
 Another crucial aspect of designed system is the storage of both the financial data and general system data.
 These 2 types of data have different storage requirements.
@@ -973,7 +972,7 @@ clients web browser.
 
 \subsection{Backend}
 The backend part of the web application is implemented in \verb|actix-web| library, which, like many other parts of this project,
-is built upon \verb|actix| and its implementation of the actor model. This library provides several REST endpoints
+is built upon \verb|actix| and its implementation of the actor model. This component will provide several REST endpoints
 for working with system resources like strategies, trader accounts, or strategy assignments. Internally,
 these endpoints should perform validation of input data, and execute database queries, which modify the state of the system.
 
@@ -1038,7 +1037,7 @@ complexity of the system, these differences must be resolved at the edge of our 
 components. To bridge the gap between external APIs, and internal communication, the system contains adapter component
 for each exchange.
 
-This component connects to real-time webso cket API in order to receive notifications about market updates,
+This component connects to real-time websocket API in order to receive notifications about market updates,
 then translates this data into OHLC format, and sends it to the \kubecomp{core} component.
 It also exposes a service endpoint for querying account state (wallet balances), and executing trades, to which the
 \kubecomp{core}'s trader actor connects.
@@ -1101,6 +1100,7 @@ to function.
 
 To ensure this attack is not possible, we limit number of LUA instructions that a particular strategy can execute.
 This is done by utilizing the \verb|debug.sethook| function.
+
 \subsection{Access to information}
 Method for strategy evaluation described so far should provide safe, and performant
 way for users to write custom code, that can be run inside our system. However, we must allow this code to access the
@@ -1113,8 +1113,32 @@ We also expose a set of functions implementing indicators for Technical analysis
 These are available inside the \verb|ta| global table.
 
 
+\subsection{Technical analysis library}
+This library is contained in a global variable named \verb|ta|. It contains most common technical indicators used in
+trading. These indicators are mathematical functions applied upon a sequence of OHLC data, mostly
+denoting some statistical property of the data. Implemented indicators are:
+\begin{itemize}
+    \item \verb|sma| - Simple moving average
+    \item \verb|ema| - Exponential moving average
+    \item \verb|macd| - Moving average convergence-divergence
+    \item \verb|rsi| - Relative strength index
+    \item \verb|tr| - True range
+    \item \verb|atr| - Average true range
+    \item \verb|min| - Minimum value
+    \item \verb|max| -  Maximum value
+    \item \verb|fs| - Fast stochastic oscillator
+    \item \verb|ss| - Slow stochastic oscillator
+\end{itemize}
+Each of these indicator has a precise mathematical definition, and aims to model an aspect of the market, but explaining
+these details is outside the scope of this thesis.
+
+These indicators can be accessed by calling a function in the \verb|ta| global table with appropriate number of arguments.
+Returned object provides a call operator, that can be used for receiving the indicator value.
+
+
+
 \section{Evaluation}
-Since users can crate multiple strategies, and then apply these trategies to multiple different assets on different exchanges,
+Since users can crate multiple strategies, and then apply these strategies to multiple different assets on different exchanges,
 the amount of work associated with a single user can vary extremely. In addition to that, the number of users of our system can vary.
 This variability of computational load on the system was primary reason for designing the system as a distributed application.
 
@@ -1122,34 +1146,27 @@ The service that is most affected by this variability is the strategy evaluation
 dynamically change the amount of used resources.
 
 
-To implement this component, we will utilize the \actor{LoadBalancer} actor defined earlier. The compoennt
-will consist of 2 sub-compontents. The load
+To implement this component, we will utilize the \actor{LoadBalancer} actor defined earlier.
 This will require specific architecture. The service will be divided into 2 parts. The control and the worker layers.
 The control layer will be a single Kubernetes pod, that will serve as an endpoint to rest of the system. It will receive
 strategy evaluation requests from Core service, and will pass them to individual workers int the worker layer.
 Each worker will be a single pod with multiple worker actors, each of which will register itself with control layer.
 
-The control layer will also perform load balancing, ensuring that no single worker is over- or underutilized.
-
-\todo{Eval balancer implemented as a load balancing broker}
-
-\todo{TA library used to provide basic indicatiors (optimized) - Otherwise an iterator over raw values is available,
-user can manuall implement his logic}
-
+The control layer will also perform load balancing, ensuring that no single worker is over or underutilized.
 
 \chapter{Implementation}
 
 In this chapter, we aim to present current state of the implementation, outline the problems faced when trying to satisfy the
-reuqirements outlined in previous chapters, what methodologies and approaches were taken to solve them, and also
-point out some interesting aspects of the implementation. Another goal of this chapter is to present the operations
+requirements outlined in previous chapters, what methodologies and approaches were taken to solve them, and also
+point out some interesting aspects of the implementation. Another goal of this chapter is to present the "operations"
 side of this project, meaning the processes used for building and deploying the system, since that was another
 important part of the implementation
 
 \section{Project structure}
 Like any other larger project, this project is also structured into several subdirectories. The main subdirectory is \verb|code|,
-which contains the code for system compoennts,the \verb|common| library and several other
+which contains the code for system components, the \verb|common| library and several other
 libraries in the \verb|deps| directory. The \verb|common| library groups dependencies that
-are shared by all components, and re-exports them for easier acess and centrailized version selection. The \verb|deps| subdirectory contains
+are shared by all components, and re-exports them for easier access and centralized version selection. The \verb|deps| subdirectory contains
 for \verb|actix-arch|, \verb|actix-comm|, \verb|db| libraries and other dependencies.
 
 Then, the second core directory is the \verb|ops| directory, that contains scripts and configuration files
@@ -1166,15 +1183,15 @@ will be described in the following section.
 Thanks to the distributed architecture, the building and deployment processes also had to be modified with this choice in mind.
 
 The rust language utilizes custom tool named \textbf{cargo} for building rust projects, and managing their dependencies.
-Having single tool manage both build process and dependency managment is extremely useful, but its not without drawbacks.
+Having single tool manage both build process and dependency management is extremely useful, but its not without drawbacks.
 \textbf{Cargo} cannot be used for building anything else than rust projects, and while it allows to customization
-of the build process by runing pre-build custom scripts, it does not support custimizing the build process with
+of the build process by running pre-build custom scripts, it does not support customizing the build process with
 any kind of post-build steps.
 
 Therefore, to solve these drawbacks, we have to wrap cargo in a meta-build system, that would manage building
-individual rust projects using \textbf{cargo}, and perform any additional steps that would be necessary.
+individual rust projects using \textbf{cargo}, and perform any  additional neccessary steps.
 
-\subsection{Makefile meta-build managment}
+\subsection{Makefile meta-build management}
 This meta-build system, does not have to do anything particularly complex, it only needs to track what projects
 were changed, and depending on that information re-build, and re-deploy them.
 
@@ -1192,14 +1209,14 @@ and emits container name and container tag into a file in \verb|target/docker/| 
 that will later be loaded into an environment variable, and used for substitution when building kubernetes
 configuration templates.
 
-\subsection{Kuberentes configuration templating}
+\subsection{Kubernetes configuration templating}
 This is very well known drawback of kubernetes. It does not support any kind of templating out of the box.
-There are existing solutions, that solve this issue, but many of them do so with opinionated approach, that is coupled
+There are existing solutions, that solve this issue, but many of them do so with opinionated approach that is coupled
 with some kind of package management.
 
 We elected to perform this templating manually, inside the makefiles implementing the build process. For this purpose,
 build of each component emits built docker image tag in the format of \verb|{COMPONENT}_IMAGE={IMAGE TAG}|.
-This is then loaded into make environment using the \verb|env| directive. Then, for each file in the \verb|ops/k8s| directory
+Then, for each file in the \verb|ops/k8s| directory
 the main makefile loads it, performs environment variable substitution using the \verb|envsubst| tool, and saves modified
 file to \verb|target/k8s| directory. There are dependencies between these steps, which are also listed in the makefile, and
 therefore it does not re-build components that were not modified.
@@ -1218,27 +1235,25 @@ future should be resolved by moving each system component into separate build ta
 Most of the application is written in pure rust, with the exception of the frontend part of the web application, which
 is written in javascript. The project uses multiple advanced features of rust, that have not yet been stabilized, and
 therefore requires a nightly toolchain. Currently, the project uses nightly toolchain from 2019-05-01. Main
-reason for usin a nightly toolchain with a specific version is the fact, that the implementation utilizes
-async-await style programming, which has not yet been stabilized, and was recently changed. This features
-should be stabilized in several months.
-
-\todo{Async await example}
+reason for using a nightly toolchain with a specific version is the fact, that the implementation utilizes
+async-await style programming, which has not yet been stabilized, recently had untergone
+several changes. These features should be stabilized in several months.
 
 The usage of asynchronous code is prevalent throughout the codebase. Almost every actix actor is written in a way, that requires
 it to send and wait for message response when responding to a message itself. With synchronous code, this would mean, that
 the throughput of the system would be very low. With asynchronous code, the actor will perform some synchronous actions,
 will send messages other actors, and will then asynchronously wait for these messages. During this waiting, the actor
-can respond to other messages, greatly imrpoving throughput.
+can respond to other messages, greatly improving throughput.
 
 \subsection{Core component}
-Core component is comprised of 3 main actors. As its name suggests, it implementes the core system logic, and
+Core component is comprised of 3 main actors. As its name suggests, it implements the core system logic, and
 other systems connect to it.
 
 \subsubsection{Ingest}
 The \actor{Ingest} actor binds a \actor{Subscriber} to a known port, and waits for publishers to connect to it.
-The publishers are created by exchange adapters, and the ingest actor uses this socket\todo{or use actor ?} to receive
-messages that cointains newest OHLC data. The ingest actor then discards old data, and publishes new, valid updates
-to a proxy actor, that then sends it to \actor{Rescaler} actor
+The publishers are created by exchange adapters, and the ingest actor uses the \actor{Subscriber} to receive
+messages that contains newest OHLC data. The ingest actor then discards old data, and publishes new, valid updates
+to a proxy actor, which sends them to  \actor{Rescaler} actor
 
 \subsubsection{Rescaler}
 This actor is responsible for creating aggregate data streams, that are not provided
@@ -1250,7 +1265,7 @@ The incoming data is then published along with the virtual aggregate data over p
 
 \subsubsection{Decision}
 This actor is responsible for deciding when a strategy should be evaluated. It periodically loads whole
-\textit{assignments} table into memory. This table contains all assingments of strategies and trading accounts
+\textit{assignments} table into memory. This table contains all assignments of strategies and trading accounts
 to individual accounts. It stores this information into B-Tree map with the asset as a
 key, and a vector of assignments as a value.
 
@@ -1263,10 +1278,10 @@ Then, after receiving result from evaluation, the actor can send a request to \t
 but this is only possible, if the assignment used had a trading account associated with it.
 
 \subsubsection{Trader}
-This actor is responsible for executing trades on individal exchanges. It receives position change requests from the \actor{Decision}
+This actor is responsible for executing trades on individual exchanges. It receives position change requests from the \actor{Decision}
 actor. Then, it sends a request to get account balances to exchange adapter. After receiving a response, the
 \textbf{Trader} actor decides if the trading account has any available funds that could be used to strengthen
-the selected positon, and possibly executes a trade by sending a new request to the same exchange adapter.
+the selected position, and possibly executes a trade by sending a new request to the same exchange adapter.
 
 Internally, the trader uses the \verb|anymap| crate to store \actor{ServiceConnections} to each exchange
 adapter, since each adapter has its separate \textbf{ServiceInfo}. The \verb|anymap| crate allows
@@ -1284,7 +1299,7 @@ it is not extremely interesting. It runs in separate kubernetes deployment, and 
 The evaluation workers are implemented by the \actor{EvalWorker} actor. This actor uses a \actor{WorkerProxy}
 actor to connect to the load balancer. The proxy actor handles communication with the balancer, and
 communicates with \actor{EvalWorker}. The \actor{EvalWorker} is written as a service handler, that accepts requests
-for strategy evalution. Each request contains the identifier of the strategy used, an asset identifier,
+for strategy evaluation. Each request contains the identifier of the strategy used, an asset identifier,
 and some additional information like the timestamp that denotes the point in the data stream, on which
 the strategy should be evaluated. The worker currently always reads the strategy, and the OHLC data from the
 persistent storage. Adding some kind of cache could be an easy optimization.
@@ -1303,6 +1318,10 @@ to the original request source, which was the \actor{Decision} actor in the \kub
 The actual strategy evaluation is implemented in \verb|strat-eval| library. This library could be extended to support other types of
 strategies. It implements all concepts related to LUA strategy evaluation outlined in \autoref{design:eval}.
 
+The technical analysis library mentioned in that section is implemented in Rust, and exposed to lua through a
+global table \verb|ta| that contains a set of \textit{UserData} values(values implemented in host language,
+and exposed to lua). This allows us to utilize rust for the heavy computation, while allowing users to
+built upon this library in LUA.
 
 \subsection{Bitfinex adapter}
 This component consists of single actor. This actor currently performs several tasks at once, and should be
@@ -1313,8 +1332,8 @@ After subscribing, the actor starts to receive notifications, that are then prom
 and published to the \actor{Ingest} actor in the \kubecomp{core} component.
 
 Another task that is performed by this actor is the serving of wallet balance and trade requests from the
-trader actor. These request are translated into REST API calls, that are performed by the http client implemented
-in \verb|actix-web| library.
+trader actor. These request are translated into REST API calls, that are performed by the http client from
+\verb|actix-web| library.
 
 The bitfinex adapter actor is also implemented in an asynchronous way, increasing throughput.
 
@@ -1326,7 +1345,7 @@ The bitfinex adapter is also managed ky kubernetes deployment and exposed by a s
 \subsubsection{API access implementation}
 Access to exchange APIs is implemented in the \verb|apis| library in the \verb|code/deps| directory. This library implements
 primitives that could be shared between different exchange adapters, and contains a \verb|bitfinex| submodule that contains
-definitions of types received from API calls, and implementations of these API calls as  asynchronous rust functions.
+definitions of types received from API calls, and implementations of these API calls as asynchronous rust functions.
 
 This pattern of implementation of specific API exchange in a submodule will be continued when extending the system
 with other exchange adapters.
@@ -1348,19 +1367,19 @@ along with increased performance obtain some data redundancy.
 
 During the implementation of persistence component, we have evaluated both of these approaches. For now,
 we have elected to utilize PostgreSQL with TimescaleDB as a primary storage solution for both system and asset data.
-This greatly simplified the development and managment of this component. However, if at any point in the future
-this approach does not fulfill our performance requirements, we have implemented minimal connectior to ScyllaDB, that
+This greatly simplified the development and management of this component. However, if at any point in the future
+this approach does not fulfill our performance requirements, we have implemented minimal connection to ScyllaDB, that
 can be swapped with PostgreSQL implementation for storing and retrieving asset data with virtually no downtime.
 
 
 \begin{figure}[H]
-    \includegraphics[width=\textwidth]{obrazky-figures/db_diag.png}
+    \includegraphics[width=\textwidth]{obrazky-figures/db.png}
     \caption{Database structure diagram}
     \label{img:arch}
 \end{figure}
 
 
-\subsubsection{Access}
+\subsubsection{Database access}
 The access to the database, is implemented by the \verb|db| library in the \verb|code/deps| subdirectory.
 This library utilizes the \verb|diesel| library
 to access the database and generate queries. We could call this library an ORM(Object-Relational Mapper).
@@ -1370,7 +1389,7 @@ One drawback of diesel is the inherently synchronous nature of database adapters
 In order for this component to effectively work with other components, we first must provide an asynchronous interface
 to the database. There are 2 key techniques we utilize.
 
-First of all, each component does  not have only one connection to the database, We utilize the \verb|r2d2| library
+First of all, each component does not have only one connection to the database, We utilize the \verb|r2d2| library
 to create a pool of reusable connections. Then, in order to execute queries concurrently, we run database queries
 in dedicated actors. These actors utilize Actix's \textbf{SyncContext} instead of normal \textbf{Context}. The main difference
 is that when using \textbf{SyncContext}, each actor runs in separate thread, and runs synchronously, while responding to
@@ -1385,7 +1404,7 @@ were unable to do so within this thesis' time frame.
 \subsection{Web component}
 This system component implements the REST API necessary to access the system. This API is then
 in turn used by the frontend web application. In theory, this API could be published for consumption by
-other developers, that wish to extend our system.
+other developers that wish to extend our system.
 
 The API is implemented using the \verb|actix-web| library, that utilizes the actor model to its fullest,
 being one of the fastest HTTP library in the world\cite{techempower_benchmark}. This library
@@ -1401,12 +1420,11 @@ Most of the implemented endpoints act as a simple interface to the database, tha
 are some custom logic.
 
 This part of the system heavily relies upon the async-await style of programming, that requires the nightly compiler.
-Every single handler method is implemented as an async function, that internally calls several other async functions.
+Every single handler method is implemented as an async function which internally calls several other async functions.
 
 %@formatter:off
 \begin{code}[language=rust,label={web_handler},caption={Example web handler function}]
-async fn api_detail((req, id): (HttpRequest, Path<i32>))
-        -> Result<impl Responder> {
+async fn api_detail((req, id): (HttpRequest, Path<i32>)) -> Result<impl Responder> {
     let db: Database = base.state.db.clone();
     let base = await_compat!(BaseReqInfo::from_request(&req))?;
     require_login!(base);
@@ -1478,40 +1496,45 @@ Follwoing example shows the JSX for the root of the application.
         <Switch>
             <Route exact path="/app/auth" component={Login}/>
             <Route path="/app" render={props => (
-            <Dashboard>
-                <Switch>
-                    <Route exact path="/app/" component={Home}/>
-                    <Route exact path="/app/strategies" component={StrategyList}/>
-                    <Route exact path="/app/strategies/:id" component={StrategyDetail}/>
-                    <Route exact path="/app/assignments" component={AssignmentList}/>
-                    <Route exact path="/app/traders" component={TraderList}/>
-                </Switch>
-            </Dashboard>
-        )}/>
+                <Dashboard>
+                    <Switch>
+                        <Route exact path="/app/" component={Home}/>
+                        <Route exact path="/app/strategies" component={StrategyList}/>
+                        <Route exact path="/app/strategies/:id" component={StrategyDetail}/>
+                        <Route exact path="/app/assignments" component={AssignmentList}/>
+                        <Route exact path="/app/traders" component={TraderList}/>
+                    </Switch>
+                </Dashboard>
+            )}/>
         </Switch>
     </ConnectedRouter>
 </div>
 \end{code}
 %@formatter:on
 
-\todo{Remove subsubsection}
 \subsubsection{Dashboard}
 This component contains the base layout of the web application, rendering the toolbar with title, navigation bar,
 and also rendering nested components. In our case, the nested component is the react-router \textbf{Switch},
 that ensures only one route from a set of route elements is active at one time. This \textbf{Switch} component
-with the set of inner routes contains the individual pages.s
+with the set of inner routes contains the individual pages.
 
 \subsection{Redux}
-Another important aspect of the web applicaiton was the storage, and management of state. The earlier attempts failed
+Another important aspect of the web application was the storage, and management of state. The earlier attempts failed
 because the management of state was untenable with growing application complexity.
 the \verb|Redux| library was developed precisely to solve this problem.
-As described earlier, the library is based on the \textbf{Flow} architecture pattern, that is based on 3 core concepts.
+As described earlier, the library is based on the \textbf{Flow} architecture pattern, which has 3 core concepts.
+
+\begin{figure}[H]
+    \includegraphics[width=\textwidth]{obrazky-figures/redux.png}
+    \caption{Redux general diagram}
+    \label{img:redux}
+\end{figure}
+
 
 The redux store contains the application state, and is only mutable inside reducers. The redux reducers are used
-to modify state, based on the actions,that are published by components, and the componts then in turn react to
+to modify state, based on the actions,that are published by components, and the components then in turn react to
 changes of state.
 
-\todo{Diagram here or in design chapter - Or move react to theory}
 
 Our usage of redux creates the state upon application creation, along with a single reducer which is responsible
 for storing data received from the REST API inside this state. The access to the REST API is implemented in
@@ -1529,7 +1552,7 @@ This library provided simple ORM-like experience, and definitely made the develo
 \subsection{Material-UI}
 This library was chosen as a base library of components, upon which our custom components were built.
 It implements commonly needed components that conform to Google's Material design guidelines\footnote{https://material.io/design/}.
-THese components are also written with first class support of mobile devices, opening up the pathway for
+These components are also written with first class support of mobile devices, opening up the pathway for
 making our web application into a Progressive Web Application\footnote{https://en.wikipedia.org/wiki/Progressive\_web\_applications}.
 
 Core component used in our custom components is the \verb|Paper| component, which creates a surface
@@ -1576,7 +1599,7 @@ to properties passed into it.
 %@formatter:on
 
 The \autoref{edit_dialog} contains code for rendering an \textbf{EditDialog}, that performs creation of new trader
-account. It uses databinding to to pass properties, and callback functions into the dialog.
+account. It uses data-binding to to pass properties, and callback functions into the dialog.
 \begin{itemize}
     \item {open -} Whether the dialog is shown or hidden
     \item {data - } Data object for editing
@@ -1615,42 +1638,41 @@ for managing them.
 Our \verb|actix_net| uses ZeroMQ, and uses several different virtual socket types provided by it. These sockets
 are long-lived. They should stay open during the whole time the component runs. However, in the kubernetes environment,
 components can be killed at virtually any time. This poses a problem. For Router and PUB socket types that were
-used in serviceHandler and publisher actors respectively, the ZeroMQ library does not detect disconnects, or detects
+used in \actor{ServiceHandler} and \actor{Publisher} actors respectively, the ZeroMQ library does not detect disconnects, or detects
 them after some time.
 
 This duration between disconnect and detection of it caused an issue with a large amount of missed messages, which
-destabilized the whole system. THe component that was affected the most, was the \actor{Ingest} actor in the \kubecomp{core}
+destabilized the whole system. The component that was affected the most, was the \actor{Ingest} actor in the \kubecomp{core}
 component, which could not detect missing OHLC updates, since it was a binding SUB socket that created a SUB topology.
 
 The approach, that we chose to fix this issue was to use features of the TCP protocol implementation know as Keepalive.
 This feature is so called, because it can be usd to keep a TCP connection alive and well, and determine when it was dropped from the other side.
 
 The primary mechanism for performing this service is to periodically send empty TCP packets, that must be acknowledged from
-the other side. If a sequence of packets is not acknowledged in some pre-defined time, the connection is considered closd
-from the other side, and is dropped. Usage of this feature required the modification of \verb|tokio-zmq| library, that provides asynchronous implemntation
+the other side. If a sequence of packets is not acknowledged in some pre-defined time, the connection is considered cloesd
+from the other side, and is dropped. Usage of this feature required the modification of \verb|tokio-zmq| library, that provides
+asynchronous implementation
 of ZeroMQ sockets. This change allowed setting custom options on the underlying sockets.
-\todo{Something about parameters?}
-
 
 \subsection{Debugging}
 However, sometimes it was necessary to observe the internal state of a particular component while it is integrated in the system.
 Initially, this provided to b quite a difficult challenge, since kubernetes utilizes containers, and accessing the container
 internals is difficult.
 
-But, after some research, we discovered the Telepresence\todo{Footnote} command line tool. This tool is written in python,
+But, after some research, we discovered the Telepresence\footnote{https://www.telepresence.io/} command line tool. This tool is written in python,
 and it creates a vpn tunnel to a container that is running in the kubernetes cluster. Allowing local applications to run as if
 the were ran inside the actual kubernetes environment.
 
-The fact that we could now run individual components locally, with a debugger greatly simplified the testing and bugfixing process.
+The fact that we could now run individual components locally, with a debugger greatly simplified the testing and bug fixing process.
 
 \subsection{Monitoring}
-Another important aspect was the monitoring of deployed system, with particular \todo{Preklad dôraz} put upon
+Another important aspect was the monitoring of deployed system, with particular emphasis put upon
 the monitoring of system performance, and access to individual container logs.
 
 At first, we only used the \verb|kubectl| command line tool. But during during the development the system kept growing
 in size, and with it the number of components that needed to be monitored has grown too. We solved this issue by installing
 
-a Kubernetes Dashboard\todo{Footnote} into our cluster, and using this dashboard for monitoring, visualization and log access.
+a Kubernetes Dashboard\footnote{https://github.com/kubernetes/dashboard} into our cluster, and using this dashboard for monitoring, visualization and log access.
 
 Currently, we use only the metrics provided by kubernetes dashboard out of the box, but in the future, we might export
 custom metrics specific to our application, that would allow us to better understand the internal system status.
@@ -1682,7 +1704,7 @@ available to the kubernetes cluster were also increased.
 
 \section{Performance measurements}
 The performance measurements were taken in production environment. We utilized custom component described earlier. This component aggregated
-messages from all other components, marking each event with the timestamp, the moment it was received. Then, after some time\todo{1 hour}, this
+messages from all other components, marking each event with the timestamp, the moment it was received. Then, periodically, this
 data was processed in memory, and written into a CSV file, that was then copied from the docker container this component was
 running inside. After obtaining the measured data, some basic statistical analysis was performed.
 
@@ -1695,18 +1717,33 @@ These configurations are:
     \centering
     \addtolength{\leftskip} {-2cm}
     \addtolength{\rightskip}{-2cm}
-\begin{tabular}{|c|c|c|l|c|c|c|c|}
-\hline
-\multirow{2}{*}{Configuration} & \multicolumn{3}{c|}{Node configuration}                                                                                  & \multirow{2}{*}{\begin{tabular}[c]{@{}c@{}}Database \\ configuration\end{tabular}} & \multirow{2}{*}{\begin{tabular}[c]{@{}c@{}}Core\\ configuration\end{tabular}} & \multicolumn{2}{c|}{Worker configuration}                                                           \\ \cline{2-4} \cline{7-8}
-& \#                 & Type                                                                       & Cost                   &                                                                                    &                                                                               & \#                 & Type                                                                           \\ \hline
-C1.0                           & \multirow{2}{*}{2} & \multirow{5}{*}{\begin{tabular}[c]{@{}c@{}}2 CPU \\ 2 GB ram\end{tabular}} & \multirow{2}{*}{\$40}  & \begin{tabular}[c]{@{}c@{}}1 CPU\\ 0.5GB RAM\end{tabular}                          & \multirow{2}{*}{\begin{tabular}[c]{@{}c@{}}200 mCPU\\ 120 MB\end{tabular}}    & 2                  & \multirow{3}{*}{\begin{tabular}[c]{@{}c@{}}150 mCPU\\  80 MB RAM\end{tabular}} \\ \cline{1-1} \cline{5-5} \cline{7-7}
-C1.5                           &                    &                                                                            &                        & \begin{tabular}[c]{@{}c@{}}1.5 CPU\\ 1G RAM\end{tabular}                           &                                                                               & 3                  &                                                                                \\ \cline{1-2} \cline{4-7}
-C2.0                           & \multirow{3}{*}{4} &                                                                            & \multirow{3}{*}{\$80}  & \multirow{3}{*}{\begin{tabular}[c]{@{}c@{}}1.5 CPU\\ 1.5 GB RAM\end{tabular}}      & \multirow{2}{*}{\begin{tabular}[c]{@{}c@{}}200 mCPU\\ 120 MB\end{tabular}}    & \multirow{5}{*}{8} &                                                                                \\ \cline{1-1} \cline{8-8}
-C2.1                           &                    &                                                                            &                        &                                                                                    &                                                                               &                    & \multirow{4}{*}{\begin{tabular}[c]{@{}c@{}}300 mCPU\\ 150 MB RAM\end{tabular}} \\ \cline{1-1} \cline{6-6}
-C2.2                           &                    &                                                                            &                        &                                                                                    & \multirow{3}{*}{\begin{tabular}[c]{@{}c@{}}400 mCPU\\ 150 MB\end{tabular}}    &                    &                                                                                \\ \cline{1-5}
-\multirow{2}{*}{C3.0}          & 4                  & \begin{tabular}[c]{@{}c@{}}2 CPU\\ 2 GB ram\end{tabular}                   & \multirow{2}{*}{\$120} & \multirow{2}{*}{\begin{tabular}[c]{@{}c@{}}2 CPU\\ 2 GB RAM\end{tabular}}          &                                                                               &                    &                                                                                \\ \cline{2-3}
-& 1                  & \begin{tabular}[c]{@{}c@{}}4 CPU\\  8 GB ram\end{tabular}                  &                        &                                                                                    &                                                                               &                    &                                                                                \\ \hline
-\end{tabular}
+    % Please add the following required packages to your document preamble:
+    % \usepackage{multirow}
+    \begin{tabular}{|l|l|l|l|l|l|l|l|l|}
+        \hline
+        \multirow{2}{*}{Config} & \multicolumn{2}{l|}{Nodes}                                     & \multirow{2}{*}{Core}                                     & \multirow{2}{*}{Postgres}                                 & \multirow{2}{*}{Balancer}                                 & \multicolumn{2}{l|}{Workers}                                                    & \multirow{2}{*}{Price} \\ \cline{2-3} \cline{7-8}
+        & \# & Type & & & & \# & Type &                        \\ \hline
+        C1 & 2 & \begin{tabular}[c]{@{}l@{}}
+                     2 vCPU\\ 2 GB RAM
+        \end{tabular} & \begin{tabular}[c]{@{}l@{}}
+                            100 mCPU\\ 100 MB
+        \end{tabular} & \begin{tabular}[c]{@{}l@{}}
+                            500 mCPU\\ 500 MB
+        \end{tabular} & \begin{tabular}[c]{@{}l@{}}
+                            200 mCPU\\ 100 MB
+        \end{tabular} & 3 & \multirow{2}{*}{\begin{tabular}[c]{@{}l@{}}
+                                                300 mCPU\\ 150 MB
+        \end{tabular}} & \$ 30                  \\ \cline{1-7} \cline{9-9}
+        C2 & 4 & \begin{tabular}[c]{@{}l@{}}
+                     2 vCPU\\ 2 GB RAM
+        \end{tabular} & \begin{tabular}[c]{@{}l@{}}
+                            200 mCPU\\ 100 MB
+        \end{tabular} & \begin{tabular}[c]{@{}l@{}}
+                            1.5 CPU\\ 1.5 GB
+        \end{tabular}  & \begin{tabular}[c]{@{}l@{}}
+                             400 mCPU\\ 100 MB
+        \end{tabular} & 8 & & \$ 60                  \\ \hline
+    \end{tabular}
 \end{table}
 
 
@@ -1714,9 +1751,7 @@ As you can see, we started with a simple configuration utilizing 2 nodes, and li
 as we increased load put upon the system, we increased the number of nodes, and increased resources available to individual components
 accordingly.
 
-
-
-\newpage
+\subsubsection{Strategy}
 The strategy used for testing is the following:
 
 
@@ -1739,7 +1774,6 @@ local sell_signal = ema_fast() < ema_slow() * 0.999
 local rsi_overbought = rsi() > 80
 local rsi_oversold = rsi() < 20
 
---
 if buy_signal and not rsi_overbought then
     return 'long'
 elseif sell_signal and not rsi_oversold then
@@ -1749,22 +1783,37 @@ else
 end
 \end{code}
 %@formatter:on
+
+
+This simple strategy utilizes 3 indicators from \verb|ta| library, applied to different timeframes of data, and
+performs some arithmetic operations to determine the state of the market. For measurement purposes, we removed foreign key
+constraints from the database, and used this strategy for numerous virtual users.
 \newpage
+
 \section{Results}
-
-
+After performing several test runs, we measured the latency of the some parts of the system, and also the global system
+latency. These measurements were then performed for different configurations and different amount of load put upon the system.
 
 \begin{figure}[H]
     \includegraphics[width=\textwidth]{obrazky-figures/agg.png}
     \caption{Aggregate performance measurements}
     \label{img:measure_agg}
 \end{figure}
-The \autoref{img:measure_agg} shows measured latencies for data passing through whole system for multiple configrations and
+
+The \autoref{img:measure_agg} shows measured latencies for data passing through whole system for multiple configurations and
 number of assignments. The x axis stands for specific measurement, and the Y axis shows latency of the system. The graph
 also contains values of average and maximum latencies measured.
 
-Up to 4000 assignments, we were able to achieve the sub-second latency for majority of cases when the system was properly configured.
-However, we were not able to achieve the neccesary latency for each configuration. To determine which part of the system
+
+We tested 2 system configurations. In the first, configuration, the system was able to preserve total system latency below
+1 second for 99 \% of cases with at most 4000 assignments. In second configuration, the system was able to preserve this latency
+when serving at most 16 000 assignments. Considering the target audience, it is very unlikely, this particular system
+will ever see utilization this high.
+
+
+\subsection{Measurement stages}
+However, we were not able to achieve the necessary latency when system had insufficient resources
+for a specific number of assignments. To determine which part of the system
 was bottleneck in which configuration, we measured different stages of the system separately.
 
 These stages are:
@@ -1775,71 +1824,82 @@ These stages are:
     \item{Exec} - Duration of actual strategy execution
 \end{itemize}
 
-Graphs for these stages are below:
+
+\subsubsection{Specific stage measurements
+}
+
+Graphs for these stages follow:
 \begin{figure}[H]
-    \includegraphics[width=\textwidth]{obrazky-figures/save.png}
+    \centering
+    \includegraphics[width=1\textwidth]{obrazky-figures/save.png}
     \caption{Saving data performance measurements}
     \label{img:measure_save}
 \end{figure}
 \begin{figure}[H]
-    \includegraphics[width=\textwidth]{obrazky-figures/dispatch.png}
+    \centering
+    \includegraphics[width=1\textwidth]{obrazky-figures/dispatch.png}
     \caption{Data dispatch performance measurements}
     \label{img:measure_dispatch}
 \end{figure}
 
 \begin{figure}[H]
-    \includegraphics[width=\textwidth]{obrazky-figures/load.png}
-    \caption{Loading data performance measurements performance measurements}
+    \centering
+    \includegraphics[width=1\textwidth]{obrazky-figures/load.png}
+    \caption{Loading data performance measurements}
     \label{img:measure_load}
 \end{figure}
 
 
 \begin{figure}[H]
-    \includegraphics[width=\textwidth]{obrazky-figures/exec.png}
+    \centering
+    \includegraphics[width=1\textwidth]{obrazky-figures/exec.png}
     \caption{Execution performance measurements}
     \label{img:measure_exec}
 \end{figure}
 
 
-If we examine these graphs in detail, we can discern how configuration changes affected te system.
+If we examine these graphs in detail, we can discern how configuration changes affected the system.
+In each configuration, the load and execute stages latencies had stayed relatively stable.
 
-\subsubsection{C 1.0}
-This is a base configuration. In this configuration the system performed adequately for up to 800 assignments.
-However, when the system had to evaluate 2000 assignments per minute, the dispatch duration skyrocketed.
-This means, that the system did not have enough workers evaluating strategies
-\subsubsection{C 2.0}
-In this configuration, we added new nodes, and increased the amount of evaluation workers from 3 to 8. This reduced
-the dispatch duration conisderably. However, the load duration increased to more than 1 second. The reason for this
-increase is unknown.
-\subsubsection{C 2.1}
-In this configuration, we increased the amount of CPU and RAM available ot each worker, with this change, the
-total system latency had fallen to sub-second latencies again, and stayed there for loads of up to 4000 assignments.
-\subsubsection{C 2.2}
-In this configuration, we increased resources available to core component. This did not affect the system in a significant way.
-\subsubsection{C 3.0}
-In this configuration, we added a larger node specifically for Database. This change allowed us to support
+\subsubsection{C1}
+In first configuration, the system was able to support at most 4000 assignments. When the system load
+exceeded this number, the time spent in the dispatch stage had risen considerably. This points to an issue with
+not enough workers evaluating strategies.
+
+\subsubsection{C2}
+In second configuration, the system was able to support 16000 assignments seamlessly however, when system had to
+serve 32000 assignments, the database subsystem was unable to handle the load, and the time required to save
+incoming data into the database has risen considerably. This increase in latency was certainly a result of
+increased general database load.
+
+\subsection{Further scaling}
+We performed some experimental testing with even larger configurations and assignment counts up to 128 thousand,
+but, due to limited time, we were unable to get the system into working state,since in these configurations,
+the system had to service several thousand requests per second. Considering the expected system load,
+we abandoned this configuration.
+
+\subsection{Automatic scaling}
+Configurations shown were created manually. This resulted in some mismatch between amount of resources available, and provided
+to specific components. In the future, we plan to utilize both horizontal and vertical pod autoscaling capabilities of kubernetes
+to automatically scale individual components. Along with pod autoscaling, several kubernetes implementations also provide
+automatic cluster scaling. By combining these 2 tools, we could make the system totally independent, even in the event
+of sudden increased or decreased load.
 
 
-
-
-
-
-If we examine these results in detail, we get a clearer picture of the problem. The first problem, with our system
-we found was the database.
+\section{Problems}
+While we can point to many positive aspects of the system, we would be remiss, if we wouldn't take its problems
+into consideration as well. Some of these problems were observed throughout the development, and some were only discovered
+upon testing.
 
 \subsection{Database bottlenecks}
-For several hundred users, the chosen database solution provides adequate performance. However, if we start to increase the number
-of users into the thousands, the database is no longer available to provide historical data for individual workers fast enough.
+When scaling the system to several thousand users, the chosen database solution seems to perform inadequately.
+When faced with high loads the database is no longer able to provide historical data for individual workers fast enough.
 This, in turn slows down dispatching of new requests since existing workers are busy loading data from database, and therefore the
-load balancing component must wait for new workers to become available. The actual strategy execution stage has relatibvely
+load balancing component must wait for new workers to become available. The actual strategy execution stage has relatively
 stable latency.
 
 To solve this problem, we will have to increase the number of available workers even further, and introduce some kind of
 local cache for historical data that would reduce the database pressure.
-
-\section{Failures}
-While we can point to many positive aspects of the system, we would be remiss, if we wouldn't take its failures
-into consideration as well.
 
 \subsection{Readability problems}
 While most of the implementation benefited greatly from the use of Rust as primary implementation language, the combination
@@ -1852,7 +1912,7 @@ and some decisions taken at the beginning proved to be wrong, and the system had
 
 \subsection{Deployment updates - Disconnects}
 As mentioned in our overview of system testing, the individual components of the system suffered from silent disconnects.
-While this issue was mostly resolved, it points  to a much deeper issue with the use of ZeroMQ as a transport technology.
+While this issue was mostly resolved, it points to a much deeper issue with the use of ZeroMQ as a transport technology.
 It requires management. If we have used simple HTTP based REST api to communicate between components, the disconnections
 would have resulted in individual call failures almost immediately, greatly reducing the instability of the system during
 an upgrade.
@@ -1878,16 +1938,28 @@ use of this language, all components of the system require very low amounts of R
 is consumed by kubernetes. The use of Actix somewhat reduced the readability of code, but allowed us to create
 fully asynchronous components, which increased system throughput considerably.
 
-Overall, we regard this choice as a good one. With some updates to the language which should be available soon (Await syntax\todo{footnote})
-we should be eable to increase the readability of the code, while preserving all the benefits.
+Overall, we regard this choice as a good one. With some updates to the language which should be available soon (Await syntax)
+we should be able to increase the readability of the code, while preserving all the benefits.
 
 \subsubsection{Lua}
-Based on measurements we collected over large amount of strategy executions, we can safley say, that the implementation
-of strategies  in LUA was a good choice. The evaluation workers showed very stable latency, and thanks to the use of this language,
+Based on measurements we collected over large amount of strategy executions, we can safely say, that the implementation
+of strategies in LUA was a good choice. The evaluation workers have shown very stable latency, and thanks to the use of this language,
 we were able to create a sandbox, securing the system from this attack vector.
 
 \subsubsection{Postgres}
-And finally, the choice of PostgreSQL for
+And finally, the choice of PostgreSQL with TimescaleDB for storing asset data. In the beginning of this project, this choice vas very attractive,
+since it allowed us to use single database for System and asset data, greatly reducing complexity of the system.
+This choice provided adequate performance throughout the development of the system.
+
+However, when testing the system with a significant load, the asset data storage solution proved to be inadequate, being
+one of the main bottlenecks, reducing system latency. Through configuration changes, we were able to tune the database. These
+changes allowed us to serve around than 16000 assignments with acceptable latency.
+
+However, if the system gains more users, we will have to change the storage solution, or provide some caching mechanisms,
+to reduce database pressure.
+
+Overall, we regard this choice as not very good one, and in the future, we would generally choose a different approach(probably
+scyllaDB) for these kinds of storage requirements.
 
 \chapter{Conclusion \& Future work}
 The aim of this thesis was design and creation of a distributed system with with very specific constraints.
@@ -1905,4 +1977,20 @@ utilize more computational resources in accordance with the rise in system load.
 The system designed was submitted into the Excel@FIT student conference. The feedback provided by attendees of this
 conference was invaluable, and will certainly influence the future of the system.
 
-\todo{Future}
+While we feel we successfully satisfied all the requirements put forward in the initial stages of this thesis,
+we feel that both the set of technologies chosen, and the implemented system have bigger potential, than was
+realized. We aim to explore this unrealized potential even after this thesis is finished by continued development,
+and eventual release of the implemented system as a fully functional service.
+
+
+\section*{Future Work}
+The system created during the course of this thesis is currently deployed, and available to users.
+To fully realize capabilities of the system, we aim to improve it in several ways.
+
+First, we will focus on the usability of the system, improving the frontend application, and creating some kind of
+tutorial. Then after the system is ready to be released, we hope to get some feedback from real users, and
+focus on areas determined by the feedback.
+
+From the system side, we aim to clean up the code of the \verb|actix-net| and \verb|actix-arch| libraries,
+and release them in the crates.io ecosystem.
+

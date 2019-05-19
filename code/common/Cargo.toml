@@ -19,6 +19,7 @@ bytes = { version = "*", features = ["serde"] }
 
 futures = "*"
 futures-retry = "*"
+itertools="*"
 
 url = "*"
 uuid = { version = "<0.7.0", features = ["v4","serde"] }

@@ -6,7 +6,7 @@ RUN echo "Server = http://mirrors.evowise.com/archlinux/\$repo/os/\$arch" >> /et
 
 RUN  pacman-db-upgrade; pacman -Syy --noconfirm glibc zeromq postgresql-libs dnsutils iproute2; pacman -Scc --noconfirm
 
-ARG app_name
-ADD target/debug/$app_name /app
+ARG app_file
+ADD $app_file /app
 
 ENTRYPOINT ["/app"]

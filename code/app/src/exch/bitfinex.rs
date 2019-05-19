@@ -136,6 +136,7 @@ impl StreamHandler<ws::Message, ws::ProtocolError> for ActixWsClient {
                         let spec = OhlcSpec::new_m("bitfinex", pair);
 
                         if let Ok(update) = json::from_value::<BfxUpdate>(val.clone()).map(|x| x.data()) {
+                            trace!("Ohlc update: {:?}", update);
                             let update = update.into_iter().map(|c| c.into()).collect();
                             let update = ingest::IngestUpdate {
                                 spec,

@@ -146,8 +146,8 @@ impl OhlcSpec {
     pub fn tar_currency(&self) -> &str {
         return self.pair.tar_currency();
     }
-    pub fn period(&self) -> &OhlcPeriod {
-        return &self.period;
+    pub fn period(&self) -> OhlcPeriod {
+        return self.period;
     }
     pub fn set_period(&mut self, period: OhlcPeriod) {
         self.period = period;

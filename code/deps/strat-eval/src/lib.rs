@@ -23,12 +23,10 @@ pub trait TradingStrategy {
 
 
 pub fn eval(ohlc : BTreeMap<i64,Ohlc>, strat : String) -> Result<TradingPosition, EvalError> {
-    println!("Creating strat eval");
     let strat = lua::LuaStrategy::new(&strat).map_err(|e| EvalError::InvalidStrategy(e.to_string()))?;
     let input = StrategyInput {
         ohlc
     };
 
-    println!("Strat eval starting");
     strat.decide(&input)
 }

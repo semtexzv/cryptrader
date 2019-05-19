@@ -12,6 +12,7 @@ scylla = ["cdrs", "cdrs_helpers_derive"]
 common = {path = "../../common"}
 serde = "*"
 
+
 diesel = { version = "*", features = ["postgres", "r2d2", "chrono", "uuid"]}
 diesel_migrations = "*"
 

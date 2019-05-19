@@ -43,22 +43,12 @@ with data as (select time, open, high, low, close, vol
          where open is not null
      )
          ON conflict do nothing
-     ),
-     calculated as (SELECT first_slow(t.time) AS bucket,
-                           first_slow(t.open) AS open,
-                           max(t.high)        AS high,
-                           min(t.low)         AS low,
-                           last_slow(t.close) AS close,
-                           sum(t.volume)      AS vol
-                    FROM backfilled t
-                    GROUP BY (t.time / $3)
-                    order by bucket asc
      )
 
-select bucket as time,
+select time,
        open,
        high,
        low,
        close,
-       vol
-from calculated
+       volume as vol
+from backfilled

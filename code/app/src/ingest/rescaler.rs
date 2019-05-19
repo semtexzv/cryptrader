@@ -60,7 +60,7 @@ impl Handler<OhlcUpdate> for Rescaler {
                         let max_time = min_time + p.seconds();
                         let iter = cmap.range(min_time..max_time);
 
-                        let new_ohlc = Ohlc::combine_with_time(min_time, iter.map(|(k, v)| v));
+                        let new_ohlc = Ohlc::combine_with_time(min_time, iter.map(|(k, v)| v.clone()));
                         let mut update = OhlcUpdate::new(msg.spec.clone(), new_ohlc);
 
 

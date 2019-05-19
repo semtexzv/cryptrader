@@ -9,173 +9,9 @@ use rlua::{self, Lua, UserData, UserDataMethods};
 use crate::{StrategyInput, TradingStrategy};
 use crate::EvalError;
 
-static SANDBOX: &str = r#"local sandbox = {
-  _VERSION      = "sandbox 0.5",
-  _DESCRIPTION  = "A pure-lua solution for running untrusted Lua code.",
-  _URL          = "https://github.com/kikito/sandbox.lua",
-  _LICENSE      = [[
-    MIT LICENSE
-
-    Copyright (c) 2013 Enrique García Cota
-
-    Permission is hereby granted, free of charge, to any person obtaining a
-    copy of this software and associated documentation files (the
-    "Software"), to deal in the Software without restriction, including
-    without limitation the rights to use, copy, modify, merge, publish,
-    distribute, sublicense, and/or sell copies of the Software, and to
-    permit persons to whom the Software is furnished to do so, subject to
-    the following conditions:
-
-    The above copyright notice and this permission notice shall be included
-    in all copies or substantial portions of the Software.
-
-    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-    OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-    MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
-    IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
-    CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
-    TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
-    SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-  ]]
-}
-
--- The base environment is merged with the given env option (or an empty table, if no env provided)
---
-local BASE_ENV = {}
-
--- List of non-safe packages/functions:
---
--- * string.rep: can be used to allocate millions of bytes in 1 operation
--- * {set|get}metatable: can be used to modify the metatable of global objects (strings, integers)
--- * collectgarbage: can affect performance of other systems
--- * dofile: can access the server filesystem
--- * _G: It has access to everything. It can be mocked to other things though.
--- * load{file|string}: All unsafe because they can grant acces to global env
--- * raw{get|set|equal}: Potentially unsafe
--- * module|require|module: Can modify the host settings
--- * string.dump: Can display confidential server info (implementation of functions)
--- * string.rep: Can allocate millions of bytes in one go
--- * math.randomseed: Can affect the host sytem
--- * io.*, os.*: Most stuff there is non-safe
-
-
--- Safe packages/functions below
-([[
-
-_VERSION assert error    ipairs   next pairs
-pcall    select tonumber tostring type unpack xpcall
-
-coroutine.create coroutine.resume coroutine.running coroutine.status
-coroutine.wrap   coroutine.yield
-
-math.abs   math.acos math.asin  math.atan math.atan2 math.ceil
-math.cos   math.cosh math.deg   math.exp  math.fmod  math.floor
-math.frexp math.huge math.ldexp math.log  math.log10 math.max
-math.min   math.modf math.pi    math.pow  math.rad   math.random
-math.sin   math.sinh math.sqrt  math.tan  math.tanh
-
-os.clock os.difftime os.time
-
-string.byte string.char  string.find  string.format string.gmatch
-string.gsub string.len   string.lower string.match  string.reverse
-string.sub  string.upper
-
-table.insert table.maxn table.remove table.sort
-
-]]):gsub('%S+', function(id)
-  local module, method = id:match('([^%.]+)%.([^%.]+)')
-  if module then
-    BASE_ENV[module]         = BASE_ENV[module] or {}
-    BASE_ENV[module][method] = _G[module][method]
-  else
-    BASE_ENV[id] = _G[id]
-  end
-end)
-
-local function protect_module(module, module_name)
-  return setmetatable({}, {
-    __index = module,
-    __newindex = function(_, attr_name, _)
-      error('Can not modify ' .. module_name .. '.' .. attr_name .. '. Protected by the sandbox.')
-    end
-  })
-end
-
-('coroutine math os string table'):gsub('%S+', function(module_name)
-  BASE_ENV[module_name] = protect_module(BASE_ENV[module_name], module_name)
-end)
-
--- auxiliary functions/variables
-
-local string_rep = string.rep
-
-local function merge(dest, source)
-  for k,v in pairs(source) do
-    dest[k] = dest[k] or v
-  end
-  return dest
-end
-
-local function sethook(f, key, quota)
-  if type(debug) ~= 'table' or type(debug.sethook) ~= 'function' then return end
-  debug.sethook(f, key, quota)
-end
-
-local function cleanup()
-  sethook()
-  string.rep = string_rep
-end
-
--- Public interface: sandbox.protect
-function sandbox.protect(f, options)
-  if type(f) == 'string' then f = assert(loadstring(f)) end
-
-  options = options or {}
-
-  local quota = false
-  if options.quota ~= false then
-    quota = options.quota or 500000
-  end
-
-  local env   = merge(options.env or {}, BASE_ENV)
-  env._G = env._G or env
-
-  setfenv(f, env)
-
-  return function(...)
-
-    if quota then
-      local timeout = function()
-        cleanup()
-        error('Quota exceeded: ' .. tostring(quota))
-      end
-      sethook(timeout, "", quota)
-    end
-
-    string.rep = nil
-
-    local ok, result = pcall(f, ...)
-
-    cleanup()
-
-    if not ok then error(result) end
-    return result
-  end
-end
-
--- Public interface: sandbox.run
-function sandbox.run(f, options, ...)
-  return sandbox.protect(f, options)(...)
-end
-
--- make sandbox(f) == sandbox.protect(f)
-setmetatable(sandbox, {__call = function(_,f,o) return sandbox.protect(f,o) end})
-
-return sandbox
-"#;
-
 pub struct LuaStrategy {
     lua: Box<Lua>,
+    src: String,
 }
 
 
@@ -189,15 +25,14 @@ impl LuaStrategy {
         let x: Result<(), rlua::Error> = lua.context(|ctx| {
             register_ta(ctx).unwrap();
             init_saferun(ctx).unwrap();
-            let fun: rlua::Function = ctx.load(src).into_function()?;
-            ctx.globals().set("__strategy", fun)?;
             Ok(())
         });
 
         let _ = x?;
 
         return Ok(LuaStrategy {
-            lua
+            lua,
+            src: src.into(),
         });
     }
 
@@ -213,28 +48,33 @@ impl LuaStrategy {
     }
     pub fn execute(&self) -> Result<TradingPosition, EvalError> {
         return self.lua.context(|ctx| {
-            println!("Executing");
-            //let exec = ctx.load("return run_sandbox(__strategy)");
-            let exec: rlua::Function = ctx.globals().get("__strategy").unwrap();
-            let res = exec.call::<_, rlua::Value>(());
-            println!("Res is : {:?}", res);
+            debug!("Executing strategy");
+            let sandbox: rlua::Function = ctx.globals().get("safe_run").unwrap();
 
-            match res {
-                Ok(rlua::Value::Number(n)) => {
+            let res = sandbox.call::<_, (rlua::Value, rlua::Value)>(self.src.clone());
+
+            if let Err(e) = res {
+                return Err(EvalError::InvalidStrategy(format!("Could not launch strategy: {}", e)));
+            }
+            let (msg, error) = res.unwrap();
+
+
+            return match (msg, error) {
+                (rlua::Value::Number(n), _) => {
                     Ok(if n < 0.0 { TradingPosition::Short } else { TradingPosition::Long })
                 }
-                Ok(rlua::Value::String(ref s)) if s.to_str().is_ok() => {
+                (rlua::Value::String(ref s), _) if s.to_str().is_ok() => {
                     let v = TradingPosition::from_str(&s.to_str().unwrap())
                         .map_err(|e| EvalError::InvalidStrategy(format!("Expected `short` `long` or `neutral`, {} was provided", s.to_str().unwrap())));
                     v
                 }
-                Ok(e) => {
+                (_, rlua::Value::String(ref s)) => {
+                    Err(EvalError::InvalidStrategy(format!("Invalid strategy output : {}", s.to_str().unwrap())))
+                }
+                (_, e) => {
                     Err(EvalError::InvalidStrategy(format!("Invalid strategy output : {:?}", e)))
                 }
-                Err(e) => {
-                    Err(EvalError::InvalidStrategy(format!("Could not launch strategy: {}", e)))
-                }
-            }
+            };
         });
     }
 }
@@ -298,6 +138,7 @@ local e=_ENV
 -- sample sandbox environment
 sandbox_env = {
   ta = ta,
+  __ohlc = __ohlc,
 
   ipairs = ipairs,
   next = next,
@@ -328,13 +169,24 @@ sandbox_env = {
   os = { clock = os.clock, difftime = os.difftime, time = os.time },
 }
 
-function run_sandbox(sb_func, ...)
-  local sb_orig_env=_ENV
-  if (not sb_func) then return nil end
-  _ENV=sandbox_env
-  local sb_ret={e.pcall(sb_func, ...)}
-  _ENV=sb_orig_env
-  return e.table.unpack(sb_ret)
+function run_sandbox(code, ...)
+    local instr_limit = 1e7
+    local instr_count = 0
+
+    local function debug_step()
+        instr_count = instr_count + 1
+        if instr_count > instr_limit then
+            error("Script used too much time")
+        end
+    end
+
+
+    local untrusted_fun, message = load(code,nil,'t',sandbox_env)
+    if not untrusted_fun then return nil, message end
+    debug.sethook(debug_step)
+    local stat, res = pcall(untrusted_fun, ...)
+    debug.sethook(nil)
+    return res, nil
 end
 return run_sandbox
 "#;

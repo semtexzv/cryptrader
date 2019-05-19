@@ -31,6 +31,7 @@ items:
       metadata:
         labels: { app: trader, layer: core }
       spec:
+        priorityClassName: high-priority
         containers:
         - name: app
           image: ${APP_IMAGE}
@@ -38,8 +39,8 @@ items:
           command: ["/app", "ingest"]
           env: *env
           resources:
-            requests: { cpu: 400m, memory: 120M }
-            limits: { cpu: 400m, memory: 130M }
+            requests: { cpu: 100m, memory: 100M }
+            limits: { cpu: 100m, memory: 100M }
 
         - name: trader
           image: ${APP_IMAGE}
@@ -47,6 +48,6 @@ items:
           command: ["/app", "trader"]
           env: *env
           resources:
-            requests: { cpu: 300m, memory: 120M }
-            limits: { cpu: 300m, memory: 130M }
+            requests: { cpu: 100m, memory: 200M }
+            limits: { cpu: 100m, memory: 200M }
 

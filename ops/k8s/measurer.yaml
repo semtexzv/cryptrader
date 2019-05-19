@@ -33,5 +33,5 @@ items:
               command: ["/app", "measure"]
               env: [{name: "RUST_LOG", value: ${RUST_LOG}}]
               resources:
-                requests: { cpu: 200m, memory: 150M }
-                limits: {cpu: 220m, memory: 180M }
+                requests: { cpu: 100m, memory: 100M }
+                limits: {cpu: 100m, memory: 100M }

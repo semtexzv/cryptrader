@@ -41,8 +41,8 @@ items:
               command: ["/app", "web"]
               env: [{name: "RUST_LOG", value: ${RUST_LOG}}]
               resources:
-                requests: { cpu: 200m, memory: 150M }
-                limits: { cpu: 400m, memory: 200M   }
+                requests: { cpu: 200m, memory: 110M }
+                limits: { cpu: 200m, memory: 120M   }
 
               ports:
               - containerPort: 8000

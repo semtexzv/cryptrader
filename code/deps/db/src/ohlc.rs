@@ -4,7 +4,7 @@ use crate::schema::{self, ohlc, Pair};
 #[cfg(feature = "scylla")]
 use cdrs::{
     frame::IntoBytes,
-    types::prelude::{Value, TryFromRow}
+    types::prelude::{Value, TryFromRow},
 };
 
 #[derive(PartialEq, Debug, Clone, Queryable, QueryableByName)]
@@ -69,7 +69,7 @@ impl crate::Database {
         })
     }
 
-    pub fn do_save_ohlc(&self, id: PairId, ohlc: Vec<Ohlc>) ->  BoxFuture<(),()> {
+    pub fn do_save_ohlc(&self, id: PairId, ohlc: Vec<Ohlc>) -> BoxFuture<(), ()> {
         // self.1.save(id.clone(),ohlc.clone());
         self.invoke::<_, _, ()>(move |this, ctx| {
             let (_, t) = measure_time(|| {
@@ -148,7 +148,7 @@ impl crate::Database {
 
     pub fn ohlc_history_backfilled(&self, spec: OhlcSpec, since: i64) -> BoxFuture<Vec<Ohlc>> {
         return box self.invoke::<_, _, _>(move |this, ctx| {
-            let sql = ::diesel::sql_query(include_str!("../sql/ohlc_raw_backfilling.sql"));
+            let sql = ::diesel::sql_query(include_str!("../sql/ohlc_raw.sql"));
 
             use crate::schema::ohlc::*;
 
@@ -165,7 +165,16 @@ impl crate::Database {
                     .iter()
                     .map(|c| c.clone().into()).collect()
             });
-            warn!("Loading ohlc data took {:?} ms, retrieved {:?} items", t, vals.len());
+
+            let (vals, t2): (Vec<Ohlc>, _) = measure_time(|| {
+                debug!("Raw data :{:?}", vals.len());
+                let vals = Ohlc::rescale(vals.into_iter(), spec.period());
+                debug!("Rescaled data :{:?}", vals.len());
+                let vals = Ohlc::backfill(vals.into_iter(), spec.period());
+                vals
+            });
+
+            info!("OHLC Load: {:?} ms, rescale: {:?} ,ms , retrieved {:?} items", t, t2, vals.len());
             Ok(vals)
         });
     }

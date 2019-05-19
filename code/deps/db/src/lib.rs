@@ -71,11 +71,11 @@ pub fn start() -> Database {
 
     let manager = r2d2_diesel::ConnectionManager::new(url);
     let pool = diesel::r2d2::Pool::builder()
-        .max_size(4)
+        .max_size(16)
         .build(manager)
         .expect("Failed to create connection pool");
 
-    return Database(SyncArbiter::start(4, move || DbWorker(pool.clone())), #[cfg(feature = "scylla")] scylla::connect());
+    return Database(SyncArbiter::start(16, move || DbWorker(pool.clone())), #[cfg(feature = "scylla")] scylla::connect());
 }
 
 impl Actor for DbWorker { type Context = SyncContext<Self>; }

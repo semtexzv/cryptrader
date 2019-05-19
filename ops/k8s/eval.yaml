@@ -31,7 +31,7 @@ items:
               imagePullPolicy: Always
               command: ["/app", "eval-balancer"]
               env: *env
-              resources: { requests: { cpu: 400m, memory: 150M }, limits: { cpu: 400m, memory: 200M } }
+              resources: { requests: { cpu: 100m, memory: 100M }, limits: { cpu: 100m, memory: 100M } }
 
   - kind: Deployment
     apiVersion: apps/v1
@@ -39,7 +39,7 @@ items:
       name: eval
       labels: { app: trader, layer: eval, type: worker }
     spec:
-      replicas: 16
+      replicas: 1
       selector: { matchLabels: { app: trader, layer: eval, type: worker }}
       template:
         metadata: { labels: { app: trader, layer: eval, type: worker } }
@@ -50,4 +50,4 @@ items:
               imagePullPolicy: Always
               command: ["/app", "eval-worker"]
               env: *env
-              resources: { requests: { cpu: 280m, memory: 80M }, limits: { cpu: 300m, memory: 100M } }
+              resources: { requests: { cpu: 100m, memory: 150M }, limits: { cpu: 100m, memory: 200M } }
