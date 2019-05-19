@@ -4,12 +4,12 @@ at Brno University of Technology, IT-MGR-2 study plan.
 
 ## Deployed copy
 
-The resulting application is deployed at [semtexzv.com]. This application requires registration, however, it currently
+The resulting application is deployed at (http://semtexzv.com). This application requires registration, however, it currently
 utilizes the provided email as an unique identifier. The password is stored in hashed form, with very complex hash function.
 
 All accounts on this deployment are unlmited, and therefore it can be used for testing the running application.
 
-## Building
+## Deploying custom copy
 
 If you wish to run your own copy of this application, you will have to satisfy a few requirements.
 
@@ -24,7 +24,7 @@ If you wish to run your own copy of this application, you will have to satisfy a
 
 
 #### Steps for creating and connecting all services necessary.
-1. Create a new kubernetes cluster on digital ocean [here](https://www.digitalocean.com/products/kubernetes/)
+1. Create a new kubernetes cluster on digital ocean [here](https://www.digitalocean.com/products/kubernetes/), We suggest at least 2 vCPU & 2 GB RAM cluster for basic deployment
 2. Login into digital ocean account using the `doctl` command line tool.
 3. Select proper kubernetes cluster using the `doctl` tool.
 4. Verify that you are properly logged in using the `kubectl get nodes` command.

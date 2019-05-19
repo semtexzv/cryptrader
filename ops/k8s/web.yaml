@@ -8,7 +8,7 @@ items:
       labels: { app: trader }
     spec:
       selector: { layer: web }
-      type: NodePort
+      type: LoadBalancer
       ports:
         - name: http
           port: 8000
