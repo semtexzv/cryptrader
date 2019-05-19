@@ -13,6 +13,7 @@ All accounts on this deployment are unlmited, and therefore it can be used for t
 
 If you wish to run your own copy of this application, you will have to satisfy a few requirements.
 
+#### Requiremets
 1. Tools for building Rust \& React applications installed on local machine, these are : `rustc, cargo, npm`.
 2. Digital ocean command line tools : `doctl`
 3. Kubernetes command line tools : `kubectl`
@@ -22,8 +23,8 @@ If you wish to run your own copy of this application, you will have to satisfy a
 
 
 
-Steps for creating and connecting all services necessary.
-1. Create a new kubernetes cluster on digital ocean (here)[https://www.digitalocean.com/products/kubernetes/]
+#### Steps for creating and connecting all services necessary.
+1. Create a new kubernetes cluster on digital ocean [here](https://www.digitalocean.com/products/kubernetes/)
 2. Login into digital ocean account using the `doctl` command line tool.
 3. Select proper kubernetes cluster using the `doctl` tool.
 4. Verify that you are properly logged in using the `kubectl get nodes` command.
@@ -32,7 +33,7 @@ Steps for creating and connecting all services necessary.
 with your docker hub account name.
 
 
-Steps for deploying the application:
+#### Steps for deploying the application:
 1. Build web application using following command: `cd code/web/app && npm install && npm build`
 1. run `make deploy` in the main directory
 
