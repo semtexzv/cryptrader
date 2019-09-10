@@ -42,6 +42,6 @@ doc:
 
 archive:
 	zip -r $(ARCHIVE) . -x "target/*" -x $(ARCHIVE) -x ".git/*"  -x "thesis/out" -x "cryptrader/*" -x "code/web/app/node_modules/*" \
-	-x "code/web/app/dist/*" -x "code/web/app/.cache/*" -x "thesis/*" -x ".idea/*" -x "EXCEL/*" -x "article/*"
+	-x "code/web/app/dist/*.map" -x "code/web/app/.cache/*" -x "thesis/*" -x ".idea/*" -x "EXCEL/*" -x "article/*"
 
 

@@ -1,6 +1,6 @@
 # System for algorithmic trading
 This system was developed as a Masters thesis by Michal Hornický <xhorni14@stud.fit.vutbr.cz> while studying
-at Brno University of Technology, IT-MGR-2 study plan.
+at Brno University of Technology, IT-MGR-2 study plan. This project is also available on [Github](https://github.com/semtexzv/cryptrader)
 
 ## Deployed copy
 
@@ -14,7 +14,7 @@ All accounts on this deployment are unlmited, and therefore it can be used for t
 If you wish to run your own copy of this application, you will have to satisfy a few requirements.
 
 #### Requiremets
-1. Tools for building Rust \& React applications installed on local machine, these are : `rustc, cargo, npm`.
+1. Tools for building Rust \& React applications installed on local machine, these are : `rustc, cargo, npm, yarn`.
 2. Digital ocean command line tools : `doctl`
 3. Kubernetes command line tools : `kubectl`
 4. Docker installed
@@ -34,7 +34,10 @@ with your docker hub account name.
 
 
 #### Steps for deploying the application:
-1. Build web application using following command: `cd code/web/app && npm install && npm build`
 1. run `make deploy` in the main directory
 
+
+#### Rebuilding web application
+If you wish to make changes to web application, you will have to enter the `code/web/app` directory,
+run `yarn install`, and rebuild the application by invoking `yarn build`.
 

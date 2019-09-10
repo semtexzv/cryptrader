@@ -170,7 +170,7 @@ numbers=left
   %keywords.en={Here, individual keywords separated by commas will be written in English.},
   % Abstrakt / Abstract
   abstract.cs={
-  Inovácia na finančných trhoch poskytuje nové príležitosti. Algoritmické obchodovoanie je
+  Inovácia na finančných trhoch poskytuje nové príležitosti. Algoritmické obchodovanie je
   vhodný spôsob využitia týchto príležitostí. Táto práca sa zaoberá návrhom a implementáciou systému,
   ktorý by dovoľoval svojím uživateľom vytvárať vlastné obchodovacie stratégie, a pomocou nich obchodovať
   na burzách. Práca kladie dôraz na návrh distribuovaného systému, ktorý bude škálovatelný, pomocou
@@ -195,7 +195,44 @@ the result of this thesis.
 },
 %(external submitter, consultant, etc.).},
   % Rozšířený abstrakt (cca 3 normostrany) - lze definovat zde nebo níže / Extended abstract (approximately 3 standard pages) - can be defined here or below
-  %extendedabstract={Do tohoto odstavce bude zapsán rozšířený výtah (abstrakt) práce v českém (slovenském) jazyce.},
+  extendedabstract={
+Inovácia na finančných trhoch poskytuje nové príležitosti. Algoritmické obchodovanie je
+vhodný spôsob využitia týchto príležitostí. Táto diplomová práca sa zaoberá návrhom a vývojom systému pre algoritmické obchodovanie na burze.
+Hlavným cieľom práce je navrhnúť a vyvinúť systém, ktorý by dovolil obchodovať na burze viac používaťeľom, a teda by bol škálovaťelný.
+
+Pre dosiahnutie týchto cieľov, bolo potrebné založiť systém na distribuovanej architektúre, a použiť moderné technológie
+z oblasti distribuovaných systémov a Cloud Computingu. Pri vypracovaní tejto práce, boli taktiež použité netradičné technológie
+ako napríklad použitie ZeroMQ pre komunikáciu, a použitie jazyku Rust pre implementáciu.
+
+Použitie tývchto technológii pre splnenie požiadavkov na vysledný systém so sebou prinieslo vlastnú sadu problémov,
+ktorých riešenie je popísané v texte práce.
+
+Text prácie je rozdelený do niekoľkých kapitol. Kapitola 2 sa v krátkosti zaoberá existujúcimi produktmi, ktoré
+taktiež poskutujú nástroje pre algoritmické obchodovanie na burzách s kryptomenami.
+
+Kapitola 3 sa zaoberá teoretickými základmi použitých technológii.
+Asi najdôležitejšou časťou je popis distribuovaných systémov. Z faktu že vytvárame distribuovaný systém vyplýva potreba
+použitia programovacej paradigmy, ktorá by tento prístup zjednodušila. Preskúmali sme viaceré, ale nakoniec sme
+použili prístup znaámy ako Actor model.
+
+Kapitola 4 sa zaoberá návrhom výsledného systému, a jeho jednotlivých častí. Systém sme navrhli ako kolekciu
+distribuovaných komponentov, ktoré komunikujú pomocou ZeroMQ, a bežia vo výpočetnom prostredí Docker kontajnerov, ktoré
+sú spravované nástrojom Kubernetes. Rozhranie systému je navrhnuté ako Single-page aplikácia vytvorená pomocou knižnice
+React, ktorá komunikuje s REST API poskytovaným servrovou aplikáciou.
+
+Kapitola 5 sa zaoberá popisom samotnej implementácie jednotlivých komponentov, ktoré boli navrhnuté v predchádzajúcej kapitole.
+Taktiež sa zaoberá popisom knižníc \texttt{actix\_comm} a \texttt{actix\_arch} ktoré obsahujú nástroje pre implementáciu
+komunikačných kanálov medzi jednotlivými komponentami v distribuovanom prostredí. Kapitola sa dalej zaoberá použitými
+technológiami, a dôvodmi pre ich použitie.
+
+Kapitola 6  obsahuje popis vlastností vyvvinutého systému, a celkovými výsledkami tejto práce. Hlavnou súčastou
+je popis práce s vytvoreným systémom, me;lógie merania výkonu, a samotné nameráné vykonnostné hodnoty.
+Táto kapitola sa taktiež zaoberá popisom problémov so systémom, a možnými riešeniami týchto problémov.
+
+Hlavnými výsledkami práce sú: samotný implementovaný systém s nástrojmi pre jeho správu a nasadzovanie, knižnice pre
+implementáciu komunikácie v distribuovanom prostredí pomocou ZeroMQ.
+
+},
   faculty={FIT}, % FIT/FEKT/FSI/FA/FCH/FP/FAST/FAVU/USI/DEF
   faculty.cs={Fakulta informačních technologií}, % Fakulta v češtině - pro využití této položky výše zvolte fakultu DEF / Faculty in Czech - for use of this entry select DEF above
   faculty.en={Faculty of Information Technology}, % Fakulta v angličtině - pro využití této položky výše zvolte fakultu DEF / Faculty in English - for use of this entry select DEF above

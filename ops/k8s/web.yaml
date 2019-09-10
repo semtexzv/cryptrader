@@ -11,7 +11,7 @@ items:
       type: LoadBalancer
       ports:
         - name: http
-          port: 8000
+          port: 80
           nodePort: 30000
           targetPort: 8000
 
