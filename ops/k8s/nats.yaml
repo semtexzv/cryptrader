@@ -1,0 +1,35 @@
+apiVersion: v1
+kind: List
+items:
+  - apiVersion: v1
+    kind: Service
+    metadata:
+      name: nats
+      labels: { app: trader, layer: nats }
+    spec:
+      selector: { layer: nats }
+      ports:
+        - name: nats
+          port: 4222
+          targetPort: 4222
+
+
+  - kind: Deployment
+    apiVersion: apps/v1
+    metadata:
+      name: nats
+      labels: { app: trader, layer: nates }
+    spec:
+      replicas: 1
+      selector: { matchLabels: { app: trader, layer: nats }}
+      template:
+        metadata:
+          labels: { app: trader, layer: nats }
+        spec:
+          containers:
+            - name: app
+              image: nats:2.0.4-linux
+              imagePullPolicy: Always
+              resources:
+                #requests: { cpu: 140m, memory: 100M }
+                #limits: {cpu: 150m, memory: 100M }

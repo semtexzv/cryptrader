@@ -1,6 +1,7 @@
 use crate::prelude::*;
 use json;
 
+#[derive(Debug)]
 pub struct CandleSpec(pub String, pub String, pub String);
 
 

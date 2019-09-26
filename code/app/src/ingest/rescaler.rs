@@ -2,13 +2,13 @@ use crate::prelude::*;
 
 use crate::ingest::OhlcUpdate;
 use common::types::PairId;
+use actix::fut::ok;
 
 
 pub struct Rescaler {
-    handle: ContextHandle,
+    client: anats::Client,
     db: Database,
     cache: BTreeMap<PairId, BTreeMap<i64, Ohlc>>,
-    out: Recipient<OhlcUpdate>,
 }
 
 impl Actor for Rescaler {
@@ -16,15 +16,13 @@ impl Actor for Rescaler {
 }
 
 impl Rescaler {
-    pub async fn new(handle: ContextHandle, db: Database, input: Addr<Proxy<OhlcUpdate>>, out: Recipient<OhlcUpdate>) -> Result<Addr<Self>, failure::Error> {
-        Ok(Arbiter::start(move |ctx: &mut Context<Self>| {
-            let rec = ctx.address().recipient();
-            input.do_send(Subscribe::forever(rec));
+    pub async fn new(client: anats::Client, db: Database) -> Result<Addr<Self>, failure::Error> {
+        Ok(Actor::create(move |ctx: &mut Context<Self>| {
+            client.subscribe(crate::CHANNEL_OHLC_AGG, None, ctx.address().recipient::<OhlcUpdate>());
             Rescaler {
-                handle,
+                client,
                 db,
                 cache: BTreeMap::new(),
-                out,
             }
         }))
     }
@@ -34,9 +32,11 @@ impl Handler<OhlcUpdate> for Rescaler {
     type Result = ();
 
     fn handle(&mut self, msg: OhlcUpdate, ctx: &mut Self::Context) -> Self::Result {
-        self.out.do_send(msg.clone()).unwrap();
+
+        self.client.publish(crate::CHANNEL_OHLC_RESCALED, msg.clone());
+
         if msg.stable {
-            let insert: Box<ActorFuture<Actor=_, Item=_, Error=failure::Error>> =
+            let insert: Box<dyn ActorFuture<Actor=_, Item=_, Error=failure::Error>> =
                 if self.cache.get(&msg.spec.pair_id()).is_none() {
                     let msg = msg.clone();
                     let time = unixtime() - 60 * 60 * 6;
@@ -52,7 +52,6 @@ impl Handler<OhlcUpdate> for Rescaler {
                 let cmap = this.cache.get_mut(msg.spec.pair_id()).unwrap();
                 cmap.insert(msg.ohlc.time, msg.ohlc.clone());
 
-                let mut items = Vec::new();
 
                 for p in OhlcPeriod::VALUES[1..].iter() {
                     if msg.ohlc.time % p.seconds() == (p.seconds() - 60) {
@@ -66,15 +65,15 @@ impl Handler<OhlcUpdate> for Rescaler {
 
                         update.spec.set_period(*p);
                         update.stable = msg.stable;
-                        items.push(this.out.send(update));
+                        this.client.publish(crate::CHANNEL_OHLC_RESCALED, update);
                     }
                 }
-                use common::future::join_all;
-                wrap_future(join_all(items).map(|_| ()).from_err())
+                afut::ok(())
             });
 
 
             ctx.spawn(b.drop_err());
+
         }
     }
 }

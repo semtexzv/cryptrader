@@ -181,7 +181,7 @@ impl<'de> Deserialize<'de> for Resp {
         D: Deserializer<'de> {
         let mut data: json::Value = json::Value::deserialize(deserializer)?;
 
-        #[derive(Deserialize,Debug)]
+        #[derive(Deserialize, Debug)]
         struct Help {
             event: EventType,
             #[serde(rename = "chanId")]
@@ -198,7 +198,7 @@ impl<'de> Deserialize<'de> for Resp {
                 });
             }
             EventType::Sub => {
-                println!("Sub: {:?}",h);
+                info!("Sub: {:?}", h);
                 return Ok(Resp {
                     chan_id: h.chan_id,
                     data: RespData::Sub(json::from_value::<SubData>(data).map_err(|e| D::Error::custom("ABC"))?),
@@ -216,8 +216,8 @@ pub async fn get_available_symbols() -> Result<Vec<SymbolDetail>, failure::Error
     };
 
     let req = client::get("https://api.bitfinex.com/v1/symbols_details").finish().unwrap();
-    let res = comp_await!(req.send())?;
-    let body: Vec<SymbolDetail> = comp_await!(res.json())?;
+    let mut res = req.send().compat().await.unwrap();
+    let body: Vec<SymbolDetail> = res.json().limit(crate::BODY_LIMIT).compat().await.unwrap();
 
     Ok(body)
 }

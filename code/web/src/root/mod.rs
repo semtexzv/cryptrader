@@ -17,8 +17,8 @@ async fn root(req: HttpRequest<State>) -> Result<impl Responder> {
 
 pub async fn pairs(req: HttpRequest<State>) -> Result<impl Responder> {
     let db: Database = req.state().db.clone();
-    let base = await_compat!(BaseReqInfo::from_request(&req))?;
-    let pairs: Vec<db::Pair> = await_compat!(db.pairs())?;
+    let base = BaseReqInfo::from_request(&req).await?;
+    let pairs: Vec<db::Pair> = db.pairs().compat().await?;
 
     Ok(Json(pairs).respond_to(&req)?)
 }
@@ -36,15 +36,15 @@ pub fn configure(application: App<State>) -> App<State> {
     application
         .resource("/", |r| {
             r.name("homepage");
-            r.method(Method::GET).with(compat(root));
-            r.method(Method::POST).with(compat(root))
+            r.method(Method::GET).with_async(root);
+            r.method(Method::POST).with_async(root);
         })
 
         .resource("/api/pairs", |r| {
-            r.method(Method::GET).with(compat(pairs));
+            r.method(Method::GET).with_async(pairs);
         })
         .resource("/api/periods", |r| {
-            r.method(Method::GET).with(compat(periods));
+            r.method(Method::GET).with_async(periods);
         })
 }
 

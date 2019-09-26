@@ -15,9 +15,6 @@ includedir = { path = "../deps/includedir"}
 clap = "*"
 serde = "*"
 
-actix-comm = { path = "../deps/actix-comm" }
-actix-arch = { path = "../deps/actix-arch" }
-actix-async-await = { path = "../deps/actix-async-await"}
 
 apis = { path = "../deps/apis" }
 db = { path = "../deps/db" }

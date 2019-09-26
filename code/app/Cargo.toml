@@ -4,20 +4,13 @@ version = "0.0.0"
 authors = ["Michal Hornický <semtexzv@gmail.com>"]
 edition = "2018"
 
-[features]
-measure = []
-default = ["measure"]
-
 [dependencies.common]
 path = "../common"
 
 [dependencies]
 clap = { version = "*", default-features=false }
 serde = { version ="*" }
-csv = "1"
 
-actix-comm = { path = "../deps/actix-comm" }
-actix-arch = { path = "../deps/actix-arch" }
 strat-eval = { path = "../deps/strat-eval"}
 
 apis = { path = "../deps/apis" }
@@ -25,3 +18,4 @@ db = { path = "../deps/db" }
 
 radix_trie = { version = "*", default-features=false }
 anymap = { version ="*", default-features=false }
+

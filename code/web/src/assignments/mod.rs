@@ -10,12 +10,12 @@ use actix_web::Json;
 
 pub async fn list(req: HttpRequest<State>) -> Result<impl Responder> {
     let db: Database = req.state().db.clone();
-    let base = await_compat!(BaseReqInfo::from_request(&req))?;
+    let base = BaseReqInfo::from_request(&req).await?;
     require_login!(base);
 
-    let pairs: Vec<db::Pair> = await_compat!(db.pairs())?;
-    let assignments: Vec<db::Assignment> = await_compat!(db.assignments(base.auth.uid))?;
-    let strategies: Vec<db::Strategy> = await_compat!(db.user_strategies(base.auth.uid))?;
+    let pairs: Vec<db::Pair> = db.pairs().compat().await?;
+    let assignments: Vec<db::Assignment> = db.assignments(base.auth.uid).compat().await?;
+    let strategies: Vec<db::Strategy> = db.user_strategies(base.auth.uid).compat().await?;
 
     Ok(Json(assignments).respond_to(&req)?)
 }
@@ -31,7 +31,7 @@ pub async fn post((req, path, data): (HttpRequest<State>, Path<(String, String, 
     let data = data.into_inner();
 
     let db: Database = req.state().db.clone();
-    let base = await_compat!(BaseReqInfo::from_request(&req))?;
+    let base = BaseReqInfo::from_request(&req).await?;
     require_login!(base);
     let assign = Assignment {
         exchange: exch,
@@ -41,14 +41,14 @@ pub async fn post((req, path, data): (HttpRequest<State>, Path<(String, String, 
         strategy_id: data.strategy_id,
         trader_id: data.trader_id,
     };
-    let res = await_compat!(db.save_assignment(assign))?;
+    let res = db.save_assignment(assign).compat().await?;
     return Ok(Json(res).respond_to(&req).unwrap());
 }
 
 pub async fn delete((req, path): (HttpRequest<State>, Path<(String, String, String)>)) -> Result<impl Responder> {
     let (exch, pair, period) = path.into_inner();
     let db: Database = req.state().db.clone();
-    let base = await_compat!(BaseReqInfo::from_request(&req))?;
+    let base = BaseReqInfo::from_request(&req).await?;
     require_login!(base);
     let assign = Assignment {
         exchange: exch,
@@ -58,18 +58,18 @@ pub async fn delete((req, path): (HttpRequest<State>, Path<(String, String, Stri
         strategy_id: 0,
         trader_id: None,
     };
-    await_compat!(db.delete_assignment(assign))?;
+    db.delete_assignment(assign).compat().await?;
     return Ok(HttpResponse::new(http::StatusCode::OK));
 }
 
 pub fn configure(application: App<State>) -> App<State> {
     application
         .resource("/api/assignments/{exch}/{pair}/{period}", |r| {
-            r.method(Method::POST).with(compat(post));
-            r.method(Method::DELETE).with(compat(delete));
+            r.method(Method::POST).with_async((post));
+            r.method(Method::DELETE).with_async((delete));
         })
         .resource("/api/assignments", |r| {
-            r.method(Method::GET).with(compat(list));
+            r.method(Method::GET).with_async((list));
         })
 }
 

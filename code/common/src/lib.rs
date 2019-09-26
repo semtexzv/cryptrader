@@ -1,5 +1,5 @@
 #![feature(slice_patterns)]
-#![feature(box_syntax, await_macro, async_await)]
+#![feature(box_syntax)]
 
 pub mod types;
 pub mod prelude;

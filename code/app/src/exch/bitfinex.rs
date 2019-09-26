@@ -1,31 +1,21 @@
 use crate::prelude::*;
-
-use common::actix_web::ws;
-use ::apis::bitfinex as api;
-
-
 use crate::ingest;
-use crate::trader::{BalanceService, TradeService, BalanceRequest, BalanceResponse, TradeRequest,
-                    TradeResponse,
-                    ExchangeError};
 
-
-
-#[derive(Debug)]
-pub struct Bitfinex;
-
-impl crate::exch::Exchange for Bitfinex {
-    const NAME: &'static str = "bitfinex";
-    const ENDPOINT: &'static str = "actix://bitfinex:42042";
-}
+use apis::bitfinex as api;
 
 use api::rest::types::SymbolDetail;
-use std::collections::btree_map::BTreeMap;
-use apis::bitfinex::ws::BfxUpdate;
+use api::ws::BfxUpdate;
+use actix_web::ws;
+
+/*
+use crate::trader::{BalanceRequest, BalanceResponse, TradeRequest,
+                    TradeResponse,
+                    ExchangeError};
+*/
+
 
 pub struct ActixWsClient {
-    handle: ContextHandle,
-    ingest: Publisher<ingest::IngestEndpoint>,
+    client: anats::Client,
 
     ws: Option<ws::ClientWriter>,
     spawn_handle: Option<SpawnHandle>,
@@ -40,7 +30,7 @@ impl Actor for ActixWsClient { type Context = Context<Self>; }
 
 impl ActixWsClient {
     fn reconnect(&mut self, ctx: &mut Context<Self>) -> impl ActorFuture<Item=(), Error=(), Actor=Self> {
-        info!("Connecting subclient");
+        warn!("Connecting subclient");
 
         if let Some(handle) = self.spawn_handle.take() {
             ctx.cancel_future(handle);
@@ -69,10 +59,7 @@ impl ActixWsClient {
         }).drop_err();
     }
 
-    async fn new(handle: ContextHandle,
-                 ingest: Publisher<ingest::IngestEndpoint>,
-                 pairs: BTreeMap<TradePair, SymbolDetail>,
-    ) -> Result<Addr<Self>> {
+    async fn new(client: anats::Client, pairs: BTreeMap<TradePair, SymbolDetail>) -> Result<Addr<Self>> {
         Ok(Arbiter::start(|ctx: &mut Context<Self>| {
             ctx.run_interval(Duration::from_secs(20), |this, ctx: &mut Context<Self>| {
                 if (Instant::now()).duration_since(this.last).as_secs() > 20 {
@@ -83,8 +70,7 @@ impl ActixWsClient {
             });
 
             let mut client = ActixWsClient {
-                handle,
-                ingest,
+                client,
 
                 ws: None,
                 spawn_handle: None,
@@ -107,13 +93,14 @@ impl ActixWsClient {
 /// Handle server websocket messages
 impl StreamHandler<ws::Message, ws::ProtocolError> for ActixWsClient {
     fn handle(&mut self, msg: ws::Message, ctx: &mut Context<Self>) {
-        self.last = Instant::now();
 
+        self.last = Instant::now();
         let text = if let ws::Message::Text(text) = msg {
             text
         } else {
             return;
         };
+
         if let Ok(r) = json::from_str::<api::ws::Resp>(&text) {
             match r.data {
                 api::ws::RespData::Sub(ref s) => {
@@ -143,8 +130,7 @@ impl StreamHandler<ws::Message, ws::ProtocolError> for ActixWsClient {
                                 ohlc: update,
                             };
 
-
-                            self.ingest.do_publish(update);
+                            self.client.publish(crate::CHANNEL_OHLC_INGEST, update);
                         }
                     }
                 }
@@ -161,7 +147,6 @@ impl StreamHandler<ws::Message, ws::ProtocolError> for ActixWsClient {
     }
 
     fn error(&mut self, err: actix_web::ws::ProtocolError, ctx: &mut Self::Context) -> Running {
-
         let reconn = self.reconnect(ctx);
         ctx.spawn(reconn);
         return Running::Continue;
@@ -175,10 +160,7 @@ impl StreamHandler<ws::Message, ws::ProtocolError> for ActixWsClient {
 
 
 pub struct BitfinexClient {
-    handle: ContextHandle,
-    ingest: Publisher<ingest::IngestEndpoint>,
-    balance_handler: ServiceHandler<BalanceService<Bitfinex>>,
-    trade_handler: ServiceHandler<TradeService<Bitfinex>>,
+    client: anats::Client,
     ws_clients: Vec<Addr<ActixWsClient>>,
     ohlc_ids: BTreeMap<i32, TradePair>,
     pairs: BTreeMap<TradePair, SymbolDetail>,
@@ -207,9 +189,9 @@ impl Actor for BitfinexClient {
 
 
 impl BitfinexClient {
-    pub async fn new(handle: ContextHandle) -> Result<Addr<Self>, Error> {
+    pub async fn new(client: anats::Client) -> Result<Addr<Self>, Error> {
         info!("Connecting to websocket");
-        let symbols = await_compat!(api::ws::get_available_symbols())?;
+        let symbols = api::ws::get_available_symbols().await?;
 
 
         let pairs: Vec<(TradePair, SymbolDetail)> = symbols.into_iter().map(|s| {
@@ -217,49 +199,46 @@ impl BitfinexClient {
         }).collect();
 
 
-        let ingest: Publisher<_> = await_compat!(Publisher::new(handle.clone()))?;
-        let balance_handler = await_compat!(ServiceHandler::new(handle.clone()))?;
-
-        let trade_handler = ServiceHandler::from_other(handle.clone(), &balance_handler);
+        //let ingest: Publisher<_> = Publisher::new(handle.clone()).await?;
+        //let balance_handler = ServiceHandler::new(handle.clone()).await?;
+        //let trade_handler = ServiceHandler::from_other(handle.clone(), &balance_handler);
 
 
         let mut clients = vec![];
 
-        for chunk in pairs.chunks(100) {
-            let ws_client = await_compat!(ActixWsClient::new(handle.clone(), ingest.clone(), chunk.iter().map(clone).collect()))?;
+        for chunk in pairs.chunks(25) {
+            info!("Spawning subclient");
+            let ws_client = ActixWsClient::new(client.clone(), chunk.iter().map(clone).collect()).await?;
 
             clients.push(ws_client);
         }
 
 
         Ok(Actor::create(|ctx: &mut Context<Self>| {
-            balance_handler.register(ctx.address().recipient());
-            trade_handler.register(ctx.address().recipient());
+            //client.subscribe(crate::CHANNEL_BALANCE_REQUESTS, ctx.address().recipient::<BalanceRequest>())
+            //client.subscribe(crate::CHANNEL_TRADE_REQUESTS, ctx.address().recipient::<TradeRequest>())
 
             BitfinexClient {
-                handle,
-                ingest,
+                client,
                 ws_clients: clients,
                 pairs: pairs.into_iter().collect(),
-                balance_handler,
-                trade_handler,
                 ohlc_ids: BTreeMap::new(),
                 nonce: unixtime_millis(),
             }
         }))
     }
 }
+/*
+impl Handler<BalanceRequest> for BitfinexClient {
+    type Result = ResponseActFuture<Self, BalanceResponse, ExchError>;
 
-impl Handler<ServiceRequest<BalanceService<Bitfinex>>> for BitfinexClient {
-    type Result = ResponseActFuture<Self, Result<BalanceResponse, ExchangeError>, RemoteError>;
-
-    fn handle(&mut self, msg: ServiceRequest<BalanceService<Bitfinex>>, ctx: &mut Self::Context) -> Self::Result {
+    fn handle(&mut self, msg: BalanceRequest, ctx: &mut Self::Context) -> Self::Result {
         info!("Serving BalanceRequest");
 
         let req: BalanceRequest = msg.0;
         let pairs = self.pairs.clone();
         let fut = async move {
-            let w = await_compat!(api::rest::wallet_info(req.trader.clone().into()));
+            let w = api::rest::wallet_info(req.trader.clone().into()).await;
 
             println!("BalanceRequest RES: {:?}", w);
             let w = w.map_err(|e| ExchangeError::InvalidInfo(e.to_string()));
@@ -321,3 +300,4 @@ impl Handler<ServiceRequest<TradeService<Bitfinex>>> for BitfinexClient {
         return box fut;
     }
 }
+*/

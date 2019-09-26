@@ -1,53 +1,42 @@
 apiVersion: v1
 kind: List
-_: &env [{name: "RUST_LOG", value: ${RUST_LOG}}]
+_: &env [{name: "RUST_LOG", value: ${RUST_LOG}}, {name: "RUST_BACKTRACE", value: "full"}]
 items:
-- apiVersion: v1
-  kind: Service
-  metadata:
-    name: core
-    labels: { app: trader}
-  spec:
-    selector: { layer: core }
-    ports:
-      - name: core
-        port: 42042
-        targetPort: 42042
+  - apiVersion: v1
+    kind: Service
+    metadata:
+      name: core
+      labels: { app: trader}
+    spec:
+      selector: { layer: core }
+      ports:
+        - name: core
+          port: 42042
+          targetPort: 42042
 
-      - name: trade
-        port: 42045
-        targetPort: 42045
+        - name: trade
+          port: 42045
+          targetPort: 42045
 
 
-- kind: Deployment
-  apiVersion: apps/v1
-  metadata:
-    name: core
-    labels: { app: trader }
-  spec:
-    replicas: 1
-    selector: { matchLabels: { app: trader, layer: core }}
-    template:
-      metadata:
-        labels: { app: trader, layer: core }
-      spec:
-        priorityClassName: high-priority
-        containers:
-        - name: app
-          image: ${APP_IMAGE}
-          imagePullPolicy: Always
-          command: ["/app", "ingest"]
-          env: *env
-          resources:
-            requests: { cpu: 100m, memory: 100M }
-            limits: { cpu: 100m, memory: 100M }
-
-        - name: trader
-          image: ${APP_IMAGE}
-          imagePullPolicy: Always
-          command: ["/app", "trader"]
-          env: *env
-          resources:
-            requests: { cpu: 100m, memory: 200M }
-            limits: { cpu: 100m, memory: 200M }
-
+  - kind: Deployment
+    apiVersion: apps/v1
+    metadata:
+      name: core
+      labels: { app: trader }
+    spec:
+      replicas: 1
+      selector: { matchLabels: { app: trader, layer: core }}
+      template:
+        metadata:
+          labels: { app: trader, layer: core }
+        spec:
+          containers:
+            - name: app
+              image: ${APP_IMAGE}
+              imagePullPolicy: Always
+              command: ["/app", "ingest"]
+              env: *env
+              resources:
+                requests: { cpu: 100m, memory: 100M }
+                limits: { cpu: 100m, memory: 100M }

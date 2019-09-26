@@ -1,4 +1,4 @@
-#![feature(await_macro,  async_await, box_syntax)]
+#![feature(box_syntax)]
 #![allow(dead_code, unused_variables, unused_imports, unreachable_code)]
 
 

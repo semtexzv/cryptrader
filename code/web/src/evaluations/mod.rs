@@ -10,14 +10,14 @@ use actix_web::Json;
 
 pub async fn list_latest(req: HttpRequest<State>) -> Result<impl Responder> {
     let db: Database = req.state().db.clone();
-    let base = await_compat!(BaseReqInfo::from_request(&req))?;
+    let base = BaseReqInfo::from_request(&req).await?;
     require_login!(base);
 
     let mut items: Vec<Evaluation> = vec![];
 
-    let strats = await_compat!(db.user_strategies(base.auth.uid))?;
+    let strats = db.user_strategies(base.auth.uid).compat().await?;
     for s in strats {
-        let evals = await_compat!(db.get_evals(s.id))?;
+        let evals = db.get_evals(s.id).compat().await?;
         items.extend_from_slice(&evals);
     }
     items.sort_by_key(|i| i.time);
@@ -28,21 +28,21 @@ pub async fn list_latest(req: HttpRequest<State>) -> Result<impl Responder> {
 
 pub async fn list_for_strat((req, id): (HttpRequest<State>, Path<i32>)) -> Result<impl Responder> {
     let db: Database = req.state().db.clone();
-    let base = await_compat!(BaseReqInfo::from_request(&req))?;
+    let base = BaseReqInfo::from_request(&req).await?;
     require_login!(base);
 
     // TODO: Ensure user is owner of S
-    let evals = await_compat!(db.get_evals(id.into_inner()))?;
+    let evals = db.get_evals(id.into_inner()).compat().await?;
     Ok(Json(evals).respond_to(&req)?)
 }
 
 pub fn configure(application: App<State>) -> App<State> {
     application
         .resource("/api/evaluations/", |r| {
-            r.method(Method::GET).with(compat(list_latest));
+            r.method(Method::GET).with_async((list_latest));
         })
         .resource("/api/strategies/{id}/evaluations", |r| {
-            r.method(Method::GET).with(compat(list_for_strat));
+            r.method(Method::GET).with_async((list_for_strat));
         })
 }
 

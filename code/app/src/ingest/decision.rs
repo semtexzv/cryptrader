@@ -1,14 +1,10 @@
 use crate::prelude::*;
 use crate::ingest::OhlcUpdate;
+use crate::eval::EvalRequest;
 
 use radix_trie::Trie;
-use crate::eval::EvalRequest;
 use std::time::Duration;
 use chrono::NaiveDateTime;
-use uuid::Uuid;
-
-
-use futures_retry::{RetryPolicy, FutureRetry};
 
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -34,33 +30,24 @@ impl TradingRequestSpec {
 }
 
 pub struct Decider {
-    handle: ContextHandle,
+    client: anats::Client,
     db: Database,
     requests: BTreeMap<String, Vec<TradingRequestSpec>>,
-    eval_svc: ServiceConnection<crate::eval::EvalService>,
-    pos_svc: ServiceConnection<crate::trader::PositionService>,
 }
 
 impl Decider {
-    pub async fn new(handle: ContextHandle, db: db::Database, input: Addr<Proxy<OhlcUpdate>>) -> Result<Addr<Self>, failure::Error> {
-        let eval_svc = await_compat!(ServiceConnection::new(handle.clone()))?;
-        let pos_svc = await_compat!(ServiceConnection::new(handle.clone()))?;
-
-
-        Ok(Arbiter::start(move |ctx: &mut Context<Self>| {
-            input.do_send(Subscribe::forever(ctx.address().recipient()));
+    pub async fn new(client: anats::Client, db: db::Database) -> Result<Addr<Self>, failure::Error> {
+        Ok(Actor::create(move |ctx: &mut Context<Self>| {
+            client.subscribe(crate::CHANNEL_OHLC_RESCALED, None, ctx.address().recipient::<OhlcUpdate>());
             ctx.run_interval(Duration::from_secs(5), |this, ctx| {
                 this.reload(ctx);
             });
             Decider {
-                handle,
+                client,
                 db,
-                eval_svc,
-                pos_svc,
                 requests: BTreeMap::new(),
             }
-        })
-        )
+        }))
     }
 
     pub fn reload(&mut self, ctx: &mut Context<Self>) {
@@ -98,15 +85,11 @@ impl Handler<OhlcUpdate> for Decider {
             for spec in sub.iter() {
                 let msg = msg.clone();
                 let spec: &TradingRequestSpec = spec;
+
                 info!("Should eval {:?} on {:?}", spec, msg.clone().spec);
-                let eval_id = Uuid::new_v4();
-                let req = EvalRequest {
-                    strat_id: spec.strat_id,
-                    #[cfg(feature = "measure")]
-                    eval_id,
-                    spec: spec.ohlc.clone(),
-                    last: msg.clone().ohlc.time,
-                };
+
+                let req = EvalRequest::new(spec.strat_id, spec.ohlc.clone(), msg.ohlc.time);
+
                 let strategy_id = spec.strat_id;
                 let user_id = spec.user_id;
                 let pair_id = spec.ohlc.pair_id().clone();
@@ -117,32 +100,14 @@ impl Handler<OhlcUpdate> for Decider {
                 let pair = spec.ohlc.pair().clone().to_string();
                 let period = spec.ohlc.period().to_string();
 
-                if cfg!(feature = "measure") {
-                    log_measurement(MeasureInfo::EvalDispatch {
-                        update_id: msg.id,
-                        eval_id: eval_id,
-                    });
-                }
-
-
-                fn eval_retry_policy(e: RemoteError) -> RetryPolicy<RemoteError> {
-                    if let RemoteError::Timeout = e {
-                        return RetryPolicy::ForwardError(e);
-                    }
-                    RetryPolicy::Repeat
-                }
-
-                let svc = self.eval_svc.clone();
-                let eval = FutureRetry::new(move || {
-                    svc.send(req.clone())
-                }, eval_retry_policy);
+                let eval = self.client.request(crate::CHANNEL_EVAL_REQUESTS, req);
 
                 let fut = wrap_future(eval);
 
-                let t1 = Instant::now();
-
                 let fut = fut.and_then(move |res, this: &mut Self, ctx| {
                     info!("Evaluated to {:?}", res);
+                    afut::ok(())
+                    /*
                     let (ok, error) = match res {
                         Ok(ref decision) => {
                             if let Some(trader) = trader {
@@ -190,7 +155,7 @@ impl Handler<OhlcUpdate> for Decider {
                     let log_fut = wrap_future(this.db.log_eval(evaluation).drop_item().set_err(RemoteError::MailboxClosed));
 
 
-                    log_fut
+                    log_fut*/
                 });
 
                 ctx.spawn(fut.drop_err());

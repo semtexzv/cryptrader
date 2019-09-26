@@ -1,27 +1,10 @@
 use crate::prelude::*;
-use actix_arch::proxy::Proxy;
 use common::future::BoxFuture;
 
 use std::collections::btree_map::Entry;
 
 pub mod rescaler;
 pub mod decision;
-
-pub struct IngestEndpoint;
-
-impl EndpointInfo for IngestEndpoint {
-    type MsgType = IngestUpdate;
-    type FanType = FanIn;
-    const ENDPOINT: &'static str = "actix://core:42042/ingest";
-}
-
-pub struct RescalerOut;
-
-impl EndpointInfo for RescalerOut {
-    type MsgType = OhlcUpdate;
-    type FanType = FanOut;
-    const ENDPOINT: &'static str = "actix://core:42043/rescaler";
-}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct IngestUpdate {
@@ -35,8 +18,6 @@ impl Message for IngestUpdate { type Result = (); }
 pub struct OhlcUpdate {
     /// Specification of trade pair and exchange from which data originates
     pub spec: OhlcSpec,
-    #[cfg(feature = "measure")]
-    pub id: uuid::Uuid,
     /// Actual ohlc data
     pub ohlc: Ohlc,
     /// Whether this update is not expected to change
@@ -49,8 +30,6 @@ impl OhlcUpdate {
     fn new(spec: OhlcSpec, ohlc: Ohlc) -> Self {
         OhlcUpdate {
             spec,
-            #[cfg(feature = "measure")]
-            id: Uuid::new_v4(),
             ohlc,
             stable: true,
         }
@@ -58,8 +37,6 @@ impl OhlcUpdate {
     fn new_live(spec: OhlcSpec, ohlc: Ohlc) -> Self {
         OhlcUpdate {
             spec,
-            #[cfg(feature = "measure")]
-            id: Uuid::new_v4(),
             ohlc,
             stable: false,
         }
@@ -70,22 +47,15 @@ impl OhlcUpdate {
 }
 
 pub struct Ingest {
-    handle: ContextHandle,
-    input: Subscriber<IngestEndpoint>,
+    client: anats::Client,
 
     db: Database,
-    out: Recipient<OhlcUpdate>,
 
     last: BTreeMap<PairId, Ohlc>,
 }
 
 impl Actor for Ingest {
     type Context = Context<Self>;
-
-    fn started(&mut self, ctx: &mut <Self as Actor>::Context) {
-        debug!("Registering recipient");
-        self.input.register(ctx.address().recipient());
-    }
 }
 
 impl Handler<IngestUpdate> for Ingest {
@@ -98,21 +68,19 @@ impl Handler<IngestUpdate> for Ingest {
 }
 
 impl Ingest {
-    pub async fn new(handle: ContextHandle, db: Database, out: Recipient<OhlcUpdate>) -> Result<Addr<Self>, failure::Error> {
-        let input = await_compat!(Subscriber::new(handle.clone()))?;
-        let last = await_compat!(db.last_ohlc_values())?;
+    pub async fn new(client : anats::Client, db: Database) -> Result<Addr<Self>, failure::Error> {
+        let last = db.last_ohlc_values().compat().await?;
 
-        Ok(Arbiter::start(move |ctx: &mut Context<Self>| {
-            input.register(ctx.address().recipient());
+        Ok(Actor::create(move |ctx: &mut Context<Self>| {
+            client.subscribe(crate::CHANNEL_OHLC_INGEST, None, ctx.address().recipient::<IngestUpdate>());
             Ingest {
-                handle,
-                input,
+                client,
                 db,
-                out,
                 last,
             }
         }))
     }
+
     fn get_last(&mut self, id: &PairId) -> Option<Ohlc> {
         let cached = self.last.entry(id.clone());
         match cached {
@@ -130,27 +98,23 @@ impl Ingest {
     }
 
     fn new_stable(&mut self, id: &PairId, tick: Ohlc, uuid: Uuid) {
-        let mut update = OhlcUpdate::new(OhlcSpec::from_pair_1m(id.clone()), tick.clone());
+        let update = OhlcUpdate::new(OhlcSpec::from_pair_1m(id.clone()), tick.clone());
 
-        update.id = uuid;
-        self.out.do_send(update).unwrap();
+        self.client.publish(crate::CHANNEL_OHLC_AGG,update);
         self.set_last(id, tick);
     }
 
     fn new_live(&mut self, id: &PairId, tick: Ohlc, uuid: Uuid) {
         if let Some(l) = self.get_last(id) {
-            let mut update = OhlcUpdate::new(OhlcSpec::from_pair_1m(id.clone()), l.clone());
-            update.id = uuid;
-            self.out.do_send(update).unwrap();
+            let update = OhlcUpdate::new(OhlcSpec::from_pair_1m(id.clone()), l.clone());
+            self.client.publish(crate::CHANNEL_OHLC_AGG, update);
         }
         self.update_live(id, tick, uuid);
     }
 
     fn update_live(&mut self, id: &PairId, tick: Ohlc, uuid: Uuid) {
-        let mut update = OhlcUpdate::new_live(OhlcSpec::from_pair_1m(id.clone()), tick.clone());
-        update.id = uuid;
-
-        self.out.do_send(update).unwrap();
+        let update = OhlcUpdate::new_live(OhlcSpec::from_pair_1m(id.clone()), tick.clone());
+        self.client.publish(crate::CHANNEL_OHLC_AGG, update);
         self.set_last(id, tick);
     }
 
@@ -190,12 +154,7 @@ impl Ingest {
 
                 let data = data.clone();
                 for (tick, uuid) in filtered.iter().zip(ids) {
-                    if cfg!(feature = "measure") {
-                        log_measurement(MeasureInfo::SaveDuration {
-                            update_id: uuid,
-                            save_duration: Instant::now().duration_since(t1),
-                        })
-                    }
+
                     let tick = tick.clone();
                     let exch = data.spec.exch().clone();
                     let pair = data.spec.pair().clone();

@@ -1,73 +1,72 @@
 apiVersion: v1
 kind: List
 items:
-- apiVersion: v1
-  kind: ConfigMap
-  metadata:
-    name: trader-pg-config
-  data:
-    POSTGRES_DB: trader
-    POSTGRES_USER: trader
-    POSTGRES_PASSWORD: trader
-    PGDATA: /pgdata/pgdata
+  - apiVersion: v1
+    kind: ConfigMap
+    metadata:
+      name: trader-pg-config
+    data:
+      POSTGRES_DB: trader
+      POSTGRES_USER: trader
+      POSTGRES_PASSWORD: trader
+      PGDATA: /pgdata/pgdata
 
-- kind: PersistentVolumeClaim
-  apiVersion: v1
-  metadata:
-    name: trader-db
-  spec:
-    accessModes:
-      - ReadWriteOnce
-    resources:
-      requests:
-        storage: 20Gi
+  - kind: PersistentVolumeClaim
+    apiVersion: v1
+    metadata:
+      name: trader-db
+    spec:
+      accessModes:
+        - ReadWriteOnce
+      resources:
+        requests:
+          storage: 20Gi
 
-- kind: Service
-  apiVersion: v1
-  metadata:
-    name: postgres
-    labels: { app: trader }
-  spec:
-    ports: [ { port: 5432 } ]
-    selector: { app: trader, layer: storage }
+  - kind: Service
+    apiVersion: v1
+    metadata:
+      name: postgres
+      labels: { app: trader }
+    spec:
+      ports: [ { port: 5432 } ]
+      selector: { app: trader, layer: storage }
 
 
-- kind: Deployment
-  apiVersion: apps/v1
-  metadata:
-    name: postgres
-    labels: { app: trader }
-  spec:
-    replicas: 1
-    strategy: { type: Recreate }
-    selector: { matchLabels: { app: trader, layer: storage }}
-    template:
-      metadata:
-        labels: { app: trader, layer: storage }
-      spec:
-        containers:
-          - name: postgres
-            image: timescale/timescaledb:1.3.0-pg11
-            imagePullPolicy: IfNotPresent
-            args: [ "-N", "800" ]
-            ports:
-              - containerPort: 5432
-            envFrom:
-              - configMapRef: { name: trader-pg-config }
-            volumeMounts:
-              - mountPath: /pgdata
-                name: postgresdb
-            resources:
-              requests:
-                cpu: 500m
-                memory: 500Mi
-              limits:
-                cpu: 500m
-                memory: 600Mi
-        priorityClassName: high-priority
-        volumes:
-          - name: postgresdb
-            persistentVolumeClaim:
-              claimName: trader-db
+  - kind: Deployment
+    apiVersion: apps/v1
+    metadata:
+      name: postgres
+      labels: { app: trader }
+    spec:
+      replicas: 1
+      strategy: { type: Recreate }
+      selector: { matchLabels: { app: trader, layer: storage }}
+      template:
+        metadata:
+          labels: { app: trader, layer: storage }
+        spec:
+          containers:
+            - name: postgres
+              image: timescale/timescaledb:1.4.1-pg11
+              imagePullPolicy: Always
+              args: [ "-N", "800" ]
+              ports:
+                - containerPort: 5432
+              envFrom:
+                - configMapRef: { name: trader-pg-config }
+              volumeMounts:
+                - mountPath: /pgdata
+                  name: postgresdb
+              resources:
+                requests:
+                  cpu: 200m
+                  memory: 400Mi
+                limits:
+                  cpu: 200m
+                  memory: 500Mi
+          volumes:
+            - name: postgresdb
+              persistentVolumeClaim:
+                claimName: trader-db
 
 

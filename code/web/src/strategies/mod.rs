@@ -17,28 +17,28 @@ use common::types::OhlcPeriod;
 
 async fn list(req: HttpRequest<State>) -> Result<impl Responder> {
     let db: Database = req.state().db.clone();
-    let base = await_compat!(BaseReqInfo::from_request(&req))?;
+    let base = BaseReqInfo::from_request(&req).await?;
     require_login!(base);
 
-    let strats = await_compat!(db.user_strategies(base.auth.uid))?;
+    let strats = db.user_strategies(base.auth.uid).compat().await?;
     Ok(Json(strats).respond_to(&req).unwrap())
 }
 
 
 async fn get((req, id): (HttpRequest<State>, Path<i32>)) -> Result<impl Responder> {
     let db: Database = req.state().db.clone();
-    let base = await_compat!(BaseReqInfo::from_request(&req))?;
+    let base = BaseReqInfo::from_request(&req).await?;
     require_login!(base);
 
-    let (strat, user) = await_compat!(db.strategy_data(id.into_inner()))?;
-    let evals = await_compat!(db.get_evals(strat.id))?;
+    let (strat, user) = db.strategy_data(id.into_inner()).compat().await?;
+    let evals = db.get_evals(strat.id).compat().await?;
     require_cond!(strat.user_id == base.auth.uid);
 
     Ok(Json(strat).respond_to(&req)?)
 }
 
 async fn post((req, id, data): (HttpRequest<State>, Option<Path<i32>>, Json<db::StrategyData>)) -> Result<impl Responder> {
-    let base = await_compat!(BaseReqInfo::from_request(& req))?;
+    let base = BaseReqInfo::from_request(&req).await?;
     let db: Database = req.state().db.clone();
     require_login!(base);
 
@@ -48,17 +48,17 @@ async fn post((req, id, data): (HttpRequest<State>, Option<Path<i32>>, Json<db::
         data.id = Some(id.into_inner());
     }
 
-    let strat = await_compat!(db.save_strategy(data))?;
+    let strat = db.save_strategy(data).compat().await?;
     Ok(Json(strat).respond_to(&req)?)
 }
 
 
 async fn delete((req, id): (HttpRequest<State>, Path<i32>)) -> Result<impl Responder> {
-    let base = await_compat!(BaseReqInfo::from_request(& req))?;
+    let base = BaseReqInfo::from_request(&req).await?;
     let db: Database = req.state().db.clone();
 
     require_login!(base);
-    let _ = await_compat!(db.delete_strategy(base.auth.uid,id.into_inner()))?;
+    let _ = db.delete_strategy(base.auth.uid,id.into_inner()).compat().await?;
     return Ok(HttpResponse::new(http::StatusCode::OK));
 }
 
@@ -66,13 +66,13 @@ async fn delete((req, id): (HttpRequest<State>, Path<i32>)) -> Result<impl Respo
 pub fn configure(application: App<State>) -> App<State> {
     application
         .resource("/api/strategies", |r| {
-            r.method(Method::GET).with(compat(list));
-            r.method(Method::POST).with(compat(post));
+            r.method(Method::GET).with_async((list));
+            r.method(Method::POST).with_async((post));
         })
         .resource("/api/strategies/{id}", |r| {
-            r.method(Method::GET).with(compat(get));
-            r.method(Method::POST).with(compat(post));
-            r.method(Method::DELETE).with(compat(delete));
+            r.method(Method::GET).with_async((get));
+            r.method(Method::POST).with_async((post));
+            r.method(Method::DELETE).with_async((delete));
         })
 }
 

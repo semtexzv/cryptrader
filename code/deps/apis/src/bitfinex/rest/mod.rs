@@ -14,6 +14,7 @@ use actix_web::{
 
 
 use crate::bitfinex::rest::types::WalletInfo;
+use actix_web::error::PayloadError;
 
 pub async fn perform_req(info: &AuthInfo,
                          path: impl Into<String>,
@@ -33,20 +34,21 @@ pub async fn perform_req(info: &AuthInfo,
     let payload = ::common::base64::encode(&body_str);
     let sig = hex(&sha384(&info.secret, &payload));
 
-    let req = client::post(url)
+    let mut req = client::post(url)
         .header("Content-Type", "application/json")
         .header("Accept", "application/json")
         .header("X-BFX-APIKEY", info.key.clone())
         .header("X-BFX-PAYLOAD", payload)
         .header("X-BFX-SIGNATURE", sig)
-        .body(body_str.clone());
+        .finish().unwrap();
+    req.set_body(body_str.clone());
 
-    trace!("Bitfinex - REQ : {:?}, body : {:?}", req, body_str);
-    let resp = await_compat!(req?.send())?;
+
+    let mut resp = req.send().compat().await?;
     trace!("Bitfinex - RES : {:?}", resp);
 
     if (resp.status().as_u16() / 100) >= 4 {
-        let body = await_compat!(resp.body())?;
+        let body = resp.body().compat().await?;
         let txt = String::from_utf8_lossy(&body).into_owned();
         return Err(ErrorUnauthorized(txt).into());
     }
@@ -55,8 +57,8 @@ pub async fn perform_req(info: &AuthInfo,
 
 
 pub async fn wallet_info(auth: AuthInfo) -> Result<Vec<WalletInfo>, actix_web::Error> {
-    let resp = await_compat!(perform_req(&auth, "/v1/balances", json!({})))?;
-    return Ok(await_compat!(resp.json())?);
+    let mut resp = perform_req(&auth, "/v1/balances", json!({})).await?;
+    return Ok(resp.json().compat().await?);
 }
 
 
@@ -67,8 +69,8 @@ pub async fn new_order(auth: AuthInfo, amount: f64, pair: TradePair, buy: bool) 
         buy,
     };
     let val = serde_json::to_value(new).unwrap();
-    let resp = await_compat!(perform_req(&auth, "/v1/order/new", val))?;
-    return Ok(await_compat!(resp.json())?);
+    let mut resp = perform_req(&auth, "/v1/order/new", val).await?;
+    return Ok(resp.json().compat().await?);
 }
 
 

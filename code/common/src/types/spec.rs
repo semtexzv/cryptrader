@@ -19,14 +19,14 @@ impl TradePair {
         return format!("t{}{}", self.0, self.1);
     }
     pub fn from_bfx_trade_sym(sym: &str) -> TradePair {
-        return TradePair(sym[1..4].to_string(), sym[4..7].to_string());
+        return TradePair(sym[1..4].to_string(), sym[4..].to_string());
     }
 
     pub fn to_bfx_pair(&self) -> String {
         return format!("{}{}", self.0, self.1);
     }
     pub fn from_bfx_pair(pair: &str) -> Self {
-        return TradePair((&pair[0..3]).to_string(), (&pair[3..6]).to_string());
+        return TradePair((&pair[0..3]).to_string(), (&pair[3..]).to_string());
     }
 
 

@@ -5,5 +5,5 @@ members = ["code/app","code/web/", "code/common","code/deps/*"]
 opt-level=0
 codegen-units=2
 lto = false
-panic = 'abort'
 debug-assertions = false
+

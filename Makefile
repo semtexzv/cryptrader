@@ -1,4 +1,4 @@
-BUILD_TYPE=Release
+export BUILD_TYPE=debug
 
 include ops/make/Macros.mk
 

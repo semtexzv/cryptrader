@@ -17,10 +17,10 @@ use common::types::OhlcPeriod;
 
 async fn list(req: HttpRequest<State>) -> Result<impl Responder> {
     let db: Database = req.state().db.clone();
-    let base = await_compat!(BaseReqInfo::from_request(&req))?;
+    let base = BaseReqInfo::from_request(&req).await?;
     require_login!(base);
 
-    let trades = await_compat!(db.user_trades(base.auth.uid))?;
+    let trades = db.user_trades(base.auth.uid).compat().await?;
     Ok(Json(trades).respond_to(&req).unwrap())
 }
 
@@ -29,7 +29,7 @@ async fn list(req: HttpRequest<State>) -> Result<impl Responder> {
 pub fn configure(application: App<State>) -> App<State> {
     application
         .resource("/api/trades", |r| {
-            r.method(Method::GET).with(compat(list));
+            r.method(Method::GET).with_async((list));
         })
 }
 

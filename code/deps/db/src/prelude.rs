@@ -14,7 +14,7 @@ pub(crate) use crate::{DbWorker, ConnType, schema};
 
 pub use schema::{User, Strategy, Assignment, Evaluation, Trader};
 
-pub(crate) type BoxFuture<I, E = diesel::result::Error> = Box<Future<Item=I, Error=E>>;
+pub(crate) type BoxFuture<I, E = diesel::result::Error> = Box<dyn Future<Item=I, Error=E>>;
 
 /*
 mod my_date_format {

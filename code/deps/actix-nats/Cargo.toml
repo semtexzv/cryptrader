@@ -1,0 +1,18 @@
+[package]
+name = "actix-nats"
+version = "0.1.0"
+authors = ["Michal Hornický <mhornick@redhat.com>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+serde = { version = "1.0", features = ["derive"]}
+json = { package = "serde_json", version = "*"}
+
+futures = "*"
+futures03 = {package = "futures-preview", version = "0.3.0-alpha.18", features = ["compat"]}
+
+actix = "0.7"
+nuid = "0.2.1"
+nats = { package = "ratsio", version = "*" }

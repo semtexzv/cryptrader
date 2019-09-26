@@ -17,7 +17,7 @@ use db::validator::Validate;
 
 pub async fn login((request, login): (HttpRequest<State>, Json<UserAuthInfo>)) -> Result<HttpResponse> {
     error!("Login");
-    let base: BaseReqInfo = await_compat!(BaseReqInfo::from_request(&request))?;
+    let base: BaseReqInfo = BaseReqInfo::from_request(&request).await?;
 
     let url = request.url_for("homepage", &[""; 0]).unwrap();
     let homepage = Ok(redirect(url.as_str()));
@@ -30,7 +30,7 @@ pub async fn login((request, login): (HttpRequest<State>, Json<UserAuthInfo>)) -
     }
 
     let password = login.password.clone();
-    let res: Result<db::User, _> = await_compat!(request.state().db.login(login));
+    let res: Result<db::User, _> = request.state().db.login(login).compat().await;
 
 
     return match res {
@@ -53,13 +53,13 @@ pub async fn signup((request, user): (HttpRequest<State>, Json<UserAuthInfo>)) -
         return Ok(redirect_to(request, "homepage"));
     }
 
-    let  base: BaseReqInfo = await_compat!(BaseReqInfo::from_request(&request))?;
+    let  base: BaseReqInfo = BaseReqInfo::from_request(&request).await?;
 
     let mut user = user.into_inner();
 
     user.password = djangohashers::make_password(&user.password);
 
-    match await_compat!(request.state().db.new_user(user)) {
+    match request.state().db.new_user(user).compat().await {
         Ok(user) => {
             request.session().set("email", user.email).unwrap();
             request.session().set("uid", user.id).unwrap();
@@ -88,9 +88,9 @@ pub fn configure(app: App<State>) -> App<State> {
             .secure(false)
             .name("_TSESSION")
     )).resource("/api/signup/", |r| {
-        r.method(Method::POST).with(compat(signup));
+        r.method(Method::POST).with_async((signup));
     }).resource("/api/signin/", |r| {
-        r.method(Method::POST).with(compat(login));
+        r.method(Method::POST).with_async((login));
     }).resource("/api/logout/", |r| {
         r.method(Method::POST).with(logout);
     })

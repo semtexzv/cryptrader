@@ -6,8 +6,6 @@ use std::borrow::Borrow;
 use db::validator::ValidationErrors;
 use std::future::Future;
 use actix_web::{http, HttpRequest, HttpResponse};
-pub use actix_async_await::*;
-
 use crate::users::middleware::UserAuthentication;
 
 

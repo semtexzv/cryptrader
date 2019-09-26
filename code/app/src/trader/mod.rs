@@ -41,7 +41,7 @@ pub struct Trader {
 
 impl Trader {
     pub async fn new(handle: ContextHandle, db: db::Database) -> Result<Addr<Self>> {
-        let handler = await_compat!(ServiceHandler::new(handle.clone()))?;
+        let handler = ServiceHandler::new(handle.clone()).compat().await?;
 
         Ok(Actor::create(|ctx| {
             handler.register(ctx.address().recipient());

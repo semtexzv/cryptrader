@@ -1,5 +1,3 @@
-
-export BUILD_TYPE=release
 include ops/make/Macros.mk
 
 $(call require,BUILD_TYPE)
@@ -32,10 +30,10 @@ build: $(APP_FILE)
 
 
 $(APP_FILE) : $(CODE_FILES) Cargo.lock Cargo.toml
-ifeq ($(BUILD_TYPE),debug)
-	K8S_BUILD=1 cargo build --package $(APP_NAME)
-else
+ifeq ($(BUILD_TYPE), release)
 	K8S_BUILD=1 cargo build --release --package $(APP_NAME)
+else
+	K8S_BUILD=1 cargo build --package $(APP_NAME)
 endif
 
 .PHONY: image

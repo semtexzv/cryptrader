@@ -3,7 +3,6 @@ use common::actix_web::{
     client::{self, ClientRequest},
     HttpMessage,
 };
-use actix_async_await::await;
 
 #[derive(Deserialize, Debug, Clone)]
 pub struct BinanceKline {
@@ -69,20 +68,19 @@ pub struct BinanceMarkets {
 }
 
 
-fn base_get(path: impl Into<String>) -> StdResult<client::ClientRequest, actix_web::Error> {
+fn base_get(path: impl Into<String>) -> client::ClientRequest {
     let path = path.into();
     let nonce = unixtime_millis();
     let url = format!("{}{}", super::API_BASE, path);
     client::get(url)
         .header("Content-Type", "application/json")
-        .header("Accept", "application/json")
-        .finish()
+        .header("Accept", "application/json").finish().unwrap()
 }
 
 pub async fn markets() -> Result<BinanceMarkets, actix_web::Error> {
-    let req: ClientRequest = base_get("/api/v1/exchangeInfo")?;
-    let res = await!(req.send())?;
-    let body: BinanceMarkets = await!(res.json())?;
+    let req: ClientRequest = base_get("/api/v1/exchangeInfo");
+    let mut res = req.send().compat().await?;
+    let body: BinanceMarkets = res.json().compat().await?;
 
     unimplemented!()
 }
