@@ -1,79 +1,86 @@
-import React, {Suspense} from "react";
-import {useRoutes, navigate} from 'hookrouter'
-import {LinkHeaderMenuItem} from "../links";
+import React, {Component} from 'react';
 
-import './App.scss'
-import {Content} from "carbon-components-react";
-import {
-    Header, HeaderName, HeaderNavigation, HeaderGlobalAction, HeaderGlobalBar
-} from "carbon-components-react/lib/components/UIShell";
-import {Search20, Notification20, UserAvatar20} from "@carbon/icons-react";
+import {useRoutes} from 'hookrouter';
 
-const Status = React.lazy(() => import('../status/status'));
-const StrategyList = React.lazy(() => import('../strategy/list'));
-const TraderList = React.lazy(() => import('../strategy/list'));
+import Dashboard from "./Dashboard";
+import {Provider} from "react-redux";
+import {loadAll} from "../../actions/apiActions";
 
-const renderFallback = () => {
-    return (<div>Loading</div>)
+import configureStore from "../../store/configure";
+
+import StrategyList from "./../strategy/StrategyList";
+import StrategyDetail from "./../strategy/StrategyDetail";
+import AssignmentList from "../assignment/AssignmentList";
+import TraderList from "../traders/TraderList";
+import Login from "../util/Auth";
+
+import {TYPE_PAIR, TYPE_PERIOD} from "../../api/baseApi";
+import Home from "./Home";
+import { createMuiTheme, MuiThemeProvider } from "@material-ui/core/styles";
+import Typography from "@material-ui/core/Typography";
+
+const store = configureStore();
+
+store.dispatch(loadAll(TYPE_PAIR));
+store.dispatch(loadAll(TYPE_PERIOD));
+
+const Evaluations = () => {
+  return (
+    <div style={{
+      flex: 1,
+      display: 'flex',
+      flexDirection: 'row',
+      alignItems: 'stretch',
+      justifyContent: 'center'
+    }}><Typography style={{display: 'flex', margin: '80px'}} component="p" color='textSecondary' variant='h4'>
+      Coming soon
+    </Typography>
+    </div>
+  )
 };
 
-const routes = {
-    '/app': () => (<div>Root</div>),
-    '/app/status': () => (
-        <Suspense fallback={renderFallback()} >
-            <Status />
-        </Suspense>
-    ),
-    '/app/strategies': () => (
-        <Suspense fallback={renderFallback()} >
-            <StrategyList/>
-        </Suspense>
-        ),
-    '/app/strategies/:id': ({id}) => (<div>Strat detail {id}</div>),
-    '/app/traders': () => (
-        <Suspense fallback={renderFallback()} >
-            <TraderList />
-        </Suspense>
-    ),
 
+function AppRoot(props) {
+  const authRoutes = {
+    "/app/auth": () => (<Login/>)
+  };
+
+  const normalRoutes = {
+    "/app/?": () => (<Home/>),
+    "/app/strategies": () => (<StrategyList/>),
+    "/app/strategies/:id": ({id}) => (<StrategyDetail id={id}/>),
+    "/app/assignments": () => (<AssignmentList/>),
+    "/app/traders": () => (<TraderList/>),
+    "/app/evaluations": () => (<Evaluations/>)
+  };
+
+  const authRouteResult = useRoutes(authRoutes);
+  const normalRouteResult = useRoutes(normalRoutes);
+
+  return (
+    <div className="App">
+      {authRouteResult || (
+        <Dashboard>
+          {normalRouteResult}
+        </Dashboard>
+      )}
+    </div>
+  )
+}
+export const App = () => {
+
+  const theme = createMuiTheme({
+    danger: '#F00'
+  });
+
+
+  return (
+    <MuiThemeProvider theme={theme}>
+      <Provider store={store}>
+        <AppRoot />
+      </Provider>
+    </MuiThemeProvider>
+  );
 };
-
-const App = () => {
-    const route = useRoutes(routes);
-    return (
-        <div className="container">
-            <Header aria-label="cryptrader">
-                <HeaderName href="/app" prefix="">
-                    Cryptrader
-                </HeaderName>
-                <HeaderNavigation aria-label="cryptrader">
-                    <LinkHeaderMenuItem aria-label="strats" href="/app/status">Status</LinkHeaderMenuItem>
-                    <LinkHeaderMenuItem aria-label="strats" href="/app/strategies">Strategies</LinkHeaderMenuItem>
-                    <LinkHeaderMenuItem aria-label="strats" href="/app/traders">Traders</LinkHeaderMenuItem>
-                </HeaderNavigation>
-                <HeaderGlobalBar>
-                    <HeaderGlobalAction aria-label="Notifications" onClick={() => {
-                        navigate("/app/status?notifications=true")
-                    }}>
-                        <Notification20 />
-                    </HeaderGlobalAction>
-                    <HeaderGlobalAction aria-label="Account" onClick={() => {
-                        navigate("/app/account")
-                    }}>
-                        <UserAvatar20 />
-                    </HeaderGlobalAction>
-                </HeaderGlobalBar>
-            </Header>
-            <Content>
-            <div className="bx--grid">
-
-                    {route || (<div> No content</div>)}
-
-            </div>
-            </Content>
-        </div>
-    )
-};
-
 
 export default App;

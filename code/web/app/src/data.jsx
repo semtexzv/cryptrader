@@ -1,4 +1,4 @@
-import {fk, many, attr, Model, ORM, createSelector, oneToOne} from 'redux-orm';
+import {fk,  attr, Model, ORM, createSelector} from 'redux-orm';
 
 export class Strategy extends Model {
     static modelName = "Strategy";
@@ -83,7 +83,7 @@ export const allStrategiesSelector = createSelector(
     orm,
     dbStateSelector,
     sess => {
-        console.log("Executing states selector " + sess.accessedModelInstances);
+        console.log("Executing states eselector " + sess.accessedModelInstances);
         return sess.Strategy.all().toModelArray()
     }
 );

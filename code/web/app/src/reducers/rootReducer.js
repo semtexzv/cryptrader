@@ -2,12 +2,10 @@ import {combineReducers} from "redux";
 
 import data from './dataReducer';
 import info from './infoReducer';
-import {connectRouter} from 'connected-react-router';
 
-const rootReduder = (history) => (combineReducers({
+const rootReduder = () => (combineReducers({
     data,
     info,
-    router: connectRouter(history)
 }));
 
 

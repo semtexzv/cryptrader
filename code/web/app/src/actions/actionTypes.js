@@ -6,3 +6,4 @@ export const DELETE_ONE_SUCCESS = 'DELETE_ONE_SUCCESS';
 
 export const AUTH_OK = "AUTH_OK";
 export const AUTH_INVALID = 'AUTH_INVALID';
+

@@ -1,5 +1,4 @@
 import * as types from '../actions/actionTypes';
-import orm, {Strategy} from '../data'
 
 const initial = {
     errors: [],
