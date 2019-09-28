@@ -39,10 +39,10 @@ pub async fn list_for_strat((req, id): (HttpRequest<State>, Path<i32>)) -> Resul
 pub fn configure(application: App<State>) -> App<State> {
     application
         .resource("/api/evaluations/", |r| {
-            r.method(Method::GET).with_async((list_latest));
+            r.method(Method::GET).with_async(compat(list_latest));
         })
         .resource("/api/strategies/{id}/evaluations", |r| {
-            r.method(Method::GET).with_async((list_for_strat));
+            r.method(Method::GET).with_async(compat(list_for_strat));
         })
 }
 

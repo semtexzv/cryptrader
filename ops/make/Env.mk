@@ -1,4 +1,4 @@
-BUILD_TYPE ?= debug
+#BUILD_TYPE ?= debug
 
 HERE = $(realpath .)
 CWD = $(HERE)

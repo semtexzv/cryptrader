@@ -66,13 +66,13 @@ async fn delete((req, id): (HttpRequest<State>, Path<i32>)) -> Result<impl Respo
 pub fn configure(application: App<State>) -> App<State> {
     application
         .resource("/api/strategies", |r| {
-            r.method(Method::GET).with_async((list));
-            r.method(Method::POST).with_async((post));
+            r.method(Method::GET).with_async(compat(list));
+            r.method(Method::POST).with_async(compat(post));
         })
         .resource("/api/strategies/{id}", |r| {
-            r.method(Method::GET).with_async((get));
-            r.method(Method::POST).with_async((post));
-            r.method(Method::DELETE).with_async((delete));
+            r.method(Method::GET).with_async(compat(get));
+            r.method(Method::POST).with_async(compat(post));
+            r.method(Method::DELETE).with_async(compat(delete));
         })
 }
 

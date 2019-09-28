@@ -16,10 +16,6 @@ serde = "*"
 diesel = { version = "*", features = ["postgres", "r2d2", "chrono", "uuid"]}
 diesel_migrations = "*"
 
-r2d2="*"
-r2d2-diesel="*"
-
-
 cdrs = { version = "*", optional = true}
 cdrs_helpers_derive = { version = "*", optional = true }
 

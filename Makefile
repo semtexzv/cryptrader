@@ -4,10 +4,10 @@ include ops/make/Macros.mk
 
 MAKEFLAGS += -j 4
 
-APPS=app web
+APPS=bitfinex app web
 
-DOCKER_FILES=$(addprefix ./target/docker/, $(APPS))
-APP_SOURCES=$(addprefix ./code/, $(APPS))
+DOCKER_FILES  = $(addprefix ./target/docker/, $(APPS))
+APP_SOURCES   = $(addprefix ./code/, $(APPS))
 
 K8S_DIR       := ./ops/k8s
 K8S_BUILD_DIR := ./target/k8s
@@ -21,6 +21,7 @@ deploy: build-k8s $(DOCKER_FILES)
 
 ./target/docker/%: .PHONY
 	APP_NAME=$* $(MAKE) -C . -f ./code/$*/Makefile ./target/docker/$*
+
 
 $(K8S_BUILD_DIR):
 	@mkdir -p $(K8S_BUILD_DIR)

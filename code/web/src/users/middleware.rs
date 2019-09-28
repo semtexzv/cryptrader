@@ -3,7 +3,7 @@ use db::{
     User, UserAuthInfo,
 };
 
-pub type UserAuthenticationResult = Box<Future<Item=User, Error=actix_web::Error>>;
+pub type UserAuthenticationResult = Box<dyn Future<Item=User, Error=actix_web::Error>>;
 
 pub trait UserAuthentication {
     fn is_authenticated(&self) -> bool;

@@ -36,15 +36,15 @@ pub fn configure(application: App<State>) -> App<State> {
     application
         .resource("/", |r| {
             r.name("homepage");
-            r.method(Method::GET).with_async(root);
-            r.method(Method::POST).with_async(root);
+            r.method(Method::GET).with(compat(root));
+            r.method(Method::POST).with(compat(root))
         })
 
         .resource("/api/pairs", |r| {
-            r.method(Method::GET).with_async(pairs);
+            r.method(Method::GET).with(compat(pairs));
         })
         .resource("/api/periods", |r| {
-            r.method(Method::GET).with_async(periods);
+            r.method(Method::GET).with(compat(periods));
         })
 }
 

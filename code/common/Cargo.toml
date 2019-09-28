@@ -24,6 +24,9 @@ itertools="*"
 url = "*"
 uuid = { version = "<0.7.0", features = ["v4","serde"] }
 
+hmac = "*"
+sha2 = "*"
+
 chrono = { version = "*", features = ["serde"]}
 base64 = "*"
 

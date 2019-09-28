@@ -83,7 +83,7 @@ export const allStrategiesSelector = createSelector(
     orm,
     dbStateSelector,
     sess => {
-        console.log("Executing states eselector " + sess.accessedModelInstances);
+        console.log("Executing states selector " + sess.accessedModelInstances);
         return sess.Strategy.all().toModelArray()
     }
 );

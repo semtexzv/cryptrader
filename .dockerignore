@@ -1,10 +1,4 @@
-images/**
 target/**/build
 target/**/deps
 target/**/incremental
-target/rls
-thesis/*
-code/*
-article/*
-cryptrader/*
-EXCEL/*
+code/deps/*

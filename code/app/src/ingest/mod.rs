@@ -2,49 +2,11 @@ use crate::prelude::*;
 use common::future::BoxFuture;
 
 use std::collections::btree_map::Entry;
+use common::msgs::*;
+
 
 pub mod rescaler;
 pub mod decision;
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct IngestUpdate {
-    pub spec: OhlcSpec,
-    pub ohlc: Vec<Ohlc>,
-}
-
-impl Message for IngestUpdate { type Result = (); }
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct OhlcUpdate {
-    /// Specification of trade pair and exchange from which data originates
-    pub spec: OhlcSpec,
-    /// Actual ohlc data
-    pub ohlc: Ohlc,
-    /// Whether this update is not expected to change
-    pub stable: bool,
-}
-
-impl Message for OhlcUpdate { type Result = (); }
-
-impl OhlcUpdate {
-    fn new(spec: OhlcSpec, ohlc: Ohlc) -> Self {
-        OhlcUpdate {
-            spec,
-            ohlc,
-            stable: true,
-        }
-    }
-    fn new_live(spec: OhlcSpec, ohlc: Ohlc) -> Self {
-        OhlcUpdate {
-            spec,
-            ohlc,
-            stable: false,
-        }
-    }
-    pub fn search_prefix(&self) -> String {
-        return format!("/{}/{}/{:?}", self.spec.exchange(), self.spec.pair(), self.spec.period());
-    }
-}
 
 pub struct Ingest {
     client: anats::Client,

@@ -43,12 +43,12 @@ pub async fn delete((req, id): (HttpRequest<State>, Path<i32>)) -> Result<impl R
 pub fn configure(application: App<State>) -> App<State> {
     application
         .resource("/api/traders", |r| {
-            r.method(Method::GET).with_async((list));
-            r.method(Method::POST).with_async((post));
+            r.method(Method::GET).with_async(compat(list));
+            r.method(Method::POST).with_async(compat(post));
         })
         .resource("/api/traders/{id}", |r| {
-            r.method(Method::POST).with_async((post));
-            r.method(Method::DELETE).with_async((delete));
+            r.method(Method::POST).with_async(compat(post));
+            r.method(Method::DELETE).with_async(compat(delete));
         })
 }
 

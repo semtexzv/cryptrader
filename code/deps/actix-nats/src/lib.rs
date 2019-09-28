@@ -14,20 +14,7 @@ use actix::fut::wrap_future;
 use futures03::compat::Future01CompatExt;
 use futures03::{TryFutureExt, FutureExt};
 use futures::{Future, BoxFuture, Stream};
-
-/*
-pub fn connect(name: impl Into<String>, addr: impl Into<String>) -> BoxFuture<Arc<NatsClient>, nats::error::RatsioError> {
-    let options = NatsClientOptions::builder()
-        .cluster_uris(vec!(addr.into()))
-        .build()
-        .unwrap();
-
-    let fut = NatsClient::from_options(options)
-        .and_then(|client| NatsClient::connect(&client));
-
-    box fut
-}
-*/
+use futures::future::{ok, result};
 
 pub async fn connect(name: impl Into<String>, addr: impl Into<String>) -> Arc<NatsClient> {
     let options = NatsClientOptions::builder()
@@ -76,7 +63,7 @@ pub struct Publish<M: RemoteMessage> {
 }
 
 impl<M: RemoteMessage> Message for Publish<M> {
-    type Result = Result<M::Result, ()>;
+    type Result = Result<M::Result, MailboxError>;
 }
 
 
@@ -108,7 +95,6 @@ impl<T: RemoteMessage> Handler<Subscribe<T>> for ClientWorker {
 
 
         let folder = move |(client, rec): (Arc<NatsClient>, Recipient<T>), i: nats::ops::Message| -> BoxFuture<(_, _), _> {
-
             let req = json::from_slice(&i.payload).expect("Msg deserialization");
             //println!("Sub recvd : {:?} => {:?} ", i, req);
             if let Some(reply_to) = i.reply_to {
@@ -144,7 +130,7 @@ impl<T: RemoteMessage> Handler<Subscribe<T>> for ClientWorker {
 }
 
 impl<T: RemoteMessage> Handler<Publish<T>> for ClientWorker {
-    type Result = ResponseActFuture<Self, T::Result, ()>;
+    type Result = ResponseActFuture<Self, T::Result, MailboxError>;
 
     fn handle(&mut self, msg: Publish<T>, _ctx: &mut Self::Context) -> Self::Result {
         let client = self.client.clone();
@@ -169,23 +155,32 @@ impl<T: RemoteMessage> Handler<Publish<T>> for ClientWorker {
 
                 let unsub = nats::ops::UnSubscribe::builder()
                     .sid(sid)
-                    .max_msgs(Some(1))
+                    .max_msgs(Some(2))
                     .build().unwrap();
 
-                let stream = client.subscribe(sub).compat().await?;
-                client.unsubscribe(unsub).compat().await?;
-                client.publish(publish).compat().await?;
-                if let Ok((Some(reply), _)) = stream.into_future().compat().await {
-                    let reply: T::Result = json::from_slice(&reply.payload).unwrap();
-                    Ok(reply)
-                } else {
-                    //Err(nats::error::RatsioError::GenericError("Bla".to_string()))
-                    Err(())
+                let stream = client.subscribe(sub).compat().await.expect("Subscribe");
+                client.unsubscribe(unsub).compat().await.expect("Unsubscribe");
+                client.publish(publish).compat().await.expect("Publish");
+                match stream.into_future().compat().await {
+                    Ok((Some(reply), _)) => {
+                        //println!("Returning value");
+                        let reply: T::Result = json::from_slice(&reply.payload).unwrap();
+                        Ok(reply)
+                    }
+                    Ok((None, _)) => {
+                        println!("Returning error, stream closed");
+                        Err(MailboxError::Closed)
+                    }
+                    Err((e,_)) => {
+                        println!("Returning error, reply closed : {:?}", e);
+                        Err(MailboxError::Closed)
+                    }
                 }
             } else {
-                client.publish(publish).compat().await?;
+                let res = client.publish(publish).compat().await.expect("Publish");
+                //println!("Returning error because this is only a notification");
                 //Err(nats::error::RatsioError::GenericError("Bla".to_string()))
-                Err(())
+                Err(MailboxError::Closed)
             }
         }.boxed_local().compat().into_actor(self))
     }
@@ -198,10 +193,9 @@ pub struct Client {
 }
 
 impl Client {
-
     pub async fn new(addr: impl Into<String>) -> Self {
         let client = connect(nuid::next(), addr).await;
-        let addr = Actor::create(|ctx| {
+        let addr = Actor::create(|_ctx| {
             ClientWorker {
                 client,
                 subs: HashMap::new(),
@@ -228,6 +222,13 @@ impl Client {
     {
         let addr = self.addr.clone();
         let topic = topic.into();
-        box addr.send(Publish { data, subject: topic, is_req: true }).map(|r| r.unwrap())
+        let sent: BoxFuture<Result<T::Result, MailboxError>, MailboxError> = box addr.send(Publish { data, subject: topic, is_req: true });
+
+        box sent.and_then(|r| result(r))
+        /*
+        .then(|r| {
+            r.unwrap()
+        }).map_err(|_| MailboxError::Closed)
+        */
     }
 }

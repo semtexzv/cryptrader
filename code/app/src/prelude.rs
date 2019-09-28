@@ -1,7 +1,7 @@
 pub use common::*;
+pub use common::prelude::*;
 
 pub use uuid::Uuid;
-pub use apis;
 pub use db;
 pub use db::Database;
 

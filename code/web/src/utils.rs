@@ -13,7 +13,7 @@ use crate::users::middleware::UserAuthentication;
 pub fn collect_validation_errors(e: ValidationErrors) -> Vec<String> {
     e.field_errors().into_iter().map(|(_k, v)| {
         v.into_iter().map(|a| {
-            format!("{:?}:{:?}", _k, a.message.unwrap().to_string())
+            format!("{:?}:{:?}", _k, a.message.clone().unwrap().to_string())
         }).collect()
     }).collect()
 }
@@ -66,7 +66,7 @@ pub async fn async_redirect(location: &str) -> Result<HttpResponse> {
 
 
 pub fn render<F>(tpl: F) -> HttpResponse
-    where F: FnOnce(&mut std::io::Write) -> std::io::Result<()>
+    where F: FnOnce(&mut dyn std::io::Write) -> std::io::Result<()>
 {
     let mut out = Vec::new();
     let _ = tpl(&mut out);

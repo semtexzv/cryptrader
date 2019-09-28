@@ -28,7 +28,7 @@ items:
         spec:
           containers:
             - name: app
-              image: ${APP_IMAGE}
+              image: ${BITFINEX_IMAGE}
               imagePullPolicy: Always
               command: ["/app", "bitfinex"]
               env: [{name: "RUST_LOG", value: ${RUST_LOG}}, {name: "RUST_BACKTRACE", value: "full"}]

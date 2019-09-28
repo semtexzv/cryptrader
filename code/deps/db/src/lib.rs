@@ -8,8 +8,7 @@ extern crate common;
 pub extern crate diesel;
 #[macro_use]
 pub extern crate diesel_migrations;
-pub extern crate r2d2;
-pub extern crate r2d2_diesel;
+
 
 pub extern crate validator;
 
@@ -60,7 +59,7 @@ pub fn init_store() {
 
 
 pub type ConnType = diesel::PgConnection;
-pub type PoolType = diesel::r2d2::Pool<r2d2_diesel::ConnectionManager<diesel::PgConnection>>;
+pub type PoolType = diesel::r2d2::Pool<diesel::r2d2::ConnectionManager<diesel::PgConnection>>;
 
 
 pub struct DbWorker(pub PoolType);
@@ -69,13 +68,13 @@ pub fn start() -> Database {
     init_store();
     let url = db_url();
 
-    let manager = r2d2_diesel::ConnectionManager::new(url);
+    let manager = diesel::r2d2::ConnectionManager::new(url);
     let pool = diesel::r2d2::Pool::builder()
         .max_size(16)
         .build(manager)
         .expect("Failed to create connection pool");
 
-    return Database(SyncArbiter::start(16, move || DbWorker(pool.clone())), #[cfg(feature = "scylla")] scylla::connect());
+    return Database(SyncArbiter::start(3, move || DbWorker(pool.clone())), #[cfg(feature = "scylla")] scylla::connect());
 }
 
 impl Actor for DbWorker { type Context = SyncContext<Self>; }

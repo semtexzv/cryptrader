@@ -13,9 +13,7 @@ serde = { version ="*" }
 
 strat-eval = { path = "../deps/strat-eval"}
 
-apis = { path = "../deps/apis" }
 db = { path = "../deps/db" }
 
 radix_trie = { version = "*", default-features=false }
-anymap = { version ="*", default-features=false }
 

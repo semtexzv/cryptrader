@@ -88,9 +88,9 @@ pub fn configure(app: App<State>) -> App<State> {
             .secure(false)
             .name("_TSESSION")
     )).resource("/api/signup/", |r| {
-        r.method(Method::POST).with_async((signup));
+        r.method(Method::POST).with_async(compat(signup));
     }).resource("/api/signin/", |r| {
-        r.method(Method::POST).with_async((login));
+        r.method(Method::POST).with_async(compat(login));
     }).resource("/api/logout/", |r| {
         r.method(Method::POST).with(logout);
     })

@@ -1,0 +1,13 @@
+[package]
+name = "bitfinex"
+version = "0.1.0"
+authors = ["Michal Hornický <mhornick@redhat.com>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies.common]
+path = "../common"
+
+[dependencies]
+serde = { version ="*" }

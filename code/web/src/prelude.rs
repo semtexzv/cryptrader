@@ -16,8 +16,18 @@ pub use db::diesel;
 pub use crate::utils::*;
 pub use crate::State;
 
+use common::prelude::futures03::TryFutureExt;
+
+pub type BoxFuture<I, E = failure::Error> = Box<dyn Future<Item=I, Error=E>>;
 
 
+pub fn compat<F, FF, I, Ok, Err>(f: F) -> impl Fn(I) -> BoxFuture<Ok, Err>
+    where F: Fn(I) -> FF,
+          FF: std::future::Future<Output=Result<Ok, Err>>,
+          FF: TryFutureExt + 'static
+{
+    move |i| box TryFutureExt::compat(Box::pin(f(i)))
+}
 
 #[derive(Debug, Fail)]
 pub struct Error(actix_web::Error);

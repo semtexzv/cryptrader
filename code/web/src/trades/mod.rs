@@ -29,7 +29,7 @@ async fn list(req: HttpRequest<State>) -> Result<impl Responder> {
 pub fn configure(application: App<State>) -> App<State> {
     application
         .resource("/api/trades", |r| {
-            r.method(Method::GET).with_async((list));
+            r.method(Method::GET).with_async(compat(list));
         })
 }
 

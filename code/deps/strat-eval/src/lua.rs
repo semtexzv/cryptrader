@@ -183,9 +183,9 @@ function run_sandbox(code, ...)
 
     local untrusted_fun, message = load(code,nil,'t',sandbox_env)
     if not untrusted_fun then return nil, message end
-    debug.sethook(debug_step)
+    -- debug.sethook(debug_step)
     local stat, res = pcall(untrusted_fun, ...)
-    debug.sethook(nil)
+    -- debug.sethook(nil)
     return res, nil
 end
 return run_sandbox

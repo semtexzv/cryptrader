@@ -5,6 +5,7 @@ use crate::eval::EvalRequest;
 use radix_trie::Trie;
 use std::time::Duration;
 use chrono::NaiveDateTime;
+use common::msgs::PositionRequest;
 
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -86,9 +87,10 @@ impl Handler<OhlcUpdate> for Decider {
                 let msg = msg.clone();
                 let spec: &TradingRequestSpec = spec;
 
-                info!("Should eval {:?} on {:?}", spec, msg.clone().spec);
+                error!("Should eval {:?} on {:?}", spec, msg.clone().spec);
 
                 let req = EvalRequest::new(spec.strat_id, spec.ohlc.clone(), msg.ohlc.time);
+                let t1 = Instant::now();
 
                 let strategy_id = spec.strat_id;
                 let user_id = spec.user_id;
@@ -100,31 +102,19 @@ impl Handler<OhlcUpdate> for Decider {
                 let pair = spec.ohlc.pair().clone().to_string();
                 let period = spec.ohlc.period().to_string();
 
-                let eval = self.client.request(crate::CHANNEL_EVAL_REQUESTS, req);
+                let client = self.client.clone();
+                let db = self.db.clone();
+                let fut = async move {
+                    let eval = client.request(crate::CHANNEL_EVAL_REQUESTS, req).compat().await.expect("Eval req");
+                    error!("Evaluated to {:?} bla", eval);
 
-                let fut = wrap_future(eval);
-
-                let fut = fut.and_then(move |res, this: &mut Self, ctx| {
-                    info!("Evaluated to {:?}", res);
-                    afut::ok(())
-                    /*
-                    let (ok, error) = match res {
+                    let (ok, error) = match eval {
                         Ok(ref decision) => {
                             if let Some(trader) = trader {
                                 info!("Trader available, sending trade request");
-                                let pos = crate::trader::PositionRequest {
-                                    trader_id: trader,
-                                    pair: pair_id,
-                                    price_approx: msg.clone().ohlc.close,
-                                    position: *decision,
-                                };
-                                let sent = this.pos_svc.send(pos);
-                                let sent = sent.map(move |r| {
-                                    warn!("Trade resulted in : {:?}", r);
-                                    ()
-                                });
-
-                                ctx.spawn(wrap_future(sent).drop_err());
+                                let pos = PositionRequest::new(trader.exchange, trader.api_key, trader.api_secret, pair_id, msg.clone().ohlc.close, *decision);
+                                let pos = client.request(crate::CHANNEL_POSITION_REQUESTS, pos).compat().await;
+                                warn!("Trade resulted in : {:?}", pos);
                             } else {
                                 info!("Trader unavailable")
                             }
@@ -145,20 +135,18 @@ impl Handler<OhlcUpdate> for Decider {
                         pair,
                         period,
                         user_id,
-                        status: res.is_ok(),
+                        status: eval.is_ok(),
                         time: common::chrono::Utc::now(),
                         ok,
                         error,
                         duration: t2.duration_since(t1).as_millis() as _,
                     };
 
-                    let log_fut = wrap_future(this.db.log_eval(evaluation).drop_item().set_err(RemoteError::MailboxClosed));
+                    db.log_eval(evaluation).compat().await.expect("Logging evaluation");
+                    Ok(())
+                };
 
-
-                    log_fut*/
-                });
-
-                ctx.spawn(fut.drop_err());
+                ctx.spawn(Box::new(fut.boxed_local().compat().into_actor(self)));
             }
         }
     }

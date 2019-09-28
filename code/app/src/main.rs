@@ -3,9 +3,8 @@
 #![allow(dead_code, unused_variables, unused_imports, unreachable_code, deprecated)]
 
 pub mod prelude;
-pub mod exch;
 pub mod ingest;
-//pub mod trader;
+pub mod trader;
 pub mod eval;
 
 
@@ -14,18 +13,6 @@ use crate::prelude::*;
 use std::env;
 use clap::{App, ArgMatches, SubCommand};
 
-pub const BODY_LIMIT : usize = 2 * 1024 * 1024;
-
-pub const CHANNEL_OHLC_INGEST: &str = "ohlc.ingest";
-pub const CHANNEL_OHLC_AGG: &str = "ohlc.agg";
-pub const CHANNEL_OHLC_RESCALED: &str = "ohlc.rescaled";
-
-pub const CHANNEL_EVAL_REQUESTS: &str = "eval";
-
-pub const CHANNEL_TRADE_REQUESTS: &str = "trade";
-pub const CHANNEL_BALANCE_REQUESTS: &str = "balance";
-
-pub const GROUP_EVAL_WORKERS: &str = "workers";
 
 fn main() {
     use common::actix::spawn as arb_spawn;
@@ -35,7 +22,6 @@ fn main() {
 
     let matches = App::new("Trader")
         .subcommand(SubCommand::with_name("ingest"))
-        .subcommand(SubCommand::with_name("bitfinex"))
         .subcommand(SubCommand::with_name("trader"))
         .subcommand(SubCommand::with_name("evaluator"))
         .get_matches();
@@ -52,10 +38,7 @@ fn main() {
                     let ingest = ingest::Ingest::new(client.clone(), db.clone()).await.unwrap();
                 }
                 "evaluator" => {
-                    //eval::Evaluator::new(client.clone(),db.clone());//.unwrap();
-                }
-                "bitfinex" => {
-                     exch::bitfinex::BitfinexClient::new(client.clone()).await.unwrap();
+                    eval::Evaluator::new(client.clone(), db.clone());//.unwrap();
                 }
                 /*
                     "ingest" => {
@@ -93,7 +76,7 @@ fn main() {
                     panic!("Not a valid subcommannd")
                 }
             }
-            Ok::<(),()>(())
+            Ok::<(), ()>(())
         };
         common::actix::spawn(root.boxed_local().compat());
     });

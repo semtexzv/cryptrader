@@ -3,18 +3,6 @@ use crate::Database;
 
 impl Database {
 
-    /*
-    pub fn all_assignments(&self) -> BoxFuture<Vec<Assignment>> {
-        return self.invoke(move |this, ctx| {
-            use crate::schema::assignments::dsl::*;
-
-            let conn: &ConnType = &this.0.get().unwrap();
-            let res = assignments.load::<Assignment>(conn)?;
-            Ok(res)
-        });
-    }
-
-    */
     pub fn all_assignments_with_traders(&self) -> BoxFuture<Vec<(Assignment, Option<Trader>)>> {
         return self.invoke(move |this, ctx| {
             use crate::schema::assignments;

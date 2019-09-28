@@ -23,19 +23,20 @@ impl EvalRequest {
     }
 }
 
-pub struct EvalWorker {
+pub struct Evaluator {
     client: anats::Client,
     db: Database,
 }
 
-impl Actor for EvalWorker {
+impl Actor for Evaluator {
     type Context = Context<Self>;
 }
 
-impl EvalWorker {
+impl Evaluator {
     pub fn new(client: anats::Client, db: Database) -> Addr<Self> {
         Actor::create(|ctx| {
-            EvalWorker {
+            client.subscribe(crate::CHANNEL_EVAL_REQUESTS, crate::GROUP_EVAL_WORKERS.to_string(), ctx.address().recipient());
+            Evaluator {
                 client,
                 db,
             }
@@ -43,7 +44,7 @@ impl EvalWorker {
     }
 }
 
-impl Handler<EvalRequest> for EvalWorker {
+impl Handler<EvalRequest> for Evaluator {
     type Result = Response<TradingPosition, EvalError>;
 
     fn handle(&mut self, req: EvalRequest, ctx: &mut Self::Context) -> Self::Result {
@@ -53,18 +54,17 @@ impl Handler<EvalRequest> for EvalWorker {
         let data = self.db.ohlc_history_backfilled(req.spec.clone(), req.last - (req.spec.period().seconds() * 1000));
         //.timeout(std::time::Duration::from_secs(30));
 
-
         let fut = Future::join(strat, data);
         let fut = Future::then(fut, move |input| {
             let (strat, data) = input.unwrap();
-            debug!("Starting exec");
+            error!("Starting exec");
             let data = data.into_iter().map(|x| (x.time, x)).collect();
 
-            debug!("Starting Eval");
+            error!("Starting Eval a");
 
             let (res, time) = measure_time(|| strat_eval::eval(data, strat.body));
 
-            debug!("Done Eval");
+            error!("Done Eval :{:?} in :{:?}", res, time);
             future::result(res)
         });
 
