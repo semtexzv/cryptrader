@@ -225,10 +225,5 @@ impl Client {
         let sent: BoxFuture<Result<T::Result, MailboxError>, MailboxError> = box addr.send(Publish { data, subject: topic, is_req: true });
 
         box sent.and_then(|r| result(r))
-        /*
-        .then(|r| {
-            r.unwrap()
-        }).map_err(|_| MailboxError::Closed)
-        */
     }
 }

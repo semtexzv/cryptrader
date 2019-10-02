@@ -87,7 +87,7 @@ impl Scylla {
                 }).collect();
                 let t1 = Instant::now();
 
-                let q = this.0.prepare(INSERT_OHLC).expect("Prepare query");
+                let q = this.pool.prepare(INSERT_OHLC).expect("Prepare query");
 
                 let mut queries = BatchQueryBuilder::new();
 
@@ -96,7 +96,7 @@ impl Scylla {
                     queries = queries.add_query_prepared(q.clone(), values);
                 }
 
-                this.0.batch_with_params(queries.finalize().expect("Finalized"))
+                this.pool.batch_with_params(queries.finalize().expect("Finalized"))
                     .expect("Batched write");
             });
 
@@ -111,7 +111,7 @@ impl Scylla {
                 pub exchange: String,
                 pub pair: String,
             }
-            let pairs = this.0.query(r#"select distinct exchange,pair from main_ks.ohlc"#)
+            let pairs = this.pool.query(r#"select distinct exchange,pair from main_ks.ohlc"#)
                 .expect(":Query")
                 .get_body()
                 .expect("Body")

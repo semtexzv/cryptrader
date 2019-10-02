@@ -14,13 +14,14 @@ items:
   - kind: PersistentVolumeClaim
     apiVersion: v1
     metadata:
-      name: trader-db
+      name: trader-pg-db
     spec:
+      storageClassName: do-block-storage
       accessModes:
         - ReadWriteOnce
       resources:
         requests:
-          storage: 20Gi
+          storage: 30Gi
 
   - kind: Service
     apiVersion: v1
@@ -63,10 +64,10 @@ items:
                   memory: 400Mi
                 limits:
                   cpu: 200m
-                  memory: 500Mi
+                  memory: 400Mi
           volumes:
             - name: postgresdb
               persistentVolumeClaim:
-                claimName: trader-db
+                claimName: trader-pg-db
 
 

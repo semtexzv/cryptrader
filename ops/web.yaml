@@ -6,10 +6,15 @@ items:
     metadata:
       name: web
       labels: { app: trader }
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: '9000'
+        prometheus.io/path: '/metrics'
     spec:
       selector: { layer: web }
       type: NodePort
       ports:
+        - { name: metrics, port: 9001, targetPort: 9001 }
         - name: http
           port: 8000
           nodePort: 30000
@@ -39,8 +44,8 @@ items:
               command: ["/app", "web"]
               env: [{name: "RUST_LOG", value: ${RUST_LOG}}, {name: "WEBAPP_ROOT", value: "/src/app/dist"}]
               resources:
-                requests: { cpu: 200m, memory: 110M }
-                limits: { cpu: 200m, memory: 120M   }
+                requests: { cpu: 100m, memory: 50M }
+                limits: { cpu: 100m, memory: 50M   }
 
               ports:
               - containerPort: 8000

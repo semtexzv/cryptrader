@@ -20,7 +20,7 @@ async fn list(req: HttpRequest<State>) -> Result<impl Responder> {
     let base = BaseReqInfo::from_request(&req).await?;
     require_login!(base);
 
-    let strats = db.user_strategies(base.auth.uid).compat().await?;
+    let strats = db.user_strategies(base.auth.uid).await?;
     Ok(Json(strats).respond_to(&req).unwrap())
 }
 
@@ -30,8 +30,8 @@ async fn get((req, id): (HttpRequest<State>, Path<i32>)) -> Result<impl Responde
     let base = BaseReqInfo::from_request(&req).await?;
     require_login!(base);
 
-    let (strat, user) = db.strategy_data(id.into_inner()).compat().await?;
-    let evals = db.get_evals(strat.id).compat().await?;
+    let (strat, user) = db.strategy_data(id.into_inner()).await?;
+    let evals = db.strategy_evals(strat.id).await?;
     require_cond!(strat.user_id == base.auth.uid);
 
     Ok(Json(strat).respond_to(&req)?)
@@ -48,7 +48,7 @@ async fn post((req, id, data): (HttpRequest<State>, Option<Path<i32>>, Json<db::
         data.id = Some(id.into_inner());
     }
 
-    let strat = db.save_strategy(data).compat().await?;
+    let strat = db.save_strategy(data).await?;
     Ok(Json(strat).respond_to(&req)?)
 }
 
@@ -58,7 +58,7 @@ async fn delete((req, id): (HttpRequest<State>, Path<i32>)) -> Result<impl Respo
     let db: Database = req.state().db.clone();
 
     require_login!(base);
-    let _ = db.delete_strategy(base.auth.uid,id.into_inner()).compat().await?;
+    let _ = db.delete_strategy(base.auth.uid,id.into_inner()).await?;
     return Ok(HttpResponse::new(http::StatusCode::OK));
 }
 

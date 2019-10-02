@@ -20,7 +20,7 @@ async fn list(req: HttpRequest<State>) -> Result<impl Responder> {
     let base = BaseReqInfo::from_request(&req).await?;
     require_login!(base);
 
-    let trades = db.user_trades(base.auth.uid).compat().await?;
+    let trades = db.user_trades(base.auth.uid).await?;
     Ok(Json(trades).respond_to(&req).unwrap())
 }
 

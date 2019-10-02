@@ -48,15 +48,14 @@ impl Handler<EvalRequest> for Evaluator {
     type Result = Response<TradingPosition, EvalError>;
 
     fn handle(&mut self, req: EvalRequest, ctx: &mut Self::Context) -> Self::Result {
-        let strat = self.db.single_strategy(req.strat_id);
+        let db = self.db.clone();
+        Response::r#async(async move {
+            let strat = db.single_strategy(req.strat_id).await.unwrap();
 
-        // Thousand ohlc candles ought to be enough for everyone
-        let data = self.db.ohlc_history_backfilled(req.spec.clone(), req.last - (req.spec.period().seconds() * 1000));
-        //.timeout(std::time::Duration::from_secs(30));
+            // Thousand ohlc candles ought to be enough for everyone
+            let data = db.ohlc_history_backfilled(req.spec.clone(), req.last - (req.spec.period().seconds() * 1000)).await.unwrap();
+            //.timeout(std::time::Duration::from_secs(30));
 
-        let fut = Future::join(strat, data);
-        let fut = Future::then(fut, move |input| {
-            let (strat, data) = input.unwrap();
             error!("Starting exec");
             let data = data.into_iter().map(|x| (x.time, x)).collect();
 
@@ -65,10 +64,8 @@ impl Handler<EvalRequest> for Evaluator {
             let (res, time) = measure_time(|| strat_eval::eval(data, strat.body));
 
             error!("Done Eval :{:?} in :{:?}", res, time);
-            future::result(res)
-        });
-
-        return Response::r#async(fut);
+            res
+        }.boxed_local().compat())
     }
 }
 

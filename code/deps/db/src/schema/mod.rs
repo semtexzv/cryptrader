@@ -1,10 +1,11 @@
 use super::*;
 use ::std::result::Result as Result;
 use uuid::Uuid;
+use common::types::Exchange;
+
 table! {
-    assignments (exchange, pair, user_id) {
-        exchange -> Text,
-        pair -> Text,
+    assignments (pair_id, user_id) {
+        pair_id -> Int4,
         user_id -> Int4,
         period -> Text,
         strategy_id -> Int4,
@@ -15,8 +16,7 @@ table! {
 table! {
     evaluations (id) {
         id -> Uuid,
-        exchange -> Text,
-        pair -> Text,
+        pair_id -> Int4,
         period -> Text,
         user_id -> Int4,
         strategy_id -> Int4,
@@ -29,10 +29,9 @@ table! {
 }
 
 table! {
-    ohlc (pair, exchange, time) {
+    ohlc (pair_id, time) {
         time -> Int8,
-        exchange -> Varchar,
-        pair -> Varchar,
+        pair_id -> Int4,
         open -> Float8,
         high -> Float8,
         low -> Float8,
@@ -42,16 +41,10 @@ table! {
 }
 
 table! {
-    ohlc_rollups (pair, exchange, period, time) {
-        time -> Int8,
+    pairs (id) {
+        id -> Int4,
         exchange -> Varchar,
         pair -> Varchar,
-        open -> Float8,
-        high -> Float8,
-        low -> Float8,
-        close -> Float8,
-        vol -> Float8,
-        period -> Int8,
     }
 }
 
@@ -83,8 +76,7 @@ table! {
         time -> Timestamptz,
         user_id -> Int4,
         trader_id -> Int4,
-        exchange -> Varchar,
-        pair -> Varchar,
+        pair_id -> Int4,
         buy -> Bool,
         amount -> Float8,
         price -> Float8,
@@ -108,13 +100,17 @@ table! {
     }
 }
 
+joinable!(assignments -> pairs (pair_id));
 joinable!(assignments -> strategies (strategy_id));
 joinable!(assignments -> traders (trader_id));
 joinable!(assignments -> users (user_id));
+joinable!(evaluations -> pairs (pair_id));
 joinable!(evaluations -> strategies (strategy_id));
 joinable!(evaluations -> users (user_id));
+joinable!(ohlc -> pairs (pair_id));
 joinable!(strategies -> users (user_id));
 joinable!(traders -> users (user_id));
+joinable!(trades -> pairs (pair_id));
 joinable!(trades -> traders (trader_id));
 joinable!(trades -> users (user_id));
 
@@ -122,22 +118,25 @@ allow_tables_to_appear_in_same_query!(
     assignments,
     evaluations,
     ohlc,
-    ohlc_rollups,
+    pairs,
     strategies,
     traders,
     trades,
     users,
 );
 
+sql_function!(fn pair_id(exch : Text, pair : Text) -> Int4);
+sql_function!(fn make_pair_id(exch : Text, pair : Text) -> Int4);
+
 
 #[derive(Debug, Clone, PartialOrd, PartialEq, Serialize, Deserialize)]
 #[derive(Identifiable, Queryable, Insertable, AsChangeset, Associations, QueryableByName)]
 #[table_name = "ohlc"]
-#[primary_key(exchange, pair, time)]
+#[primary_key(pair_id, time)]
+#[belongs_to(Pair, foreign_key = "pair_id")]
 pub struct Ohlc {
     pub time: i64,
-    pub exchange: String,
-    pub pair: String,
+    pub pair_id: i32,
     pub open: f64,
     pub high: f64,
     pub low: f64,
@@ -158,6 +157,19 @@ impl Into<common::types::Ohlc> for Ohlc {
     }
 }
 
+impl Ohlc {
+    pub fn new(pair_id: i32, ohlc: common::types::Ohlc) -> Self {
+        Self {
+            time: ohlc.time as _,
+            pair_id,
+            open: ohlc.open,
+            high: ohlc.high,
+            low: ohlc.low,
+            close: ohlc.close,
+            vol: ohlc.vol,
+        }
+    }
+}
 
 #[derive(Debug, Clone, PartialOrd, PartialEq, Serialize, Deserialize)]
 #[derive(Identifiable, Queryable, Insertable, AsChangeset, Associations, QueryableByName)]
@@ -209,18 +221,18 @@ pub struct Strategy {
 #[derive(Debug, Clone, PartialOrd, PartialEq, Serialize, Deserialize)]
 #[derive(Identifiable, Queryable, Insertable, AsChangeset, Associations, QueryableByName)]
 #[table_name = "assignments"]
-#[primary_key(exchange, pair, user_id)]
+#[primary_key(pair_id, user_id)]
 #[belongs_to(User, foreign_key = "user_id")]
 #[belongs_to(Strategy, foreign_key = "user_id")]
 #[belongs_to(Trader, foreign_key = "trader_id")]
+#[belongs_to(Pair, foreign_key = "pair_id")]
 pub struct Assignment {
-    pub exchange: String,
-    pub pair: String,
+    pub pair_id: i32,
     pub user_id: i32,
 
     pub period: String,
-
     pub strategy_id: i32,
+
     pub trader_id: Option<i32>,
 }
 
@@ -233,8 +245,7 @@ pub struct Assignment {
 #[belongs_to(Strategy, foreign_key = "strategy_id")]
 pub struct Evaluation {
     pub id: Uuid,
-    pub exchange: String,
-    pub pair: String,
+    pub pair_id: i32,
     pub period: String,
 
     pub user_id: i32,
@@ -262,9 +273,7 @@ pub struct Trade {
 
     pub user_id: i32,
     pub trader_id: i32,
-
-    pub exchange: String,
-    pub pair: String,
+    pub pair_id: i32,
 
     pub buy: bool,
     pub amount: f64,
@@ -276,21 +285,20 @@ pub struct Trade {
 }
 
 
-
-// This is a table resulting from materialized view
-table! {
-    pairs(exchange, pair) {
-        exchange -> Text,
-        pair -> Text,
-    }
-}
-
-#[derive(PartialEq, Deserialize, Serialize, Debug, Clone)]
-#[derive(Queryable, Associations, QueryableByName)]
+#[derive(PartialEq, PartialOrd, Deserialize, Serialize, Debug, Clone)]
+#[derive(Identifiable, Queryable, Insertable, AsChangeset, Associations, QueryableByName)]
 #[table_name = "pairs"]
+#[primary_key(id)]
 pub struct Pair {
+    pub id: i32,
     pub exchange: String,
     pub pair: String,
+}
+
+impl Into<PairId> for Pair {
+    fn into(self) -> PairId {
+        PairId::new(Exchange::from_str(&self.exchange).unwrap(), TradePair::from_str(&self.pair).unwrap())
+    }
 }
 
 

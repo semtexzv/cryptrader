@@ -6,6 +6,7 @@ use radix_trie::Trie;
 use std::time::Duration;
 use chrono::NaiveDateTime;
 use common::msgs::PositionRequest;
+use common::types::Exchange;
 
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -18,17 +19,22 @@ pub struct TradingRequestSpec {
 
 impl TradingRequestSpec {
     pub fn from_db(d: &db::Assignment, t: Option<db::Trader>) -> Self {
+        unimplemented!()
+        /*
         TradingRequestSpec {
-            ohlc: OhlcSpec::new(d.exchange.clone(), TradePair::from_str(&d.pair).unwrap(), OhlcPeriod::from_str(&d.period).unwrap()),
+            ohlc: OhlcSpec::new(Exchange::from_str(&d.exchange).unwrap(), TradePair::from_str(&d.pair).unwrap(), OhlcPeriod::from_str(&d.period).unwrap()),
             user_id: d.user_id,
             strat_id: d.strategy_id,
             trader: t,
         }
+        */
     }
     pub fn search_prefix(&self) -> String {
         return format!("/{}/{}/{:?}", self.ohlc.exchange(), self.ohlc.pair(), self.ohlc.period());
     }
 }
+
+impl_invoke!(Decider);
 
 pub struct Decider {
     client: anats::Client,
@@ -38,7 +44,7 @@ pub struct Decider {
 
 impl Decider {
     pub async fn new(client: anats::Client, db: db::Database) -> Result<Addr<Self>, failure::Error> {
-        Ok(Actor::create(move |ctx: &mut Context<Self>| {
+        Ok(Arbiter::start(move |ctx: &mut Context<Self>| {
             client.subscribe(crate::CHANNEL_OHLC_RESCALED, None, ctx.address().recipient::<OhlcUpdate>());
             ctx.run_interval(Duration::from_secs(5), |this, ctx| {
                 this.reload(ctx);
@@ -52,9 +58,14 @@ impl Decider {
     }
 
     pub fn reload(&mut self, ctx: &mut Context<Self>) {
-        let f = wrap_future(self.db.all_assignments_with_traders())
-            .and_then(|req, this: &mut Self, ctx| {
-                info!("Eval requests reloaded");
+        let addr = ctx.address().clone();
+        let fut = async {
+            let req = ActorExt::invoke(addr.clone(), |this: &mut Self, ctx| {
+                this.db.clone()
+            }).await;
+            let req = req.all_assignments_with_traders().await.unwrap();
+
+            ActorExt::invoke(addr.clone(), move |this: &mut Self, ctx| {
                 this.requests = BTreeMap::new();
                 for (r, t) in req.iter() {
                     let spec = TradingRequestSpec::from_db(r, t.clone());
@@ -62,12 +73,11 @@ impl Decider {
                     let strats = this.requests.entry(spec.search_prefix()).or_insert(Vec::new());
                     strats.push(spec);
                 }
+            }).await;
 
-
-                afut::ok(())
-            });
-
-        ctx.spawn(f.map(|_, _, _| ()).drop_err());
+            Ok::<_,()>(())
+        };
+        //ctx.spawn(f.map(|_, _, _| ()).drop_err());
     }
 }
 
@@ -131,8 +141,8 @@ impl Handler<OhlcUpdate> for Decider {
                     let evaluation = db::Evaluation {
                         id: Uuid::new_v4(),
                         strategy_id,
-                        exchange,
-                        pair,
+                        // TODO: pair_id
+                        pair_id: 0,
                         period,
                         user_id,
                         status: eval.is_ok(),
@@ -142,7 +152,7 @@ impl Handler<OhlcUpdate> for Decider {
                         duration: t2.duration_since(t1).as_millis() as _,
                     };
 
-                    db.log_eval(evaluation).compat().await.expect("Logging evaluation");
+                    db.log_eval(evaluation).await.expect("Logging evaluation");
                     Ok(())
                 };
 

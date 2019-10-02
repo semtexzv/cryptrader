@@ -1,5 +1,6 @@
 use crate::prelude::*;
 
+#[allow(non_snake_case)]
 #[derive(Serialize, Debug)]
 pub struct Auth {
     event: String,

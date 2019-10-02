@@ -15,48 +15,34 @@ pub struct StrategyData {
 
 
 impl crate::Database {
-    pub fn strategy_data(&self, sid: i32) -> BoxFuture<(crate::Strategy, crate::User)> {
-        return self.invoke(move |this, ctx| {
+    pub async fn strategy_data(&self, sid: i32) -> Result<(crate::Strategy, crate::User)> {
+        ActorExt::invoke(self.0.clone(), move |this, ctx| {
             debug!("Receiving strategy data");
-            use schema::strategies::dsl::*;
-            use schema::users::dsl::*;
-
-            let conn: &ConnType = &this.0.get().unwrap();
-            let (strat, user) = strategies.find(sid).inner_join(users).get_result(conn)?;
-            return Ok((strat, user));
-        });
+            let conn: &ConnType = &this.pool.get().unwrap();
+            Strategy::identified_by(&sid)
+                .inner_join(schema::users::table).get_result(&this.conn())
+        }).await
     }
 
-    pub fn single_strategy(&self, sid: i32) -> BoxFuture<crate::Strategy> {
-        return self.invoke(move |this, ctx| {
+    pub async fn single_strategy(&self, sid: i32) -> Result<crate::Strategy> {
+        ActorExt::invoke(self.0.clone(), move |this, ctx| {
             debug!("Receiving strategy source : {:?}", sid);
-            use schema::strategies::dsl::*;
-            use schema::users::dsl::*;
-
-            let conn: &ConnType = &this.0.get().unwrap();
-            let strat = strategies.find(sid).get_result(conn)?;
-            debug!("Got strategy source : {:?}", sid);
-            return Ok(strat);
-        });
+            Strategy::identified_by(&sid).get_result(&this.conn())
+        }).await
     }
 
-    pub fn user_strategies(&self, uid: i32) -> BoxFuture<Vec<crate::Strategy>> {
-        return self.invoke(move |this, ctx| {
-            use schema::strategies::dsl::*;
-            use schema::users::dsl::*;
-
-            let conn: &ConnType = &this.0.get().unwrap();
-            let strats = strategies.filter(user_id.eq(uid)).load(conn)?;
-            return Ok(strats);
-        });
+    pub async fn user_strategies(&self, uid: i32) -> Result<Vec<crate::Strategy>> {
+        ActorExt::invoke(self.0.clone(), move |this, ctx| {
+            referenced_by::<Strategy, User, _>(&uid).load(&this.conn())
+        }).await
     }
 
-    pub fn save_strategy(&self, data: StrategyData) -> BoxFuture<crate::Strategy> {
-        return self.invoke(move |this, ctx| {
+    pub async fn save_strategy(&self, data: StrategyData) -> Result<crate::Strategy> {
+        ActorExt::invoke(self.0.clone(), move |this, ctx| {
             use schema::strategies::dsl::*;
             use schema::users::dsl::*;
 
-            let conn: &ConnType = &this.0.get().unwrap();
+            let conn: &ConnType = &this.pool.get().unwrap();
 
             let s = diesel::insert_into(strategies)
                 .values(&data)
@@ -66,28 +52,28 @@ impl crate::Database {
                 .get_result(conn)?;
 
             return Ok(s);
-        });
+        }).await
     }
 
-    pub fn delete_strategy(&self, uid : i32, sid : i32) -> BoxFuture<bool> {
-        return self.invoke(move |this, ctx| {
+    pub async fn delete_strategy(&self, uid: i32, sid: i32) -> Result<bool> {
+        ActorExt::invoke(self.0.clone(), move |this, ctx| {
             use schema::strategies::dsl::*;
 
 
-            let conn: &ConnType = &this.0.get().unwrap();
+            let conn: &ConnType = &this.pool.get().unwrap();
             let q = diesel::delete(strategies)
                 .filter(user_id.eq(uid))
                 .filter(id.eq(sid));
 
             Ok(q.execute(conn)? > 0)
-        });
+        }).await
     }
 
 
-    pub fn log_eval(&self, res: Evaluation) -> BoxFuture<Evaluation> {
-        self.invoke(move |this, _| {
+    pub async fn log_eval(&self, res: Evaluation) -> Result<Evaluation> {
+        ActorExt::invoke(self.0.clone(), move |this, ctx| {
             use schema::evaluations::dsl::*;
-            let conn: &ConnType = &this.0.get().unwrap();
+            let conn: &ConnType = &this.pool.get().unwrap();
 
             let res = diesel::insert_into(evaluations)
                 .values(&res)
@@ -96,36 +82,24 @@ impl crate::Database {
 
 
             Ok(res)
-        })
+        }).await
     }
-    /*
-    pub fn user_evals(&self, uid: i32) -> BoxFuture<Vec<Evaluation>> {
-        self.invoke(move |this, _| {
+    pub async fn user_evals(&self, uid: i32) -> Result<Vec<Evaluation>> {
+        self.0.invoke(move |this, _| {
             use schema::evaluations::dsl::*;
-            let conn: &ConnType = &this.0.get().unwrap();
-            let r = evaluations
-                .inner_join(schema::strategies::dsl::strategies)
-                .inner_join(schema::users::dsl::users)
-                .filter(schema::strategies::dsl::id.eq(uid))
+
+            referenced_by::<Evaluation, User, _>(&uid)
                 .order_by(time.desc())
                 .limit(10)
-                .get_results(conn)?;
-
-            Ok(r)
-        })
+                .get_results(&this.conn())
+        }).await
     }
-
-*/
-    pub fn get_evals(&self, sid: i32) -> BoxFuture<Vec<Evaluation>> {
-        self.invoke(move |this, _| {
-            use schema::evaluations::dsl::*;
-            let conn: &ConnType = &this.0.get().unwrap();
-            let r = evaluations.filter(strategy_id.eq(sid))
-                .order_by(time.desc())
+    pub async fn strategy_evals(&self, sid: i32) -> Result<Vec<Evaluation>> {
+        ActorExt::invoke(self.0.clone(), move |this, ctx| {
+            referenced_by::<Evaluation, Strategy, _>(&sid)
+                .order_by(schema::evaluations::time.desc())
                 .limit(10)
-                .get_results(conn)?;
-
-            Ok(r)
-        })
+                .get_results(&this.conn())
+        }).await
     }
 }

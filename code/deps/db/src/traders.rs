@@ -28,8 +28,7 @@ pub struct NewTradeData {
     pub user_id: i32,
     pub trader_id: i32,
 
-    pub exchange: String,
-    pub pair: String,
+    pub pair_id: i32,
 
     pub buy: bool,
     pub amount: f64,
@@ -42,19 +41,16 @@ pub struct NewTradeData {
 
 
 impl crate::Database {
-    pub fn user_traders(&self, uid: i32) -> BoxFuture<Vec<Trader>> {
-        self.invoke(move |this, ctx| {
-            use crate::schema::traders::dsl::*;
-            let conn: &ConnType = &this.0.get().unwrap();
-            let q = traders.filter(user_id.eq(uid)).get_results(conn)?;
-            Ok(q)
-        })
+    pub async fn user_traders(&self, uid: i32) -> Result<Vec<Trader>> {
+        ActorExt::invoke(self.0.clone(), move |this, ctx| {
+            referenced_by::<Trader, User, _>(&uid).load(&this.conn())
+        }).await
     }
 
-    pub fn save_trader(&self, trader: TraderData) -> BoxFuture<Trader> {
-        self.invoke(move |this, ctx| {
+    pub async fn save_trader(&self, trader: TraderData) -> Result<Trader> {
+        self.0.invoke(move |this, ctx| {
             use crate::schema::traders::dsl::*;
-            let conn: &ConnType = &this.0.get().unwrap();
+            let conn: &ConnType = &this.pool.get().unwrap();
             let q = diesel::insert_into(traders)
                 .values(&trader)
                 .on_conflict(id)
@@ -62,49 +58,39 @@ impl crate::Database {
                 .set(&trader)
                 .get_result::<Trader>(conn)?;
             Ok(q)
-        })
+        }).await
     }
 
-    pub fn delete_trader(&self, uid: i32, tid: i32) -> BoxFuture<bool> {
-        self.invoke(move |this, ctx| {
+    pub async fn delete_trader(&self, uid: i32, tid: i32) -> Result<bool> {
+        self.0.invoke(move |this, ctx| {
             use crate::schema::traders::dsl::*;
-            let conn: &ConnType = &this.0.get().unwrap();
+            let conn: &ConnType = &this.pool.get().unwrap();
             let q = diesel::delete(traders)
                 .filter(user_id.eq(uid))
                 .filter(id.eq(tid));
 
             Ok(q.execute(conn)? > 0)
-        })
+        }).await
     }
 
-    pub fn log_trade(&self, trade: NewTradeData) -> BoxFuture<Trade> {
-        self.invoke(move |this, ctx| {
+    pub async fn log_trade(&self, trade: NewTradeData) -> Result<Trade> {
+        self.0.invoke(move |this, ctx| {
             use self::trades::dsl::*;
 
-            let conn: &ConnType = &this.0.get().unwrap();
-
-            let r = diesel::insert_into(trades)
+            diesel::insert_into(trades)
                 .values(&trade)
                 .on_conflict(id)
                 .do_nothing()
-                .get_result::<Trade>(conn)?;
-
-            Ok(r)
-        })
+                .get_result::<Trade>(&this.conn())
+        }).await
     }
-    pub fn user_trades(&self, uid : i32) -> BoxFuture<Vec<Trade>> {
-        self.invoke(move |this, ctx| {
-            use self::trades::dsl::*;
-            println!("Tst");
 
-            let conn: &ConnType = &this.0.get().unwrap();
-
-            let q = trades.filter(user_id.eq(uid))
-                .order_by(time.desc())
+    pub async fn user_trades(&self, uid: i32) -> Result<Vec<Trade>> {
+        ActorExt::invoke(self.0.clone(), move |this, ctx| {
+            referenced_by::<Trade, User, _>(&uid)
+                .order_by(schema::trades::time.desc())
                 .limit(20)
-                .get_results(conn)?;
-
-            Ok(q)
-        })
+                .load(&this.conn())
+        }).await
     }
 }

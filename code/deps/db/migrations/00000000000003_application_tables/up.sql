@@ -6,8 +6,6 @@ BEGIN
 END;
 $$ language 'plpgsql';
 
-CREATE EXTENSION IF NOT EXISTS pgcrypto CASCADE;
-
 
 create table if not exists users
 (
@@ -62,8 +60,7 @@ create table if not exists traders
 
 create table if not exists assignments
 (
-    exchange    text    not null,
-    pair        text    not null,
+    pair_id     integer not null,
     user_id     integer not null,
 
     period      text    not null,
@@ -71,7 +68,8 @@ create table if not exists assignments
 
     trader_id   integer,
 
-    primary key (exchange, pair, user_id),
+    primary key (pair_id, user_id),
+    foreign key (pair_id) references pairs (id) on delete cascade,
     foreign key (user_id) references users (id) on delete cascade,
     foreign key (strategy_id) references strategies (id) on delete cascade,
     foreign key (trader_id) references traders (id) on delete cascade
@@ -80,13 +78,10 @@ create table if not exists assignments
 create table if not exists evaluations
 (
     id          uuid                     not null default gen_random_uuid(),
-
-    exchange    text                     not null,
-    pair        text                     not null,
+    pair_id     integer                  not null,
     period      text                     not null,
 
     user_id     integer                  not null,
-
     strategy_id integer                  not null,
 
     time        timestamp with time zone not null default now(),
@@ -98,6 +93,7 @@ create table if not exists evaluations
     error       text,
 
     primary key (id),
+    foreign key (pair_id) references pairs (id) on delete cascade,
     foreign key (user_id) references users (id) on delete cascade,
     foreign key (strategy_id) references strategies (id) on delete cascade
 );
@@ -109,9 +105,7 @@ create table if not exists trades
 
     user_id   integer                  not null,
     trader_id integer                  not null,
-
-    exchange  varchar                  not null,
-    pair      varchar                  not null,
+    pair_id   integer                  not null,
 
     buy       boolean                  not null,
     amount    double precision         not null,
@@ -122,6 +116,7 @@ create table if not exists trades
     error     text,
 
     primary key (id),
+    foreign key (pair_id) references pairs (id) on delete cascade,
     foreign key (user_id) references users (id) on delete cascade,
     foreign key (trader_id) references traders (id) on delete cascade
 

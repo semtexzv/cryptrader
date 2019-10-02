@@ -1,1 +1,0 @@
-drop materialized view if exists pairs;

@@ -17,7 +17,7 @@ impl Actor for Rescaler {
 
 impl Rescaler {
     pub async fn new(client: anats::Client, db: Database) -> Result<Addr<Self>, failure::Error> {
-        Ok(Actor::create(move |ctx: &mut Context<Self>| {
+        Ok(Arbiter::start(move |ctx: &mut Context<Self>| {
             client.subscribe(crate::CHANNEL_OHLC_AGG, None, ctx.address().recipient::<OhlcUpdate>());
             Rescaler {
                 client,
@@ -35,6 +35,7 @@ impl Handler<OhlcUpdate> for Rescaler {
 
         self.client.publish(crate::CHANNEL_OHLC_RESCALED, msg.clone());
 
+        /*
         if msg.stable {
             let insert: Box<dyn ActorFuture<Actor=_, Item=_, Error=failure::Error>> =
                 if self.cache.get(&msg.spec.pair_id()).is_none() {
@@ -73,7 +74,8 @@ impl Handler<OhlcUpdate> for Rescaler {
 
 
             ctx.spawn(b.drop_err());
-
         }
+            */
+
     }
 }

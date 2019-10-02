@@ -1,0 +1,12 @@
+# src: https://github.com/helm/charts/tree/master/stable/prometheus
+server:
+  extraArgs: {}
+  resources:
+    requests: { cpu: 300m, memory: 400M }
+    limits: { cpu: 300m, memory: 400M   }
+
+alertmanager:
+  enabled: false
+
+pushgateway:
+  enabled: false

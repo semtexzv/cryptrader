@@ -118,7 +118,18 @@ pub struct IngestUpdate {
     pub ohlc: Vec<Ohlc>,
 }
 
-impl Message for IngestUpdate { type Result = (); }
+impl IngestUpdate {
+    pub fn new(spec: impl Into<OhlcSpec>, ohlc: impl Into<Vec<Ohlc>>) -> Self {
+        Self {
+            spec: spec.into(),
+            ohlc: ohlc.into(),
+        }
+    }
+}
+
+impl Message for IngestUpdate {
+    type Result = Result<(), ()>;
+}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct OhlcUpdate {

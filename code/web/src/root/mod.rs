@@ -18,7 +18,7 @@ async fn root(req: HttpRequest<State>) -> Result<impl Responder> {
 pub async fn pairs(req: HttpRequest<State>) -> Result<impl Responder> {
     let db: Database = req.state().db.clone();
     let base = BaseReqInfo::from_request(&req).await?;
-    let pairs: Vec<db::Pair> = db.pairs().compat().await?;
+    let pairs: Vec<db::Pair> = db.pairs().await?;
 
     Ok(Json(pairs).respond_to(&req)?)
 }

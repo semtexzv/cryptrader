@@ -10,5 +10,9 @@ pub use common::types::{
 };
 
 
-
-
+use common::metrics::*;
+lazy_static! {
+    pub static ref COUNTER_OHLC: IntCounterVec = {
+        register_int_counter_vec!("ohlc_ingest", "Number of OHLC received", &["exchange", "pair"]).unwrap()
+    };
+}

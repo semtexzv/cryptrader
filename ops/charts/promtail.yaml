@@ -1,0 +1,24 @@
+loki:
+  serviceName: 'loki'
+  servicePort: 3100
+  serviceScheme: http
+
+pipelineStages:
+- docker: {}
+- match:
+    # Rust env logger format parser
+    selector: '{app="trader"}'
+    stages:
+    - regex:
+        expression: '\[(?P<timestamp>.*)\s+(?P<level>[a-zA-Z]*)\s+(?P<module>.*)\]\s+(?P<content>.*)'
+    - template:
+        source: level
+        template: '{{ .Value | ToLower }}'
+    - labels:
+        level:
+        module:
+    - output:
+        source: content
+    - timestamp:
+        format: RFC3339Nano
+        source: timestamp

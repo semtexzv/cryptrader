@@ -11,7 +11,7 @@ pub async fn list(req: HttpRequest<State>) -> Result<impl Responder> {
     let base = BaseReqInfo::from_request(&req).await?;
     require_login!(base);
 
-    let traders = db.user_traders(base.auth.uid).compat().await?;
+    let traders = db.user_traders(base.auth.uid).await?;
 
     Ok(Json(traders).respond_to(&req)?)
 }
@@ -26,7 +26,7 @@ pub async fn post((req, id, form): (HttpRequest<State>, Option<Path<i32>>, Json<
         form.id = Some(id.into_inner());
     }
     require_login!(base);
-    let trader = db.save_trader(form).compat().await?;
+    let trader = db.save_trader(form).await?;
     Ok(Json(trader).respond_to(&req)?)
 }
 
@@ -35,7 +35,7 @@ pub async fn delete((req, id): (HttpRequest<State>, Path<i32>)) -> Result<impl R
     let base = BaseReqInfo::from_request(&req).await?;
     require_login!(base);
 
-    db.delete_trader(base.auth.uid,id.into_inner()).compat().await?;
+    db.delete_trader(base.auth.uid,id.into_inner()).await?;
 
     return Ok(HttpResponse::new(http::StatusCode::OK));
 }

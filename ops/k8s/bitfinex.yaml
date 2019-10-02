@@ -6,13 +6,13 @@ items:
     metadata:
       name: bitfinex
       labels: { app: trader }
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: '9001'
+        prometheus.io/path: '/metrics'
     spec:
       selector: { layer: sources, exch: bitfinex }
-      ports:
-        - name: def
-          port: 42042
-          targetPort: 42042
-
+      ports: [ { name: metrics, port: 9001, targetPort: 9001 }]
 
   - kind: Deployment
     apiVersion: apps/v1

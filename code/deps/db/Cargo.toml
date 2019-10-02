@@ -6,8 +6,6 @@ edition = "2018"
 
 [features]
 default = []
-scylla = ["cdrs", "cdrs_helpers_derive"]
-
 [dependencies]
 common = {path = "../../common"}
 serde = "*"
@@ -16,8 +14,6 @@ serde = "*"
 diesel = { version = "*", features = ["postgres", "r2d2", "chrono", "uuid"]}
 diesel_migrations = "*"
 
-cdrs = { version = "*", optional = true}
-cdrs_helpers_derive = { version = "*", optional = true }
 
 
 validator={ version = "*", default-features=false}

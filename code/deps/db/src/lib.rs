@@ -9,9 +9,7 @@ pub extern crate diesel;
 #[macro_use]
 pub extern crate diesel_migrations;
 
-
 pub extern crate validator;
-
 #[macro_use]
 pub extern crate validator_derive;
 
@@ -50,19 +48,27 @@ fn db_url() -> String {
 pub fn init_store() {
     info!("Initializing database");
     let url = db_url();
-    let connection = ConnType::establish(&url)
+    let connection = diesel::PgConnection::establish(&url)
         .expect("Error connecting to DB");
 
     embedded_migrations::run(&connection).unwrap();
     info!("Migrations performed");
 }
 
+use diesel::r2d2::{PooledConnection, Pool, ConnectionManager};
 
-pub type ConnType = diesel::PgConnection;
+pub type ConnType = PooledConnection<diesel::r2d2::ConnectionManager<diesel::PgConnection>>;
 pub type PoolType = diesel::r2d2::Pool<diesel::r2d2::ConnectionManager<diesel::PgConnection>>;
 
+pub struct DbWorker {
+    pub pool: PoolType
+}
 
-pub struct DbWorker(pub PoolType);
+impl DbWorker {
+    pub fn conn(&self) -> ConnType {
+        return self.pool.get().unwrap();
+    }
+}
 
 pub fn start() -> Database {
     init_store();
@@ -70,80 +76,30 @@ pub fn start() -> Database {
 
     let manager = diesel::r2d2::ConnectionManager::new(url);
     let pool = diesel::r2d2::Pool::builder()
-        .max_size(16)
+        .max_size(12)
         .build(manager)
         .expect("Failed to create connection pool");
 
-    return Database(SyncArbiter::start(3, move || DbWorker(pool.clone())), #[cfg(feature = "scylla")] scylla::connect());
+    return Database(SyncArbiter::start(12, move || DbWorker { pool: pool.clone() }));
 }
 
 impl Actor for DbWorker { type Context = SyncContext<Self>; }
 
 #[derive(Clone)]
-pub struct Database(Addr<DbWorker>, #[cfg(feature = "scylla")]  scylla::Scylla);
+pub struct Database(Addr<DbWorker>);
 
 
 use diesel::query_dsl::select_dsl::SelectDsl;
 use diesel::query_builder::{AsQuery, Query};
 use diesel::deserialize::QueryableByName;
 use diesel::associations::{HasTable, BelongsTo, Identifiable};
+
 use crate::repo::GetAllDsl;
 
+impl_invoke!(DbWorker);
 
 
-impl_invoke!(Database,DbWorker);
-
-#[macro_export]
-macro_rules! impl_invoke {
-    ($wrap:ty, $ty:ty) => {
-
-        use std::result::Result;
-        pub struct Invoke<F, R, E> (pub F)
-            where F: FnOnce(&mut $ty, &mut <$ty as Actor>::Context) -> Result<R, E> + Send + 'static,
-                  R: Send + 'static,
-                  E: Send + 'static;
-
-        impl<F, R, E> Message for Invoke<F, R, E>
-            where F: FnOnce(&mut $ty, &mut <$ty as Actor>::Context) -> Result<R, E> + Send + 'static,
-                  R: Send + 'static,
-                  E: Send + 'static {
-            type Result = Result<R, E>;
-        }
-
-        impl<F, R, E> Handler<Invoke<F, R, E>> for $ty
-            where F: FnOnce(&mut $ty, &mut <$ty as Actor>::Context) -> Result<R, E> + Send + 'static,
-                  R: Send + 'static,
-                  E: Send + 'static {
-            type Result = Result<R, E>;
-
-            fn handle(&mut self, msg: Invoke<F, R, E>, ctx: &mut Self::Context) -> Self::Result {
-                return msg.0(self, ctx);
-            }
-        }
-
-        impl $wrap {
-            #![allow(dead_code)]
-            pub fn invoke<F, R, E>(&self, f: F) -> BoxFuture<R, E>
-                where F: FnOnce(&mut $ty, &mut <$ty as Actor>::Context) -> Result<R, E> + Send + 'static,
-                      R: Send + 'static,
-                      E: Send + 'static + Debug
-            {
-                let req = self.0.send(Invoke(f));
-                let req: BoxFuture<R, E> = box req.then(|r| r.unwrap());
-                req
-            }
-
-            pub fn do_invoke<F, R, E>(&self, f: F)
-                where F: FnOnce(&mut $ty, &mut <$ty as Actor>::Context) -> Result<R, E> + Send + 'static,
-                      R: Send + 'static,
-                      E: Send + 'static + Debug
-            {
-                self.0.do_send(Invoke(f));
-            }
-        }
-
-    };
-}
-
-
-
+use diesel::pg::Pg;
+use diesel::query_builder::QueryFragment;
+use diesel::query_builder::QueryId;
+use diesel::types::HasSqlType;

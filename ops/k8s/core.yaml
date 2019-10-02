@@ -7,17 +7,13 @@ items:
     metadata:
       name: core
       labels: { app: trader}
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: '9000'
+        prometheus.io/path: '/metrics'
     spec:
       selector: { layer: core }
-      ports:
-        - name: core
-          port: 42042
-          targetPort: 42042
-
-        - name: trade
-          port: 42045
-          targetPort: 42045
-
+      ports: [ { name: metrics, port: 9000, targetPort: 9000 }]
 
   - kind: Deployment
     apiVersion: apps/v1

@@ -80,105 +80,34 @@ impl Ohlc {
             Ohlc::combine(c)
         }).collect()
     }
-
-    /*
-    pub fn rescale(values: &[Ohlc], period: &OhlcPeriod) -> Vec<Ohlc> {
-        if *period == OhlcPeriod::Min1 {
-            return Vec::from(values);
-        }
-        let count = period.seconds() / 60;
-        let chunks = values.chunks(count as usize);
-
-        let mut res = vec![];
-        for c in chunks {
-            res.push(Ohlc::combine(c.iter()));
-        }
-        return res;
-    }
-    */
 }
 
-
-/*
-impl ta::Open for Ohlc {
-    fn open(&self) -> f64 {
-        self.open
-    }
-}
-
-impl ta::High for Ohlc {
-    fn high(&self) -> f64 {
-        self.high
-    }
-}
-
-impl ta::Low for Ohlc {
-    fn low(&self) -> f64 {
-        self.low
-    }
-}
-
-impl ta::Close for Ohlc {
-    fn close(&self) -> f64 {
-        self.close
-    }
-}
-
-impl ta::Volume for Ohlc {
-    fn volume(&self) -> f64 {
-        self.vol
-    }
-}
-
-pub struct Indicator<T: ta::Next<f64>> {
-    indic: T,
-    current: Option<T::Output>,
-}
-
-impl<T> Indicator<T>
-    where T: ta::Next<f64> + Clone,
-          T::Output: Clone
-{
-    pub fn new(t: T) -> Self {
-        return Indicator {
-            indic: t,
-            current: None,
-        };
-    }
-    pub fn last(&self) -> T::Output {
-        self.current.clone().unwrap()
-    }
-}
-
-impl<T> ta::Next<Ohlc> for Indicator<T>
-    where T: ta::Next<f64> + Clone,
-          T::Output: Clone
-{
-    type Output = T::Output;
-
-    fn next(&mut self, input: Ohlc) -> Self::Output {
-        use ta::Close;
-
-        self.current = Some(self.indic.next(input.close()));
-
-        return self.current.clone().unwrap();
-    }
-}
-*/
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize, Serialize, PartialOrd, Ord)]
 pub enum OhlcPeriod {
+    #[serde(rename = "1m")]
     Min1,
+    #[serde(rename = "5m")]
     Min5,
+    #[serde(rename = "10m")]
     Min10,
+    #[serde(rename = "15m")]
     Min15,
+    #[serde(rename = "30m")]
     Min30,
+    #[serde(rename = "1h")]
     Hour1,
+    #[serde(rename = "2h")]
     Hour2,
+    #[serde(rename = "3h")]
     Hour3,
+    #[serde(rename = "6h")]
     Hour6,
+    #[serde(rename = "12h")]
     Hour12,
+    #[serde(rename = "1d")]
     Day1,
+    #[serde(rename = "1w")]
     Week1,
 }
 

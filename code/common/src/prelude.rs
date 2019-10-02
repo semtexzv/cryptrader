@@ -25,13 +25,17 @@ pub use json::json;
 pub use actix::{
     self,
     prelude::*,
-    fut::{self as afut, wrap_future, wrap_stream}};
-
+    fut::{self as afut, wrap_future, wrap_stream},
+};
 pub use actix_web;
+pub use itertools::Itertools;
+
 
 pub use url::Url;
 pub use log::{log, trace, debug, info, warn, error};
+pub use dotenv;
 pub use env_logger;
+pub use maplit::{hashmap, btreemap, hashset, btreeset};
 
 pub use bytes::{Bytes, BytesMut};
 
@@ -45,6 +49,7 @@ pub use base64;
 pub use chrono;
 pub use uuid;
 pub use anats;
+pub use prometheus;
 
 pub use futures::{self, prelude::*, future};
 pub use futures03::compat::Future01CompatExt as _;
@@ -124,7 +129,7 @@ pub fn measure_time<R, F>(f: F) -> (R, i64)
     let res = f();
     let t2 = Instant::now();
 
-    return (res, t2.duration_since(t1).as_millis() as _) ;
+    return (res, t2.duration_since(t1).as_millis() as _);
 }
 
 
@@ -210,6 +215,7 @@ impl<F> FutureExt for F where F: Future + Sized {}
 
 pub use self::FutureExt as _;
 use crate::types::TradePair;
+use actix::dev::ToEnvelope;
 
 
 pub fn hmac_sha384(secret: &str, data: &str) -> Vec<u8> {
@@ -257,9 +263,89 @@ pub fn f64_from_str_opt<'de, D>(deserializer: D) -> StdResult<Option<f64>, D::Er
     s.map(|s| f64::from_str(&s).map_err(::serde::de::Error::custom)).transpose()
 }
 
-pub fn tradepair_from_bfx<'de, D>(deserializer : D) -> StdResult<TradePair, D::Error>
-    where D : Deserializer<'de>
+pub fn tradepair_from_bfx<'de, D>(deserializer: D) -> StdResult<TradePair, D::Error>
+    where D: Deserializer<'de>
 {
     let s = <String>::deserialize(deserializer)?;
     Ok(TradePair::from_bfx_pair(&s))
+}
+
+pub struct Invoke<A, F, R> (pub F, pub PhantomData<A>)
+    where F: FnOnce(&mut A, &mut <A as Actor>::Context) -> R + Send + 'static,
+          A: Actor,
+          R: Send + 'static;
+
+impl<A, F, R> Message for Invoke<A, F, R>
+    where F: FnOnce(&mut A, &mut <A as Actor>::Context) -> R + Send + 'static,
+          A: Actor,
+          R: Send + 'static, {
+    type Result = Result<R, ()>;
+}
+
+unsafe impl<A, F, R> Send for Invoke<A, F, R>
+    where F: FnOnce(&mut A, &mut <A as Actor>::Context) -> R + Send + 'static,
+          A: Actor,
+          R: Send + 'static {}
+
+pub trait ActorExt<F, R>: Actor
+    where F: FnOnce(&mut Self, &mut Self::Context) -> R + Send + 'static,
+          R: Send + 'static,
+          Self: Handler<Invoke<Self, F, R>>,
+          Self::Context: ToEnvelope<Self, Invoke<Self, F, R>>
+{
+    fn invoke(addr: Addr<Self>, f: F) -> futures03::future::LocalBoxFuture<'static, R>
+    {
+        async move {
+            let invoke = Invoke(f, PhantomData);
+            let res = addr.send(invoke).compat().await.unwrap().unwrap();
+            res
+        }.boxed_local()
+    }
+}
+
+pub trait AddrExt<A, F, R>
+    where A: Actor + Handler<Invoke<A, F, R>>,
+          F: FnOnce(&mut A, &mut A::Context) -> R + Send + 'static,
+          R: Send + 'static,
+          A::Context: ToEnvelope<A, Invoke<A, F, R>> {
+    fn invoke(&self, f: F) -> futures03::future::LocalBoxFuture<'static, R>;
+}
+
+impl<A, F, R> AddrExt<A, F, R> for Addr<A>
+    where A: Actor + Handler<Invoke<A, F, R>>,
+          F: FnOnce(&mut A, &mut A::Context) -> R + Send + 'static,
+          R: Send + 'static,
+          A::Context: ToEnvelope<A, Invoke<A, F, R>> {
+    fn invoke(&self, f: F) -> futures03::future::LocalBoxFuture<'static, R> {
+        let addr = self.clone();
+        async move {
+            let invoke = Invoke(f, PhantomData);
+            let res = addr.send(invoke).compat().await.unwrap().unwrap();
+            res
+        }.boxed_local()
+    }
+}
+
+
+impl<A, F, R> ActorExt<F, R> for A
+    where Self: Actor + Handler<Invoke<A, F, R>>,
+          F: FnOnce(&mut Self, &mut Self::Context) -> R + Send + 'static,
+          R: Send + 'static,
+          Self: Handler<Invoke<Self, F, R>>,
+          Self::Context: ToEnvelope<Self, Invoke<Self, F, R>>
+{}
+
+#[macro_export]
+macro_rules! impl_invoke {
+    ($ty:ty) => {
+        impl<F, R> Handler<Invoke<Self, F, R>> for $ty
+            where F: FnOnce(&mut Self, &mut <Self as Actor>::Context) -> R + Send + 'static,
+                  R: Send + 'static, {
+            type Result = Result<R, ()>;
+
+            fn handle(&mut self, msg: Invoke<Self, F, R>, ctx: &mut Self::Context) -> Self::Result {
+                return Ok(msg.0(self, ctx));
+            }
+        }
+    };
 }

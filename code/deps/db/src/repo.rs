@@ -1,26 +1,36 @@
-use crate::prelude::*;
+use std::marker::PhantomData;
+
+use diesel::{insert_into, Identifiable, Table, ExpressionMethods, Expression, SelectableExpression};
+use diesel::connection::Connection;
 use diesel::query_builder::{Query, AsQuery, QueryFragment, QueryId, InsertStatement, AsChangeset, IntoUpdateTarget};
 use diesel::backend::Backend;
-use diesel::associations::HasTable;
+use diesel::associations::{HasTable, BelongsTo};
 use diesel::query_dsl::select_dsl::SelectDsl;
 use diesel::sql_types::HasSqlType;
 use diesel::helper_types::{Filter, Select};
 use diesel::expression::helper_types::SqlTypeOf;
-use diesel::dsl::{Eq, Update};
+use diesel::dsl::{FindBy, Eq, Update};
 use diesel::query_dsl::filter_dsl::{FilterDsl, FindDsl};
-use diesel::expression::AsExpression;
-use diesel::insert_into;
+use diesel::expression::{AsExpression, NonAggregate};
 use diesel::query_builder::UpdateStatement;
+use diesel::pg::Pg;
+
 
 pub struct Repository<DB: Backend, C: Connection<Backend=DB>>(PhantomData<(DB, C)>);
 
 
-type Id<T> = <T as Identifiable>::Id;
+//type IdOf<'a, T> = <&'a T as Identifiable>::Id;
 type TablePk<T> = <<T as HasTable>::Table as Table>::PrimaryKey;
+type TableOf<T> = <T as HasTable>::Table;
 
 pub trait GetAllDsl<T: HasTable> {
     type Output;
     fn get_all() -> Self::Output;
+}
+
+pub trait IdentifiedByDsl<Expr>: HasTable {
+    type Output;
+    fn identified_by(id: Expr) -> Self::Output;
 }
 
 impl<T: HasTable> GetAllDsl<T> for T
@@ -31,22 +41,47 @@ impl<T: HasTable> GetAllDsl<T> for T
     fn get_all() -> Self::Output { SelectDsl::select(T::table(), T::Table::all_columns()) }
 }
 
-
-pub trait GetOneDsl<T: Identifiable>
+pub trait ReferencedByDsl<'a, O, Expr>
+    where &'a O: Identifiable,
+          O: 'a
 {
     type Output;
-    fn get_one(id: Id<T>) -> Self::Output;
+    fn referenced_by(id: Expr) -> Self::Output;
 }
 
-impl<T> GetOneDsl<T> for T
-    where T: Identifiable,
-          T::Table: FilterDsl<Eq<TablePk<T>, Id<T>>>,
-          Id<T>: AsExpression<SqlTypeOf<TablePk<T>>>,
-          TablePk<T>: ExpressionMethods,
-{
-    type Output = Filter<T::Table, Eq<TablePk<T>, Id<T>>>;
 
-    fn get_one(id: Id<T>) -> Self::Output {
-        FilterDsl::filter(T::table(), T::table().primary_key().eq(id))
+impl<'a, T, Expr> IdentifiedByDsl<Expr> for T
+    where T: 'a + HasTable,
+          &'a Self: Identifiable,
+          TableOf<Self>: FilterDsl<Eq<TablePk<Self>, Expr>>,
+          Expr: AsExpression<SqlTypeOf<TablePk<Self>>>,
+          TablePk<Self>: ExpressionMethods
+{
+    type Output = FindBy<TableOf<Self>, TablePk<Self>, Expr>;
+
+    fn identified_by(id: Expr) -> Self::Output {
+        FilterDsl::filter(Self::table(), Self::table().primary_key().eq(id))
     }
+}
+
+
+impl<'a, This, Other: 'a, Expr> ReferencedByDsl<'a, Other, Expr> for This
+    where &'a Other: Identifiable,
+          This: HasTable + BelongsTo<Other>,
+          Expr: AsExpression<<This::ForeignKeyColumn as Expression>::SqlType>,
+          This::Table: FilterDsl<Eq<This::ForeignKeyColumn, Expr>>,
+          This::ForeignKeyColumn: ExpressionMethods,
+{
+    type Output = FindBy<TableOf<This>, This::ForeignKeyColumn, Expr>;
+
+    fn referenced_by(id: Expr) -> Self::Output {
+        FilterDsl::filter(This::table(), This::foreign_key_column().eq(id))
+    }
+}
+
+pub fn referenced_by<'a, This, Other, Expr>(id: Expr) -> This::Output
+    where &'a Other: Identifiable,
+          This: ReferencedByDsl<'a, Other, Expr>
+{
+    This::referenced_by(id)
 }

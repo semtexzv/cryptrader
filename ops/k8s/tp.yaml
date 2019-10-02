@@ -1,0 +1,21 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tp
+  labels:
+    app: tp
+spec:
+  replicas: 1  # only one replica
+  selector: { matchLabels: { app: tp }}
+  template:
+    metadata:
+      labels:
+        name: tp
+        app: tp
+    spec:
+      containers:
+        - name: tp
+          image: datawire/telepresence-k8s:0.101  # new image
+          resources:
+            requests: { cpu: 20m, memory: 80M }
+            limits: { cpu: 20m, memory: 80M }

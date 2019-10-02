@@ -5,16 +5,17 @@ pub mod order;
 
 
 use crate::prelude::*;
+use std::convert::TryFrom;
+use actix_web::ws::Message as WsMessage;
 use json;
 
 pub use self::auth::*;
 pub use self::candles::*;
 use common::types::{
     ticker::Ticker,
-    TradePair, PairId, OhlcSpec,
 };
 
-
+/*
 #[derive(Debug, Clone)]
 pub struct Msg(pub i32, pub String, pub json::Value);
 
@@ -170,12 +171,74 @@ pub struct Resp {
 }
 
 use common::serde::de::Error;
-use super::rest::types::SymbolDetail;
+*/
 
 pub fn nonce() -> u64 {
     return ::common::unixtime_millis() as u64;
 }
 
+#[derive(Debug, Deserialize, Serialize)]
+pub enum InfoTag { #[serde(rename = "info")]    _Info }
+
+
+#[derive(Debug, Deserialize, Serialize)]
+pub enum SubscribedTag { #[serde(rename = "subscribed")]    _Subscribed }
+
+#[derive(Debug, Deserialize, Serialize)]
+pub enum HeartbeatTag { #[serde(rename = "hb")]    _Hb }
+
+#[derive(Debug, Deserialize, Serialize)]
+pub struct ServerInfo {
+    event: InfoTag,
+    version: usize,
+    #[serde(rename = "serverId")]
+    id: String,
+    platform: json::Value,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct Subscribed {
+    pub event: SubscribedTag,
+    pub channel: String,
+    #[serde(rename = "chanId")]
+    pub channel_id: usize,
+    pub key: String,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct GeneralInfo {
+    pub event : InfoTag,
+    pub code : usize,
+    pub msg : String
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(untagged)]
+pub enum Message {
+    ServerInfo(ServerInfo),
+    Subscribed(Subscribed),
+    ChannelHeartbeat(usize, HeartbeatTag),
+    ChannelData(usize, json::Value),
+    General(GeneralInfo),
+    Unknown(json::Value),
+}
+
+impl TryFrom<WsMessage> for Message {
+    type Error = failure::Error;
+
+    fn try_from(value: WsMessage) -> Result<Self, Self::Error> {
+        match value {
+            WsMessage::Text(text) => {
+                Ok(json::from_str(&text)?)
+            }
+            other => {
+                bail!("Invalid message type")
+            }
+        }
+    }
+}
+
+/*
 impl<'de> Deserialize<'de> for Resp {
     fn deserialize<D>(deserializer: D) -> StdResult<Self, D::Error> where
         D: Deserializer<'de> {
@@ -188,7 +251,7 @@ impl<'de> Deserialize<'de> for Resp {
             pub chan_id: i32,
         }
 
-        let mut h: Help = json::from_value(data.clone()).map_err(|e| D::Error::custom("ABC"))?;
+        let mut h: Help = json::from_value(data.clone()).map_err(|_| D::Error::custom("ABC"))?;
 
         match h.event {
             EventType::Auth => {
@@ -198,7 +261,7 @@ impl<'de> Deserialize<'de> for Resp {
                 });
             }
             EventType::Sub => {
-                info!("Sub: {:?}", h);
+                debug!("Sub: {:?}", h);
                 return Ok(Resp {
                     chan_id: h.chan_id,
                     data: RespData::Sub(json::from_value::<SubData>(data).map_err(|e| D::Error::custom("ABC"))?),
@@ -207,17 +270,4 @@ impl<'de> Deserialize<'de> for Resp {
         }
     }
 }
-
-
-pub async fn get_available_symbols() -> Result<Vec<SymbolDetail>, failure::Error> {
-    use common::{
-        actix_web,
-        actix_web::*,
-    };
-
-    let req = client::get("https://api.bitfinex.com/v1/symbols_details").finish().unwrap();
-    let mut res = req.send().compat().await.unwrap();
-    let body: Vec<SymbolDetail> = res.json().limit(crate::BODY_LIMIT).compat().await.unwrap();
-
-    Ok(body)
-}
+*/

@@ -21,19 +21,22 @@ impl Actor for Ingest {
 }
 
 impl Handler<IngestUpdate> for Ingest {
-    type Result = ();
+    type Result = Result<(), ()>;
 
-    fn handle(&mut self, msg: IngestUpdate, ctx: &mut Context<Self>) {
-        trace!("Received ingest update : {:?} with : {:?} points", msg.spec, msg.ohlc.len());
+    fn handle(&mut self, msg: IngestUpdate, ctx: &mut Context<Self>) -> Self::Result {
+        info!("Received ingest update : {:?} with : {:?} points", msg.spec, msg.ohlc.len());
+        warn!("Received ingest update : {:?} with : {:?} points", msg.spec, msg.ohlc.len());
+        COUNTER_OHLC.with_label_values(&[&msg.spec.exchange().to_string(), &msg.spec.pair_id().to_string()]).inc_by(msg.ohlc.len() as _);
         self.apply_update(msg, ctx).unwrap();
+        Ok(())
     }
 }
 
 impl Ingest {
-    pub async fn new(client : anats::Client, db: Database) -> Result<Addr<Self>, failure::Error> {
-        let last = db.last_ohlc_values().compat().await?;
+    pub async fn new(client: anats::Client, db: Database) -> Result<Addr<Self>, failure::Error> {
+        let last = db.ohlc_lasts().await?;
 
-        Ok(Actor::create(move |ctx: &mut Context<Self>| {
+        Ok(Arbiter::start(move |ctx: &mut Context<Self>| {
             client.subscribe(crate::CHANNEL_OHLC_INGEST, None, ctx.address().recipient::<IngestUpdate>());
             Ingest {
                 client,
@@ -62,7 +65,7 @@ impl Ingest {
     fn new_stable(&mut self, id: &PairId, tick: Ohlc, uuid: Uuid) {
         let update = OhlcUpdate::new(OhlcSpec::from_pair_1m(id.clone()), tick.clone());
 
-        self.client.publish(crate::CHANNEL_OHLC_AGG,update);
+        self.client.publish(crate::CHANNEL_OHLC_AGG, update);
         self.set_last(id, tick);
     }
 
@@ -94,32 +97,30 @@ impl Ingest {
             let now = ::common::unixtime();
             let max_stable_time = now - 60;
 
+            let spec = data.spec;
             let mut filtered: Vec<Ohlc> = data.ohlc
-                .iter()
+                .into_iter()
                 .filter(|t| t.time >= last_time.saturating_sub(60))
-                .map(|x| x.clone())
                 .collect();
 
             filtered.sort_by_key(|x| x.time);
             let ids: Vec<Uuid> = filtered.iter().map(|i| Uuid::new_v4()).collect();
 
-            let f = this.db.do_save_ohlc(data.spec.pair_id().clone(), filtered.clone());
+            let f = this.db.do_save_ohlc(spec.pair_id().clone(), filtered.clone())
+                .boxed_local()
+                .compat();
+
             let f = wrap_future(f);
 
-            let data = data.clone();
-            let t1 = Instant::now();
-
             f.then(move |_, this: &mut Self, ctx| {
-                let id = data.spec.pair_id();
+                let id = spec.pair_id();
                 let now = ::common::unixtime();
                 let max_stable_time = now - 60;
 
-                let data = data.clone();
                 for (tick, uuid) in filtered.iter().zip(ids) {
-
                     let tick = tick.clone();
-                    let exch = data.spec.exch().clone();
-                    let pair = data.spec.pair().clone();
+                    let exch = spec.exch().clone();
+                    let pair = spec.pair().clone();
                     if tick.time > last_time && tick.time <= max_stable_time {
                         this.new_stable(id, tick, uuid);
                     } else if tick.time > last_time && tick.time > max_stable_time {
@@ -138,4 +139,40 @@ impl Ingest {
     }
 }
 
+
+pub struct Import {
+    client: anats::Client,
+
+    db: Database,
+}
+
+impl Import {
+    pub async fn new(client: anats::Client, db: Database) -> Addr<Self> {
+        Arbiter::start(|ctx: &mut Context<Self>| {
+            client.subscribe(common::CHANNEL_OHLC_IMPORT, common::GROUP_IMPORT_WORKERS.to_string(), ctx.address().recipient());
+            Import {
+                client,
+                db,
+            }
+        })
+    }
+}
+
+impl Actor for Import {
+    type Context = Context<Self>;
+}
+
+impl Handler<IngestUpdate> for Import {
+    type Result = ResponseActFuture<Self, (), ()>;
+
+    fn handle(&mut self, msg: IngestUpdate, ctx: &mut Self::Context) -> Self::Result {
+        info!("Importing {} {}", msg.ohlc.len(), msg.spec);
+        let fut = self.db.do_save_ohlc(msg.spec.pair_id().clone(), msg.ohlc)
+            .boxed_local()
+            .compat()
+            .map(|_| ())
+            .map_err(|_| warn!("Could not save ohlc"));
+        Box::new(wrap_future(fut))
+    }
+}
 

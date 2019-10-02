@@ -1,5 +1,5 @@
 use crate::prelude::*;
-use super::ohlc::{ OhlcPeriod};
+use super::ohlc::OhlcPeriod;
 
 
 #[derive(Debug, Clone, PartialOrd, PartialEq, Ord, Eq, Serialize, Deserialize)]
@@ -18,6 +18,7 @@ impl TradePair {
     pub fn bfx_trade_sym(&self) -> String {
         return format!("t{}{}", self.0, self.1);
     }
+    /// Parses a 'tBTCUSD' format
     pub fn from_bfx_trade_sym(sym: &str) -> TradePair {
         return TradePair(sym[1..4].to_string(), sym[4..].to_string());
     }
@@ -25,10 +26,10 @@ impl TradePair {
     pub fn to_bfx_pair(&self) -> String {
         return format!("{}{}", self.0, self.1);
     }
+    /// Parses a BTCUSD like format
     pub fn from_bfx_pair(pair: &str) -> Self {
         return TradePair((&pair[0..3]).to_string(), (&pair[3..]).to_string());
     }
-
 
     pub fn src(&self) -> &str {
         return &self.1;
@@ -62,23 +63,82 @@ impl ::std::str::FromStr for TradePair {
     }
 }
 
+/*
+impl Serialize for TradePair {
+    fn serialize<S>(&self, serializer: S) -> Result<<S as Serializer>::Ok, <S as Serializer>::Error> where
+        S: Serializer {
+        serializer.serialize_str(format!("{}:{}", self.0, self.1));
+    }
+}
+
+impl<'de> Deserialize<'de> for TradePair {
+    fn deserialize<D>(deserializer: D) -> Result<Self, <D as Deserializer<'de>>::Error> where
+        D: Deserializer<'de> {
+        struct V;
+        impl<'a> Visitor<'a> for V {
+            type Value = TradePair;
+
+
+            fn expecting(&self, formatter: &mut fmt::Formatter<'a>) -> fmt::Result<()> {
+                write!(formatter, "A str")
+            }
+
+            fn visit_str<E>(self, v: &str) -> Result<Self::Value, E> where
+                E: serde::de::Error, {
+                TradePair::from_str()
+            }
+        }
+        deserializer.deserialize_str()
+    }
+}
+*/
+
+#[derive(Debug, Clone, Deserialize, Serialize, PartialOrd, PartialEq, Ord, Eq, Hash)]
+pub enum Exchange {
+    #[serde(rename = "bitfinex")]
+    Bitfinex,
+    #[serde(rename = "coinbase")]
+    Coinbase,
+}
+
+impl Exchange {
+    pub const VALUES: &'static [Self] = &[Exchange::Bitfinex, Exchange::Coinbase];
+    pub const NAMES: &'static [&'static str] = &["bitfinex", "coinbase"];
+}
+
+impl std::fmt::Display for Exchange {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", Self::NAMES[Self::VALUES.iter().position(|v| v == self).unwrap()])
+    }
+}
+
+impl FromStr for Exchange {
+    type Err = ();
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        if let Some(pos) = Self::NAMES.iter().position(|v| v == &s) {
+            Ok(Self::VALUES[pos].clone())
+        } else { Err(()) }
+    }
+}
+
 #[derive(Debug, Clone, Deserialize, Serialize, PartialOrd, PartialEq, Ord, Eq)]
 pub struct PairId {
-    exch: String,
+    exch: Exchange,
     pair: TradePair,
 }
 
 impl PairId {
-    pub fn new(exch: impl Into<String>, pair: impl Into<TradePair>) -> Self {
+    pub fn new(exch: impl Into<Exchange>, pair: impl Into<TradePair>) -> Self {
         return PairId {
             exch: exch.into(),
             pair: pair.into(),
         };
     }
-    pub fn exch(&self) -> &str {
+    pub fn exch(&self) -> &Exchange {
         return &self.exch;
     }
-    pub fn exchange(&self) -> &str {
+    pub fn exchange(&self) -> &Exchange {
         return &self.exch;
     }
     pub fn pair(&self) -> &TradePair {
@@ -109,13 +169,13 @@ pub struct OhlcSpec {
 }
 
 impl OhlcSpec {
-    pub fn new(exch: impl Into<String>, pair: impl Into<TradePair>, period: impl Into<OhlcPeriod>) -> Self {
+    pub fn new(exch: impl Into<Exchange>, pair: impl Into<TradePair>, period: impl Into<OhlcPeriod>) -> Self {
         return OhlcSpec {
             pair: PairId::new(exch, pair),
             period: period.into(),
         };
     }
-    pub fn new_m(exch: impl Into<String>, pair: impl Into<TradePair>) -> Self {
+    pub fn new_m(exch: impl Into<Exchange>, pair: impl Into<TradePair>) -> Self {
         return Self::new(exch, pair, OhlcPeriod::Min1);
     }
     pub fn from_pair(pair: impl Into<PairId>, period: impl Into<OhlcPeriod>) -> Self {
@@ -128,10 +188,10 @@ impl OhlcSpec {
         return Self::from_pair(pair, OhlcPeriod::Min1);
     }
 
-    pub fn exch(&self) -> &str {
+    pub fn exch(&self) -> &Exchange {
         return self.pair.exch();
     }
-    pub fn exchange(&self) -> &str {
+    pub fn exchange(&self) -> &Exchange {
         return self.pair.exch();
     }
     pub fn pair_id(&self) -> &PairId {

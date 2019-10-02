@@ -1,0 +1,9 @@
+persistence:
+  enabled: true
+  storageClassName: do-block-storage
+  type: pvc
+
+
+resources:
+  requests: { cpu: 10m, memory: 60M }
+  limits: { cpu: 100m, memory: 60M   }

@@ -30,7 +30,7 @@ pub async fn login((request, login): (HttpRequest<State>, Json<UserAuthInfo>)) -
     }
 
     let password = login.password.clone();
-    let res: Result<db::User, _> = request.state().db.login(login).compat().await;
+    let res: Result<db::User, _> = request.state().db.login(login).await;
 
 
     return match res {
@@ -59,7 +59,7 @@ pub async fn signup((request, user): (HttpRequest<State>, Json<UserAuthInfo>)) -
 
     user.password = djangohashers::make_password(&user.password);
 
-    match request.state().db.new_user(user).compat().await {
+    match request.state().db.new_user(user).await {
         Ok(user) => {
             request.session().set("email", user.email).unwrap();
             request.session().set("uid", user.id).unwrap();

@@ -4,7 +4,7 @@ use crate::utils::*;
 use crate::users::middleware::UserAuthentication;
 use std::string::ToString;
 use actix_web::Path;
-use common::types::OhlcPeriod;
+use common::types::{OhlcPeriod, Exchange, TradePair, PairId};
 use db::{Database, Assignment};
 use actix_web::Json;
 
@@ -13,9 +13,9 @@ pub async fn list(req: HttpRequest<State>) -> Result<impl Responder> {
     let base = BaseReqInfo::from_request(&req).await?;
     require_login!(base);
 
-    let pairs: Vec<db::Pair> = db.pairs().compat().await?;
-    let assignments: Vec<db::Assignment> = db.assignments(base.auth.uid).compat().await?;
-    let strategies: Vec<db::Strategy> = db.user_strategies(base.auth.uid).compat().await?;
+    let pairs: Vec<db::Pair> = db.pairs().await?;
+    let assignments: Vec<db::Assignment> = db.assignments(base.auth.uid).await?;
+    let strategies: Vec<db::Strategy> = db.user_strategies(base.auth.uid).await?;
 
     Ok(Json(assignments).respond_to(&req)?)
 }
@@ -26,13 +26,14 @@ pub struct Assign {
     pub trader_id: Option<i32>,
 }
 
-pub async fn post((req, path, data): (HttpRequest<State>, Path<(String, String, String)>, Json<Assign>)) -> Result<impl Responder> {
+pub async fn post((req, path, data): (HttpRequest<State>, Path<(Exchange, String, OhlcPeriod)>, Json<Assign>)) -> Result<impl Responder> {
     let (exch, pair, period) = path.into_inner();
     let data = data.into_inner();
 
     let db: Database = req.state().db.clone();
     let base = BaseReqInfo::from_request(&req).await?;
     require_login!(base);
+    /*
     let assign = Assignment {
         exchange: exch,
         pair: pair,
@@ -41,24 +42,20 @@ pub async fn post((req, path, data): (HttpRequest<State>, Path<(String, String, 
         strategy_id: data.strategy_id,
         trader_id: data.trader_id,
     };
-    let res = db.save_assignment(assign).compat().await?;
+
+    let res = db.save_assignment(assign).await?;
+    let res = unimplemented!();
     return Ok(Json(res).respond_to(&req).unwrap());
+    */
+    unimplemented!()
 }
 
-pub async fn delete((req, path): (HttpRequest<State>, Path<(String, String, String)>)) -> Result<impl Responder> {
+pub async fn delete((req, path): (HttpRequest<State>, Path<(Exchange, String, OhlcPeriod)>)) -> Result<impl Responder> {
     let (exch, pair, period) = path.into_inner();
     let db: Database = req.state().db.clone();
     let base = BaseReqInfo::from_request(&req).await?;
     require_login!(base);
-    let assign = Assignment {
-        exchange: exch,
-        pair: pair,
-        period: period,
-        user_id: base.auth.uid,
-        strategy_id: 0,
-        trader_id: None,
-    };
-    db.delete_assignment(assign).compat().await?;
+    db.delete_assignment(PairId::new(exch, TradePair::from_str(&pair).unwrap()), base.auth.uid).await?;
     return Ok(HttpResponse::new(http::StatusCode::OK));
 }
 

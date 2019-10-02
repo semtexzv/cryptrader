@@ -15,9 +15,9 @@ pub async fn list_latest(req: HttpRequest<State>) -> Result<impl Responder> {
 
     let mut items: Vec<Evaluation> = vec![];
 
-    let strats = db.user_strategies(base.auth.uid).compat().await?;
+    let strats = db.user_strategies(base.auth.uid).await?;
     for s in strats {
-        let evals = db.get_evals(s.id).compat().await?;
+        let evals = db.strategy_evals(s.id).await?;
         items.extend_from_slice(&evals);
     }
     items.sort_by_key(|i| i.time);
@@ -32,7 +32,7 @@ pub async fn list_for_strat((req, id): (HttpRequest<State>, Path<i32>)) -> Resul
     require_login!(base);
 
     // TODO: Ensure user is owner of S
-    let evals = db.get_evals(id.into_inner()).compat().await?;
+    let evals = db.strategy_evals(id.into_inner()).await?;
     Ok(Json(evals).respond_to(&req)?)
 }
 

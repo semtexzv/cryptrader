@@ -14,7 +14,7 @@ use validator::Validate;
 #[derive(Insertable, Validate, Deserialize, Serialize, Debug)]
 #[table_name = "users"]
 pub struct UserAuthInfo {
-    #[validate(email(message = "Hmmm, invalid email provided."))]
+    #[validate(email(message = "Invalid email"))]
     pub email: String,
     pub password: String,
 }
@@ -30,29 +30,29 @@ impl Into<common::types::auth::AuthInfo> for Trader {
 }
 
 impl crate::Database {
-    pub fn get_user(&self, uid: i32) -> BoxFuture<User, diesel::result::Error> {
-        self.invoke::<_, _, diesel::result::Error>(move |this, ctx| {
+    pub async fn get_user(&self, uid: i32) -> Result<User, diesel::result::Error> {
+        ActorExt::invoke(self.0.clone(), move |this, ctx| {
             use crate::schema::users::dsl::*;
 
-            let conn: &ConnType = &this.0.get().unwrap();
+            let conn: &ConnType = &this.pool.get().unwrap();
 
             let res = users.filter(id.eq(uid)).get_result::<User>(conn)?;
             Ok(res)
-        })
+        }).await
     }
-    pub fn login(&self, login: UserAuthInfo) -> BoxFuture<User, diesel::result::Error> {
-        self.invoke(move |this, ctx| {
+    pub async fn login(&self, login: UserAuthInfo) -> Result<User, diesel::result::Error> {
+        ActorExt::invoke(self.0.clone(), move |this, ctx| {
             use crate::schema::users::dsl::*;
 
-            let conn: &ConnType = &this.0.get().unwrap();
+            let conn: &ConnType = &this.pool.get().unwrap();
             users.filter(email.eq(login.email)).get_result::<User>(conn)
-        })
+        }).await
     }
-    pub fn new_user(&self, user: UserAuthInfo) -> BoxFuture<User, diesel::result::Error> {
-        self.invoke(move |this, ctx| {
-            let conn: &ConnType = &this.0.get().unwrap();
+    pub async fn new_user(&self, user: UserAuthInfo) -> Result<User, diesel::result::Error> {
+        ActorExt::invoke(self.0.clone(), move |this, ctx| {
+            let conn: &ConnType = &this.pool.get().unwrap();
             let r = diesel::insert_into(users::table).values(&user).get_result::<User>(conn)?;
             Ok(r)
-        })
+        }).await
     }
 }

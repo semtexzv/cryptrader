@@ -32,17 +32,3 @@ build-k8s: $(K8S_BUILD_DIR) $(DOCKER_FILES)
 		mkdir -p `dirname "$(K8S_BUILD_DIR)/$$file"` ; \
 		$(LOAD_VARS) VERSION= envsubst <$(K8S_DIR)/$$file >$(K8S_BUILD_DIR)/$$file ;\
 	done
-
-ARCHIVE=xhorni14.zip
-clean:
-	rm -rf ./target
-	rm -rf $(ARCHIVE)
-
-doc:
-	$(MAKE) pdf -C thesis
-
-archive:
-	zip -r $(ARCHIVE) . -x "target/*" -x $(ARCHIVE) -x ".git/*"  -x "thesis/out" -x "cryptrader/*" -x "code/web/app/node_modules/*" \
-	-x "code/web/app/dist/*.map" -x "code/web/app/.cache/*" -x "thesis/*" -x ".idea/*" -x "EXCEL/*" -x "article/*"
-
-
