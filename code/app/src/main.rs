@@ -16,8 +16,7 @@ use clap::{App, ArgMatches, SubCommand};
 fn main() {
     common::init();
     let matches = App::new("Trader")
-        .subcommand(SubCommand::with_name("ingest"))
-        .subcommand(SubCommand::with_name("trader"))
+        .subcommand(SubCommand::with_name("core"))
         .subcommand(SubCommand::with_name("evaluator"))
         .get_matches();
 
@@ -32,7 +31,7 @@ fn main() {
 
 
             match matches.subcommand().0 {
-                "ingest" => {
+                "core" => {
                     let decider = ingest::decision::Decider::new(client.clone(), db.clone()).await.unwrap();
                     let rescaler = ingest::rescaler::Rescaler::new(client.clone(), db.clone()).await.unwrap();
                     let ingest = ingest::Ingest::new(client.clone(), db.clone()).await.unwrap();

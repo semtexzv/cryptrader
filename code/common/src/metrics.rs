@@ -13,5 +13,5 @@ pub fn metric_export() -> impl Responder {
 
 pub fn make_exporting_app() -> actix_web::App {
     actix_web::App::new()
-        .route("/metrics", actix_web::http::Method::GET, |req: actix_web::HttpRequest| metric_export())
+        .route("/metrics", actix_web::http::Method::GET, |_: actix_web::HttpRequest| metric_export())
 }

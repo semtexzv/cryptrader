@@ -22,6 +22,7 @@ items:
       labels: { app: trader }
     spec:
       replicas: 1
+      strategy: { type: Recreate }
       selector: { matchLabels: { app: trader, layer: core }}
       template:
         metadata:
@@ -31,8 +32,8 @@ items:
             - name: app
               image: ${APP_IMAGE}
               imagePullPolicy: Always
-              command: ["/app", "ingest"]
+              command: ["/app", "core"]
               env: *env
               resources:
-                requests: { cpu: 100m, memory: 100M }
-                limits: { cpu: 100m, memory: 100M }
+                requests: { cpu: 100m, memory: 60M }
+                limits: { cpu: 100m, memory: 60M }

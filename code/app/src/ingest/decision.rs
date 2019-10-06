@@ -60,10 +60,11 @@ impl Decider {
     pub fn reload(&mut self, ctx: &mut Context<Self>) {
         let addr = ctx.address().clone();
         let fut = async {
-            let req = ActorExt::invoke(addr.clone(), |this: &mut Self, ctx| {
+            let db = addr.invoke(|this: &mut Self, ctx| {
                 this.db.clone()
             }).await;
-            let req = req.all_assignments_with_traders().await.unwrap();
+
+            let req = db.all_assignments_with_traders().await.unwrap();
 
             ActorExt::invoke(addr.clone(), move |this: &mut Self, ctx| {
                 this.requests = BTreeMap::new();
@@ -75,7 +76,7 @@ impl Decider {
                 }
             }).await;
 
-            Ok::<_,()>(())
+            Ok::<_, ()>(())
         };
         //ctx.spawn(f.map(|_, _, _| ()).drop_err());
     }

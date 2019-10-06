@@ -8,11 +8,11 @@ items:
       labels: { app: trader }
       annotations:
         prometheus.io/scrape: "true"
-        prometheus.io/port: '9001'
+        prometheus.io/port: '9000'
         prometheus.io/path: '/metrics'
     spec:
       selector: { layer: sources, exch: bitfinex }
-      ports: [ { name: metrics, port: 9001, targetPort: 9001 }]
+      ports: [ { name: metrics, port: 9000, targetPort: 9000 }]
 
   - kind: Deployment
     apiVersion: apps/v1
@@ -21,6 +21,7 @@ items:
       labels: { app: trader }
     spec:
       replicas: 1
+      strategy: { type: Recreate }
       selector: { matchLabels: { app: trader, layer: sources, exch: bitfinex }}
       template:
         metadata:
@@ -32,6 +33,6 @@ items:
               imagePullPolicy: Always
               command: ["/app", "bitfinex"]
               env: [{name: "RUST_LOG", value: ${RUST_LOG}}, {name: "RUST_BACKTRACE", value: "full"}]
-              #resources:
-              #  requests: { cpu: 80m, memory: 100M }
-              #  limits: {cpu: 90m, memory: 100M }
+              resources:
+                requests: { cpu: 100m, memory: 100M }
+                limits: {cpu: 100m, memory: 100M }

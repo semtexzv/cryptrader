@@ -32,11 +32,14 @@ impl Handler<OhlcUpdate> for Rescaler {
     type Result = ();
 
     fn handle(&mut self, msg: OhlcUpdate, ctx: &mut Self::Context) -> Self::Result {
-
         self.client.publish(crate::CHANNEL_OHLC_RESCALED, msg.clone());
+        let addr = ctx.address();
 
-        /*
+
         if msg.stable {
+            let inserted = if let Some(last) = self.cache.get(&msg.spec.pair_id()) {
+                let time = unixtime() - 60 * 60 * 6;
+            };
             let insert: Box<dyn ActorFuture<Actor=_, Item=_, Error=failure::Error>> =
                 if self.cache.get(&msg.spec.pair_id()).is_none() {
                     let msg = msg.clone();
@@ -75,7 +78,5 @@ impl Handler<OhlcUpdate> for Rescaler {
 
             ctx.spawn(b.drop_err());
         }
-            */
-
     }
 }

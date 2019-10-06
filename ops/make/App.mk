@@ -15,9 +15,6 @@ CODE_FILES  := $(wildcard $(SRC_DIR)/*) $(wildcard $(SRC_DIR)/**/*) $(wildcard c
 DOCKERFILE  := ops/docker/Dockerfile # $(shell test -e $(SRC_DIR)/Dockerfile && echo "$(SRC_DIR)/Dockerfile" || echo "ops/docker/default.Dockerfile" )
 
 DOCKER_IMAGE_VAR = $(shell echo "$(APP_NAME)_IMAGE" | tr '-' '_' | tr '[:lower:]' '[:upper:]')
-
-# Cargo uses absolute paths in emitted dependencies, so we use absolute paths also
-
 DOCKER_MARK = target/docker/$(APP_NAME)
 
 # We use binary hash as unique identifier of a release of an application

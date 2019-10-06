@@ -55,10 +55,11 @@ pub fn run() {
         let db = db::start();
         server::new(move || {
 
+            /*
             let server = common::actix_web::server::new(||{
                 common::metrics::make_exporting_app()
-            }).bind("0.0.0.0:9002").unwrap().start();
-
+            }).bind("0.0.0.0:9000").unwrap().start();
+            */
 
             let mut app = App::with_state(State {
                 db: db.clone(),

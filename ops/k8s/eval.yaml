@@ -5,13 +5,17 @@ _: &env [{name: "RUST_LOG", value: ${RUST_LOG}}, {name: "RUST_BACKTRACE", value:
 items:
   - apiVersion: v1
     kind: Service
-    metadata: { name: eval, labels: { app: trader, layer: eval } }
+    metadata:
+      name: eval
+      labels: { app: trader, layer: eval }
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: '9000'
+        prometheus.io/path: '/metrics'
+
     spec:
       selector: { layer: eval }
-      ports:
-        - name: eval
-          port: 42042
-          targetPort: 42042
+      ports: [ { name: metrics, port: 9000, targetPort: 9000 }]
 
   - apiVersion: apps/v1
     kind: Deployment
@@ -20,6 +24,7 @@ items:
       labels: { app: trader, layer: eval }
     spec:
       replicas: 1
+      strategy: { type: Recreate }
       selector: { matchLabels: { app: trader, layer: eval }}
       template:
         metadata: { labels: { app: trader, layer: eval } }

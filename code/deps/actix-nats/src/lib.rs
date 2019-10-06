@@ -3,14 +3,11 @@
 
 use std::sync::Arc;
 use std::marker::PhantomData;
-use std::io::Sink;
 use std::collections::HashMap;
-use std::cell::RefCell;
 
 use serde::{Serialize, Deserialize, de::DeserializeOwned};
 use actix::prelude::*;
 use nats::nats_client::{NatsClient, NatsClientOptions};
-use actix::fut::wrap_future;
 use futures03::compat::Future01CompatExt;
 use futures03::{TryFutureExt, FutureExt};
 use futures::{Future, BoxFuture, Stream};

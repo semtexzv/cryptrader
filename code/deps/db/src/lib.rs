@@ -71,18 +71,21 @@ impl DbWorker {
 }
 
 pub fn start() -> Database {
+    with_size(8)
+}
+
+fn with_size(count : usize) -> Database {
     init_store();
     let url = db_url();
 
     let manager = diesel::r2d2::ConnectionManager::new(url);
     let pool = diesel::r2d2::Pool::builder()
-        .max_size(12)
+        .max_size(count as _)
         .build(manager)
         .expect("Failed to create connection pool");
 
-    return Database(SyncArbiter::start(12, move || DbWorker { pool: pool.clone() }));
+    return Database(SyncArbiter::start(count, move || DbWorker { pool: pool.clone() }));
 }
-
 impl Actor for DbWorker { type Context = SyncContext<Self>; }
 
 #[derive(Clone)]

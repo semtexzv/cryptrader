@@ -14,15 +14,15 @@ items:
       selector: { layer: web }
       type: NodePort
       ports:
-        - { name: metrics, port: 9001, targetPort: 9001 }
+        - { name: metrics, port: 9000, targetPort: 9000 }
         - name: http
           port: 8000
-          nodePort: 30000
+          nodePort: 32000
           targetPort: 8000
 
         - name: https
           port: 443
-          nodePort: 30001
+          nodePort: 32001
           targetPort: 443
 
   - kind: Deployment
@@ -44,9 +44,8 @@ items:
               command: ["/app", "web"]
               env: [{name: "RUST_LOG", value: ${RUST_LOG}}, {name: "WEBAPP_ROOT", value: "/src/app/dist"}]
               resources:
-                requests: { cpu: 100m, memory: 50M }
-                limits: { cpu: 100m, memory: 50M   }
-
+                requests: { cpu: 100m, memory: 80M }
+                limits: { cpu: 100m, memory: 80M   }
               ports:
               - containerPort: 8000
               - containerPort: 443
