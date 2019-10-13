@@ -7,7 +7,7 @@ pub struct CandleSpec(pub String, pub String, pub String);
 impl FromStr for CandleSpec {
     type Err = ();
 
-    fn from_str(s: &str) -> StdResult<Self, Self::Err> {
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
         let v = s.split(":")
             .map(|x| x.to_string())
             .collect::<Vec<String>>();
@@ -50,7 +50,7 @@ impl Into<Ohlc> for BfxCandle {
 }
 
 impl<'de> Deserialize<'de> for BfxCandle {
-    fn deserialize<D>(deserializer: D) -> StdResult<Self, D::Error> where
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error> where
         D: Deserializer<'de> {
         type Arr = (i64, f64, f64, f64, f64, f64);
 

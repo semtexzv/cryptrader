@@ -44,11 +44,12 @@ pub struct Decider {
 
 impl Decider {
     pub async fn new(client: anats::Client, db: db::Database) -> Result<Addr<Self>, failure::Error> {
-        Ok(Arbiter::start(move |ctx: &mut Context<Self>| {
-            client.subscribe(crate::CHANNEL_OHLC_RESCALED, None, ctx.address().recipient::<OhlcUpdate>());
-            ctx.run_interval(Duration::from_secs(5), |this, ctx| {
+        Ok(Self::start(move |addr| {
+            //client.subscribe(crate::CHANNEL_OHLC_RESCALED, None, ctx.address().recipient::<OhlcUpdate>());
+            /*ctx.run_interval(Duration::from_secs(5), |this, ctx| {
                 this.reload(ctx);
             });
+            */
             Decider {
                 client,
                 db,
@@ -58,7 +59,7 @@ impl Decider {
     }
 
     pub fn reload(&mut self, ctx: &mut Context<Self>) {
-        let addr = ctx.address().clone();
+        /*let addr = ctx.address().clone();
         let fut = async {
             let db = addr.invoke(|this: &mut Self, ctx| {
                 this.db.clone()
@@ -78,16 +79,20 @@ impl Decider {
 
             Ok::<_, ()>(())
         };
+        */
         //ctx.spawn(f.map(|_, _, _| ()).drop_err());
     }
 }
 
-impl Actor for Decider { type Context = Context<Self>; }
+impl Actor for Decider {  }
 
 impl Handler<OhlcUpdate> for Decider {
-    type Result = ();
 
-    fn handle(&mut self, msg: OhlcUpdate, ctx: &mut Self::Context) -> Self::Result {
+    type Future = impl Future<Output=()> + 'static;
+
+    fn handle(mut self : ContextRef<Self>, msg : OhlcUpdate) -> Self::Future {
+        async {}
+        /*
         if !msg.stable {
             return ();
         }
@@ -160,5 +165,6 @@ impl Handler<OhlcUpdate> for Decider {
                 ctx.spawn(Box::new(fut.boxed_local().compat().into_actor(self)));
             }
         }
+        */
     }
 }

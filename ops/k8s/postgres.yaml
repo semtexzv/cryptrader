@@ -60,11 +60,11 @@ items:
                   name: postgresdb
               resources:
                 requests:
-                  cpu: 200m
-                  memory: 400Mi
+                  cpu: 500m
+                  memory: 500Mi
                 limits:
-                  cpu: 200m
-                  memory: 400Mi
+                  cpu: 500m
+                  memory: 500Mi
           volumes:
             - name: postgresdb
               persistentVolumeClaim:

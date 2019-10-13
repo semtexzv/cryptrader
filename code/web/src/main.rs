@@ -51,10 +51,9 @@ pub fn static_file(req: HttpRequest<State>) -> Result<impl Responder> {
 }
 
 pub fn run() {
-    actix::System::run(|| {
+    common::ak::rt::run(async move {
         let db = db::start();
         server::new(move || {
-
             /*
             let server = common::actix_web::server::new(||{
                 common::metrics::make_exporting_app()

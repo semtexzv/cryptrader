@@ -20,8 +20,11 @@ failure_derive="*"
 
 bytes = { version = "*", features = ["serde"] }
 
-futures03 = {package = "futures-preview", version = "0.3.0-alpha.18", features = ["compat"]}
-futures = "*"
+ak = "*"
+anats = { package = "actix-nats" , path = "../deps/actix-nats" }
+
+futures = {package = "futures-preview", version = "0.3.0-alpha.19", features = ["compat"]}
+prometheus = "*"
 itertools="*"
 
 url = "*"
@@ -33,9 +36,3 @@ sha2 = "*"
 chrono = { version = "*", features = ["serde"]}
 base64 = "*"
 
-tokio = { version ="*"}
-
-actix = { version = "=0.7", default-features=false }
-actix-web = { version = "=0.7", features = ["tls"]}
-prometheus = "0.7.0"
-anats = { package = "actix-nats", path = "../deps/actix-nats"}

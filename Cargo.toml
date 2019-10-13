@@ -2,8 +2,11 @@
 members = ["code/app","code/web/", "code/bitfinex", "code/common","code/deps/*"]
 
 [profile.dev]
-opt-level=0
+opt-level=1
 codegen-units=2
 lto = false
 debug-assertions = false
 
+[patch.crates-io]
+ak-rt = { path = "../ak/ak-rt" }
+ak = { path = "../ak" }

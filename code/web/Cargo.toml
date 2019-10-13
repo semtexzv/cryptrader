@@ -15,4 +15,5 @@ db = { path = "../deps/db" }
 mime = "0.3"
 mime_guess = "2.0.1"
 
+actix-web = { version = "=0.7", features = ["tls"]}
 djangohashers = "^0.3"

@@ -1,5 +1,6 @@
 use crate::prelude::*;
 use crate::types::*;
+use ak::Message;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PositionRequest {
@@ -128,7 +129,7 @@ impl IngestUpdate {
 }
 
 impl Message for IngestUpdate {
-    type Result = Result<(), ()>;
+    type Result = ();
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

@@ -42,13 +42,13 @@ pub struct NewTradeData {
 
 impl crate::Database {
     pub async fn user_traders(&self, uid: i32) -> Result<Vec<Trader>> {
-        ActorExt::invoke(self.0.clone(), move |this, ctx| {
+        ActorExt::invoke(self.0.clone(), move |this| {
             referenced_by::<Trader, User, _>(&uid).load(&this.conn())
         }).await
     }
 
     pub async fn save_trader(&self, trader: TraderData) -> Result<Trader> {
-        self.0.invoke(move |this, ctx| {
+        self.0.invoke(move |this| {
             use crate::schema::traders::dsl::*;
             let conn: &ConnType = &this.pool.get().unwrap();
             let q = diesel::insert_into(traders)
@@ -62,7 +62,7 @@ impl crate::Database {
     }
 
     pub async fn delete_trader(&self, uid: i32, tid: i32) -> Result<bool> {
-        self.0.invoke(move |this, ctx| {
+        self.0.invoke(move |this| {
             use crate::schema::traders::dsl::*;
             let conn: &ConnType = &this.pool.get().unwrap();
             let q = diesel::delete(traders)
@@ -74,7 +74,7 @@ impl crate::Database {
     }
 
     pub async fn log_trade(&self, trade: NewTradeData) -> Result<Trade> {
-        self.0.invoke(move |this, ctx| {
+        self.0.invoke(move |this| {
             use self::trades::dsl::*;
 
             diesel::insert_into(trades)
@@ -86,7 +86,7 @@ impl crate::Database {
     }
 
     pub async fn user_trades(&self, uid: i32) -> Result<Vec<Trade>> {
-        ActorExt::invoke(self.0.clone(), move |this, ctx| {
+        ActorExt::invoke(self.0.clone(), move |this| {
             referenced_by::<Trade, User, _>(&uid)
                 .order_by(schema::trades::time.desc())
                 .limit(20)

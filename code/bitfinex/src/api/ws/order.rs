@@ -57,7 +57,7 @@ pub struct NewOrderMsg {
 }
 
 impl Serialize for NewOrderMsg {
-    fn serialize<S>(&self, serializer: S) -> StdResult<S::Ok, S::Error> where
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error> where
         S: Serializer {
         return (0, "on", None as Option<i32>, &self.ord).serialize(serializer);
     }

@@ -9,6 +9,7 @@ pub use common::types::{
     Ohlc, OhlcSpec, OhlcPeriod, TradePair, PairId, TradingPosition,
 };
 
+pub use std::future::Future;
 
 use common::metrics::*;
 lazy_static! {

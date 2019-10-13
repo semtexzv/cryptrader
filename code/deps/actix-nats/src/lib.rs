@@ -1,26 +1,27 @@
 #![feature(trait_alias)]
 #![feature(box_syntax)]
+#![feature(type_alias_impl_trait)]
+#![feature(arbitrary_self_types)]
 
 use std::sync::Arc;
 use std::marker::PhantomData;
 use std::collections::HashMap;
 
 use serde::{Serialize, Deserialize, de::DeserializeOwned};
-use actix::prelude::*;
-use nats::nats_client::{NatsClient, NatsClientOptions};
-use futures03::compat::Future01CompatExt;
-use futures03::{TryFutureExt, FutureExt};
-use futures::{Future, BoxFuture, Stream};
-use futures::future::{ok, result};
 
-pub async fn connect(name: impl Into<String>, addr: impl Into<String>) -> Arc<NatsClient> {
-    let options = NatsClientOptions::builder()
-        .cluster_uris(vec!(addr.into()))
-        .build()
-        .unwrap();
+use ak::*;
+use ak::addr::*;
+use futures::{TryStreamExt, StreamExt};
+use futures::async_await::pending_once;
+use tokio::future::FutureExt;
+use std::time::Duration;
 
-    let client = NatsClient::from_options(options).compat().await.unwrap();
-    NatsClient::connect(&client).compat().await.unwrap();
+pub async fn connect(name: impl Into<String>, addr: impl Into<String>) -> nats::Client {
+    let addr = addr.into().parse().unwrap();
+    let client = nats::Client::new(vec![addr]);
+
+    client.connect_mut().await.name(name.into());
+    client.connect().await;
 
     client
 }
@@ -38,7 +39,7 @@ pub(crate) struct Subscribe<T: RemoteMessage> {
 }
 
 impl<T: RemoteMessage> Message for Subscribe<T> {
-    type Result = Result<String, ()>;
+    type Result = String;
 }
 
 impl<T: RemoteMessage + 'static> Subscribe<T> {
@@ -60,129 +61,92 @@ pub struct Publish<M: RemoteMessage> {
 }
 
 impl<M: RemoteMessage> Message for Publish<M> {
-    type Result = Result<M::Result, MailboxError>;
+    type Result = Result<M::Result, ()>;
 }
 
 
 pub(crate) struct ClientWorker {
-    client: Arc<NatsClient>,
-    subs: HashMap<String, SpawnHandle>,
+    client: nats::Client,
 }
 
-impl actix::Actor for ClientWorker {
-    type Context = Context<Self>;
-}
+impl Actor for ClientWorker {}
 
 
 impl<T: RemoteMessage> Handler<Subscribe<T>> for ClientWorker {
-    type Result = Result<String, ()>;
+    type Future = impl Future<Output=String> + 'static;
 
-    fn handle(&mut self, msg: Subscribe<T>, ctx: &mut Self::Context) -> Self::Result {
+    fn handle(mut self: ContextRef<Self>, msg: Subscribe<T>) -> Self::Future {
+        use futures::stream::StreamExt;
+
+        println!("Subscribing");
         let client = self.client.clone();
-        let recipient = msg.rec.clone();
 
-        let sid = nuid::next();
-        let sub = nats::ops::Subscribe::builder()
-            .subject(msg.name)
-            .sid(sid.clone())
-            .queue_group(msg.group)
-            .build().unwrap();
+        async move {
+            let mut sub = msg.name.parse().unwrap();
+            let (sid, src) = client.subscribe(&sub, 2).await.unwrap();
 
-        use futures::future::ok;
+            let folder = move |(client, rec): (nats::Client, Recipient<T>), i: nats::Msg| async move {
+                println!("Sub msg received");
+                let mut req_data = json::from_slice(i.payload()).expect("Msg deserialization");
+                if let Some(reply_to) = i.reply_to() {
+                    let mut response = rec.send(req_data).await.unwrap();
+                    let data = json::to_vec(&response).expect("response serialization");
 
+                    client.publish(reply_to, &data).await;
+                    (client, rec)
+                } else {
+                    rec.send(req_data).await.unwrap();
+                    (client, rec)
+                }
+            };
 
-        let folder = move |(client, rec): (Arc<NatsClient>, Recipient<T>), i: nats::ops::Message| -> BoxFuture<(_, _), _> {
-            let req = json::from_slice(&i.payload).expect("Msg deserialization");
-            //println!("Sub recvd : {:?} => {:?} ", i, req);
-            if let Some(reply_to) = i.reply_to {
-                let res = rec.send(req);
-                box res.map_err(|e| nats::error::RatsioError::GenericError("Mailbox".to_string())).and_then(|reply_data| {
-                    let data = json::to_vec(&reply_data).expect("Msg serialization");
+            let finished = src.fold((client, msg.rec), folder);
 
-                    let pub_reply = nats::ops::Publish::builder()
-                        .subject(reply_to)
-                        .payload(data)
-                        .build().expect("Publish builder");
+            self.spawn(|this| async {
+                println!("Spawning folder");
+                finished.await;
+            });
 
-                    client.publish(pub_reply)
-                        .map(|_| (client, rec))
-                })
-            } else {
-                rec.do_send(req).unwrap();
-                box ok((client, rec))
-            }
-        };
-
-        let handle = ctx.spawn(self.client.subscribe(sub)
-            .and_then(move |stream| {
-                stream.fold((client, recipient), folder)
-            })
-            .map(|_| ())
-            .map_err(|e| panic!("{:?}", e))
-            .into_actor(self));
-
-        self.subs.insert(sid.clone(), handle);
-        Ok(sid)
+            format!("{}", sid)
+        }
     }
 }
 
 impl<T: RemoteMessage> Handler<Publish<T>> for ClientWorker {
-    type Result = ResponseActFuture<Self, T::Result, MailboxError>;
+    type Future = impl Future<Output=Result<T::Result, ()>>;
 
-    fn handle(&mut self, msg: Publish<T>, _ctx: &mut Self::Context) -> Self::Result {
+    fn handle(mut self: ContextRef<Self>, msg: Publish<T>) -> Self::Future {
         let client = self.client.clone();
-        Box::new(async move {
+        async move {
+            println!("Handling send msg");
             let subject = msg.subject.parse().unwrap();
-            let rep = format!("{}-{}", subject, nuid::next());
+            let rep = format!("{}-{}", subject, nuid::next()).parse().unwrap();
             let data = json::to_vec(&msg.data).unwrap();
             let sid = nuid::next();
-
-            let publish = nats::ops::Publish::builder()
-                .reply_to(if msg.is_req { Some(rep.clone()) } else { None })
-                .subject(subject)
-                .payload(data)
-                .build()
-                .unwrap();
+            println!("Handling send msg");
+            let _ = client.publish(&subject, &data).await;
 
             if msg.is_req {
-                let sub = nats::ops::Subscribe::builder()
-                    .subject(rep)
-                    .sid(sid.clone())
-                    .build().unwrap();
+                let (sid, recvr) = client.subscribe(&rep, 2).await.unwrap();
+                client.unsubscribe_with_max_msgs(sid, 1).await.unwrap();
 
-                let unsub = nats::ops::UnSubscribe::builder()
-                    .sid(sid)
-                    .max_msgs(Some(2))
-                    .build().unwrap();
-
-                let stream = client.subscribe(sub).compat().await.expect("Subscribe");
-                client.unsubscribe(unsub).compat().await.expect("Unsubscribe");
-                client.publish(publish).compat().await.expect("Publish");
-                match stream.into_future().compat().await {
-                    Ok((Some(reply), _)) => {
-                        //println!("Returning value");
-                        let reply: T::Result = json::from_slice(&reply.payload).unwrap();
-                        Ok(reply)
+                match recvr.into_future().timeout(Duration::from_secs(1)).await {
+                    Ok((Some(rep), _)) => {
+                        let reply: T::Result = json::from_slice(&rep.payload()).unwrap();
+                        return Ok(reply);
                     }
-                    Ok((None, _)) => {
-                        println!("Returning error, stream closed");
-                        Err(MailboxError::Closed)
-                    }
-                    Err((e,_)) => {
-                        println!("Returning error, reply closed : {:?}", e);
-                        Err(MailboxError::Closed)
+                    Ok((None, _)) | Err(_) => {
+                        panic!("Returning error, stream closed");
+                        return Err(());
                     }
                 }
             } else {
-                let res = client.publish(publish).compat().await.expect("Publish");
-                //println!("Returning error because this is only a notification");
-                //Err(nats::error::RatsioError::GenericError("Bla".to_string()))
-                Err(MailboxError::Closed)
+                client.publish(&subject, data.as_ref()).await.expect("Publish");
+                return Err(());
             }
-        }.boxed_local().compat().into_actor(self))
+        }
     }
 }
-
 
 #[derive(Clone)]
 pub struct Client {
@@ -192,35 +156,45 @@ pub struct Client {
 impl Client {
     pub async fn new(addr: impl Into<String>) -> Self {
         let client = connect(nuid::next(), addr).await;
-        let addr = Actor::create(|_ctx| {
+        let addr = Actor::start(|addr| {
             ClientWorker {
                 client,
-                subs: HashMap::new(),
             }
         });
         Client { addr }
     }
 
     pub fn subscribe<T>(&self, topic: impl Into<String>, queue: impl Into<Option<String>>, addr: Recipient<T>)
+                        -> impl Future<Output=()> + 'static
         where
             T: RemoteMessage + Send
     {
-        let _ = self.addr.do_send(Subscribe::new(topic, queue, addr));
+        let fut = self.addr.send(Subscribe::new(topic, queue, addr));
+
+        async { fut.await.unwrap(); }
     }
 
     pub fn publish<T>(&self, topic: impl Into<String>, data: T)
+                      -> impl Future<Output=()> + 'static
         where T: RemoteMessage
     {
-        let _ = self.addr.do_send(Publish { data, subject: topic.into(), is_req: false });
+        let fut = self.addr.send(Publish { data, subject: topic.into(), is_req: false });
+        async {
+            println!("Awaiting send future");
+            let _ = fut.await;
+        }
     }
 
-    pub fn request<T>(&self, topic: impl Into<String>, data: T) -> Box<dyn Future<Item=T::Result, Error=MailboxError>>
+    pub fn request<T>(&self, topic: impl Into<String>, data: T)
+                      -> impl Future<Output=Result<T::Result, ()>>
         where T: RemoteMessage
     {
         let addr = self.addr.clone();
         let topic = topic.into();
-        let sent: BoxFuture<Result<T::Result, MailboxError>, MailboxError> = box addr.send(Publish { data, subject: topic, is_req: true });
+        let sent = addr.send(Publish { data, subject: topic, is_req: true });
 
-        box sent.and_then(|r| result(r))
+        async {
+            sent.await.unwrap()
+        }
     }
 }

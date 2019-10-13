@@ -71,7 +71,7 @@ pub struct DbOhlc {
 
 impl Scylla {
     pub fn save(&self, id: PairId, ohlc: Vec<Ohlc>) {
-        return self.do_invoke::<_, _, failure::Error>(move |this, ctx| {
+        return self.do_invoke::<_, _, failure::Error>(move |this| {
             let (_,t) = measure_time(|| {
                 let new_ohlc: Vec<DbOhlc> = ohlc.iter().map(|candle| {
                     DbOhlc {
@@ -105,7 +105,7 @@ impl Scylla {
         });
     }
     pub fn last_ohlcs(&self) -> BoxFuture<(), ()> {
-        return self.invoke(move |this, ctx| {
+        return self.invoke(move |this| {
             #[derive(Clone, Debug, IntoCDRSValue, TryFromRow, PartialEq)]
             pub struct Pair {
                 pub exchange: String,

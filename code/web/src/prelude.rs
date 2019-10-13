@@ -1,16 +1,14 @@
-pub use common::{
-    prelude::*,
-    actix_web::{
+pub use common::{prelude::*,};
+pub use actix_web::{
+    self,
+    http::{
         self,
-        http::{
-            self,
-            Method,
-        },
-        dev::*,
-        Responder, HttpRequest, App, AsyncResponder, server, HttpResponse,
-        Form, Path, Json,
-        middleware::session::RequestSession,
+        Method,
     },
+    dev::*,
+    Responder, HttpRequest, App, AsyncResponder, server, HttpResponse,
+    Form, Path, Json,
+    middleware::session::RequestSession,
 };
 pub use db::diesel;
 pub use crate::utils::*;
@@ -58,7 +56,7 @@ impl actix_web::ResponseError for Error {
 
 impl Error {
     pub fn from_resp(req: &HttpRequest<State>, code: http::StatusCode, resp: impl Responder<Item=HttpResponse>) -> Self {
-        let resp: StdResult<HttpResponse, _> = resp.respond_to(req)
+        let resp: Result<HttpResponse, _> = resp.respond_to(req)
             .map(|r| r.into());
         match resp {
             Ok(mut resp) => {

@@ -4,7 +4,7 @@ use common::types::Exchange;
 
 impl Database {
     pub fn all_assignments_with_traders(&self) -> LocalBoxFuture<Result<Vec<(Assignment, Option<Trader>)>>> {
-        ActorExt::invoke(self.0.clone(), move |this, ctx| {
+        ActorExt::invoke(self.0.clone(), move |this| {
             use crate::schema::assignments;
             use crate::schema::traders;
 
@@ -15,17 +15,17 @@ impl Database {
                 .load(conn)?;
 
             Ok(res)
-        }).boxed_local()
+        })
     }
 
     pub async fn assignments(&self, uid: i32) -> Result<Vec<Assignment>> {
-        self.0.invoke(move |this, ctx| {
+        self.0.invoke(move |this| {
             referenced_by::<Assignment, User, _>(&uid).load(&this.conn())
         }).await
     }
 
     pub async fn save_assignment(&self, req: Assignment) -> Result<Assignment> {
-        self.0.invoke(move |this, ctx| {
+        self.0.invoke(move |this| {
             use schema::assignments::dsl::*;
             let conn: &ConnType = &this.pool.get().unwrap();
             let s = diesel::insert_into(assignments)
@@ -43,7 +43,7 @@ impl Database {
     }
 
     pub async fn delete_assignment(&self, pair: PairId, uid: i32) -> Result<()> {
-        ActorExt::invoke(self.0.clone(), move |this, ctx| {
+        ActorExt::invoke(self.0.clone(), move |this| {
             use schema::assignments::dsl::*;
             let conn: &ConnType = &this.pool.get().unwrap();
 

@@ -12,8 +12,8 @@ pub struct Trader {
 
 impl Trader {
     pub async fn new(client: anats::Client, db: db::Database) -> Result<Addr<Self>> {
-        Ok(Actor::create(|ctx| {
-            client.subscribe(crate::CHANNEL_POSITION_REQUESTS, None, ctx.address().recipient());
+        Ok(Self::start_async(|addr| async move {
+            client.subscribe(crate::CHANNEL_POSITION_REQUESTS, None, addr.recipient()).await;
             Self {
                 client,
                 db,
@@ -23,20 +23,19 @@ impl Trader {
 }
 
 
-impl Actor for Trader { type Context = Context<Self>; }
+impl Actor for Trader {}
 
 impl Handler<PositionRequest> for Trader {
-    type Result = ResponseActFuture<Self, PositionResponse, ExchangeError>;
+    type Future = impl Future<Output=Result<PositionResponse, ExchangeError>>;
 
-    fn handle(&mut self, msg: PositionRequest, ctx: &mut Self::Context) -> Self::Result {
-        let client = self.client.clone();
+    #[ak::suspend]
+    fn handle(mut self: ContextRef<Self>, msg: PositionRequest) -> Self::Future {
         info!("Position request : {:?}", msg);
-        Box::new(async move {
+        async move {
             let balance = BalanceRequest::new(msg.exch, msg.api_key, msg.api_secret, msg.pair.pair().clone());
-            let balance: BalanceResponse = client.request(crate::CHANNEL_BALANCE_REQUESTS, balance).compat().await.unwrap()?;
+            let balance: BalanceResponse = self.client.request(crate::CHANNEL_BALANCE_REQUESTS, balance).await.unwrap()?;
             Err(ExchangeError::InvalidFunds("".to_string()))
-        }.boxed_local().compat().into_actor(self))
+        }
     }
 }
-
 

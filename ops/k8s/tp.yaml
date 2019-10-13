@@ -5,6 +5,7 @@ metadata:
   labels:
     app: tp
 spec:
+  strategy: { type: Recreate }
   replicas: 1  # only one replica
   selector: { matchLabels: { app: tp }}
   template:
@@ -15,7 +16,7 @@ spec:
     spec:
       containers:
         - name: tp
-          image: datawire/telepresence-k8s:0.101  # new image
+          image: datawire/telepresence-k8s:0.102  # new image
           resources:
-            requests: { cpu: 20m, memory: 80M }
-            limits: { cpu: 20m, memory: 80M }
+            requests: { cpu: 200m, memory: 100M }
+            limits: { cpu: 200m, memory: 100M }

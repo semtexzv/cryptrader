@@ -1,8 +1,7 @@
 use crate::prelude::*;
-use actix_web::client;
+use hyper::{client::Client, Response, Body};
 use common::types::auth::AuthInfo;
 
-use actix_web::HttpMessage;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SymbolDetail {
@@ -13,9 +12,7 @@ pub struct SymbolDetail {
 }
 
 pub async fn get_available_symbols() -> Result<Vec<SymbolDetail>, failure::Error> {
-
-
-    let req = client::get("https://api.bitfinex.com/v1/symbols_details").finish().unwrap();
+    let req = client().get("https://api.bitfinex.com/v1/symbols_details".parse().unwrap()).await?;
     let res = req.send().compat().await.unwrap();
     let body: Vec<SymbolDetail> = res.json().limit(crate::BODY_LIMIT).compat().await.unwrap();
 
@@ -26,7 +23,7 @@ pub async fn get_available_symbols() -> Result<Vec<SymbolDetail>, failure::Error
 pub async fn req_v1(info: &AuthInfo,
                     path: impl Into<String>,
                     mut body: json::Value)
-                    -> StdResult<client::ClientResponse, actix_web::Error>
+                    -> Result<Response<Body>, hyper::Error>
 {
     let path = path.into();
     let nonce = unixtime_millis();
@@ -41,7 +38,7 @@ pub async fn req_v1(info: &AuthInfo,
     let payload = ::common::base64::encode(&body_str);
     let sig = hex(&hmac_sha384(&info.secret, &payload));
 
-    let mut req = client::post(url)
+    let mut req = client().post(url.parse())
         .header("Content-Type", "application/json")
         .header("Accept", "application/json")
         .header("X-BFX-APIKEY", info.key.clone())
@@ -57,7 +54,7 @@ pub async fn req_v1(info: &AuthInfo,
     if (resp.status().as_u16() / 100) >= 4 {
         let body = resp.body().compat().await?;
         let txt = String::from_utf8_lossy(&body).into_owned();
-        return Err(actix_web::error::ErrorUnauthorized(txt).into());
+        panic!("Not autohorized");
     }
     return Ok(resp);
 }
@@ -74,7 +71,7 @@ pub struct WalletInfo {
     pub available: f64,
 }
 
-pub async fn wallet_info(auth: AuthInfo) -> Result<Vec<WalletInfo>, actix_web::Error> {
+pub async fn wallet_info(auth: AuthInfo) -> Result<Vec<WalletInfo>> {
     let resp = req_v1(&auth, "/v1/balances", json!({})).await?;
     return Ok(resp.json().compat().await?);
 }
@@ -88,7 +85,7 @@ pub struct NewOrderPayload {
 }
 
 impl Serialize for NewOrderPayload {
-    fn serialize<S>(&self, serializer: S) -> StdResult<S::Ok, S::Error> where
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error> where
         S: Serializer {
         #[derive(Debug, Clone, Serialize, Deserialize)]
         pub struct RawPayload {
@@ -145,7 +142,7 @@ pub struct OrderStatus {
 
 }
 
-pub async fn new_order(auth: AuthInfo, amount: f64, pair: TradePair, buy: bool) -> Result<OrderStatus, actix_web::Error> {
+pub async fn new_order(auth: AuthInfo, amount: f64, pair: TradePair, buy: bool) -> Result<OrderStatus> {
     let new = NewOrderPayload {
         amount,
         symbol: pair,

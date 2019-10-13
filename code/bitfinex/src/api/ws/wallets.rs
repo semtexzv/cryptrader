@@ -11,7 +11,7 @@ pub struct WalletInfo {
 }
 
 impl<'de> Deserialize<'de> for WalletInfo {
-    fn deserialize<D>(deserializer: D) -> StdResult<Self, D::Error> where
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error> where
         D: Deserializer<'de> {
         type Arr = (String, String, f64, f64, Option<f64>);
 

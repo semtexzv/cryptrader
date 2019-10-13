@@ -16,4 +16,3 @@ strat-eval = { path = "../deps/strat-eval"}
 db = { path = "../deps/db" }
 
 radix_trie = { version = "*", default-features=false }
-

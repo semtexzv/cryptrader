@@ -49,7 +49,7 @@ impl ::std::fmt::Display for TradePair {
 impl ::std::str::FromStr for TradePair {
     type Err = Error;
 
-    fn from_str(s: &str) -> StdResult<Self, Self::Err> {
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
         let vec = s.split(":").collect::<Vec<&str>>();
 
         return match &vec[..] {

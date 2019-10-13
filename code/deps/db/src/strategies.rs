@@ -16,7 +16,7 @@ pub struct StrategyData {
 
 impl crate::Database {
     pub async fn strategy_data(&self, sid: i32) -> Result<(crate::Strategy, crate::User)> {
-        ActorExt::invoke(self.0.clone(), move |this, ctx| {
+        ActorExt::invoke(self.0.clone(), move |this| {
             debug!("Receiving strategy data");
             let conn: &ConnType = &this.pool.get().unwrap();
             Strategy::identified_by(&sid)
@@ -24,21 +24,21 @@ impl crate::Database {
         }).await
     }
 
-    pub async fn single_strategy(&self, sid: i32) -> Result<crate::Strategy> {
-        ActorExt::invoke(self.0.clone(), move |this, ctx| {
+    pub fn single_strategy(&self, sid: i32) -> impl Future<Output=Result<crate::Strategy>> {
+        self.0.invoke(move |this| {
             debug!("Receiving strategy source : {:?}", sid);
             Strategy::identified_by(&sid).get_result(&this.conn())
-        }).await
+        })
     }
 
     pub async fn user_strategies(&self, uid: i32) -> Result<Vec<crate::Strategy>> {
-        ActorExt::invoke(self.0.clone(), move |this, ctx| {
+        ActorExt::invoke(self.0.clone(), move |this| {
             referenced_by::<Strategy, User, _>(&uid).load(&this.conn())
         }).await
     }
 
     pub async fn save_strategy(&self, data: StrategyData) -> Result<crate::Strategy> {
-        ActorExt::invoke(self.0.clone(), move |this, ctx| {
+        ActorExt::invoke(self.0.clone(), move |this| {
             use schema::strategies::dsl::*;
             use schema::users::dsl::*;
 
@@ -56,7 +56,7 @@ impl crate::Database {
     }
 
     pub async fn delete_strategy(&self, uid: i32, sid: i32) -> Result<bool> {
-        ActorExt::invoke(self.0.clone(), move |this, ctx| {
+        ActorExt::invoke(self.0.clone(), move |this| {
             use schema::strategies::dsl::*;
 
 
@@ -71,7 +71,7 @@ impl crate::Database {
 
 
     pub async fn log_eval(&self, res: Evaluation) -> Result<Evaluation> {
-        ActorExt::invoke(self.0.clone(), move |this, ctx| {
+        ActorExt::invoke(self.0.clone(), move |this| {
             use schema::evaluations::dsl::*;
             let conn: &ConnType = &this.pool.get().unwrap();
 
@@ -85,7 +85,7 @@ impl crate::Database {
         }).await
     }
     pub async fn user_evals(&self, uid: i32) -> Result<Vec<Evaluation>> {
-        self.0.invoke(move |this, _| {
+        self.0.invoke(move |this| {
             use schema::evaluations::dsl::*;
 
             referenced_by::<Evaluation, User, _>(&uid)
@@ -95,7 +95,7 @@ impl crate::Database {
         }).await
     }
     pub async fn strategy_evals(&self, sid: i32) -> Result<Vec<Evaluation>> {
-        ActorExt::invoke(self.0.clone(), move |this, ctx| {
+        ActorExt::invoke(self.0.clone(), move |this| {
             referenced_by::<Evaluation, Strategy, _>(&sid)
                 .order_by(schema::evaluations::time.desc())
                 .limit(10)

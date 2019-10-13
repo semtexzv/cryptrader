@@ -2,7 +2,6 @@ use crate::prelude::*;
 
 use crate::ingest::OhlcUpdate;
 use common::types::PairId;
-use actix::fut::ok;
 
 
 pub struct Rescaler {
@@ -11,14 +10,12 @@ pub struct Rescaler {
     cache: BTreeMap<PairId, BTreeMap<i64, Ohlc>>,
 }
 
-impl Actor for Rescaler {
-    type Context = Context<Self>;
-}
+impl Actor for Rescaler {}
 
 impl Rescaler {
     pub async fn new(client: anats::Client, db: Database) -> Result<Addr<Self>, failure::Error> {
-        Ok(Arbiter::start(move |ctx: &mut Context<Self>| {
-            client.subscribe(crate::CHANNEL_OHLC_AGG, None, ctx.address().recipient::<OhlcUpdate>());
+        Ok(Self::start_async(move |addr| async move {
+            client.subscribe(crate::CHANNEL_OHLC_AGG, None, addr.recipient::<OhlcUpdate>()).await;
             Rescaler {
                 client,
                 db,
@@ -29,9 +26,15 @@ impl Rescaler {
 }
 
 impl Handler<OhlcUpdate> for Rescaler {
-    type Result = ();
+    type Future = impl Future<Output=()> + 'static;
 
-    fn handle(&mut self, msg: OhlcUpdate, ctx: &mut Self::Context) -> Self::Result {
+    #[ak::suspend]
+    fn handle(mut self: ContextRef<Self>, msg: OhlcUpdate) -> Self::Future {
+        async move {
+            warn!("Received rescal update : {} ({})", msg.spec.pair_id(), msg.ohlc.time);
+            self.client.publish(crate::CHANNEL_OHLC_RESCALED, msg.clone()).await;
+        }
+        /*
         self.client.publish(crate::CHANNEL_OHLC_RESCALED, msg.clone());
         let addr = ctx.address();
 
@@ -78,5 +81,6 @@ impl Handler<OhlcUpdate> for Rescaler {
 
             ctx.spawn(b.drop_err());
         }
+        */
     }
 }

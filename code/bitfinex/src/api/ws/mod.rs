@@ -6,7 +6,7 @@ pub mod order;
 
 use crate::prelude::*;
 use std::convert::TryFrom;
-use actix_web::ws::Message as WsMessage;
+use hyper_ws::Message as WsMessage;
 use json;
 
 pub use self::auth::*;
@@ -20,7 +20,7 @@ use common::types::{
 pub struct Msg(pub i32, pub String, pub json::Value);
 
 impl<'de> Deserialize<'de> for Msg {
-    fn deserialize<D>(deserializer: D) -> StdResult<Self, D::Error> where
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error> where
         D: Deserializer<'de> {
         #[derive(Deserialize)]
         #[serde(untagged)]
@@ -62,7 +62,7 @@ pub struct Notif {
 }
 
 impl<'de> Deserialize<'de> for Notif {
-    fn deserialize<D>(deserializer: D) -> StdResult<Self, D::Error> where
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error> where
         D: Deserializer<'de> {
         return NotifArray::deserialize(deserializer)
             .map(
@@ -105,7 +105,7 @@ impl Into<Ticker> for TickerData {
 }
 
 impl<'de> Deserialize<'de> for TickerData {
-    fn deserialize<D>(deserializer: D) -> StdResult<Self, D::Error> where
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error> where
         D: Deserializer<'de> {
         return TickerArray::deserialize(deserializer)
             .map(
@@ -240,7 +240,7 @@ impl TryFrom<WsMessage> for Message {
 
 /*
 impl<'de> Deserialize<'de> for Resp {
-    fn deserialize<D>(deserializer: D) -> StdResult<Self, D::Error> where
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error> where
         D: Deserializer<'de> {
         let mut data: json::Value = json::Value::deserialize(deserializer)?;
 

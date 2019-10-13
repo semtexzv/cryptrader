@@ -11,3 +11,6 @@ path = "../common"
 
 [dependencies]
 serde = { version ="*" }
+
+hyper = "0.13.0-alpha.4"
+hyper-ws = {path = "../deps/hyper-ws"}

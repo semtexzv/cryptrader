@@ -15,8 +15,8 @@ pub(crate) use crate::{DbWorker, ConnType, schema};
 
 pub use schema::{User, Strategy, Assignment, Evaluation, Trader};
 
-pub use common::futures03::future::LocalBoxFuture;
-pub use common::futures03::future::BoxFuture;
+pub use common::futures::future::LocalBoxFuture;
+pub use common::futures::future::BoxFuture;
 
 pub(crate) type Result<I, E = diesel::result::Error> = std::result::Result<I, E>;
 

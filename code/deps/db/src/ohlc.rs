@@ -60,14 +60,14 @@ select * from ohlc join bound_vals
 
 impl crate::Database {
     pub async fn pairs(&self) -> Result<Vec<Pair>> {
-        self.0.invoke(move |this, ctx| {
+        self.0.invoke(move |this| {
             Pair::get_all().load(&this.conn())
         }).await
     }
 
     async fn ohlcs_from_query(&self, query: &'static str) -> Result<BTreeMap<PairId, common::types::Ohlc>> {
         let pairs = self.pairs().await?;
-        self.0.invoke(move |this, ctx| {
+        self.0.invoke(move |this| {
             let ohlcs: Vec<schema::Ohlc> = diesel::dsl::sql_query(query).load(&this.conn())?;
             pairs.into_iter()
                 .map(|p| {
@@ -88,7 +88,7 @@ impl crate::Database {
     }
 
     pub fn do_save_ohlc(&self, id: PairId, ohlc: Vec<Ohlc>) -> LocalBoxFuture<'static, Result<()>> {
-        self.0.invoke(move |this, ctx| {
+        self.0.invoke(move |this| {
             let (len, t) = measure_time::<Result<usize>, _>(|| {
                 let conn: ConnType = this.conn();
 
@@ -116,11 +116,11 @@ impl crate::Database {
             });
             warn!("Saved {:?} items, took {:?} ", len, t);
             Ok(())
-        }).boxed_local()
+        })
     }
 
     pub async fn ohlc_history(&self, pid: PairId, since: i64) -> Result<BTreeMap<i64, Ohlc>> {
-        ActorExt::invoke(self.0.clone(), move |this, ctx| {
+        ActorExt::invoke(self.0.clone(), move |this| {
             use crate::schema::ohlc::*;
 
             let conn: &ConnType = &this.pool.get().unwrap();
@@ -150,8 +150,9 @@ impl crate::Database {
         }).await
     }
 
-    pub async fn ohlc_history_backfilled(&self, spec: OhlcSpec, since: i64) -> Result<Vec<Ohlc>> {
-        ActorExt::invoke(self.0.clone(), move |this, ctx| {
+    pub fn ohlc_history_backfilled(&self, spec: OhlcSpec, since: i64)
+                                   -> impl Future<Output=Result<Vec<Ohlc>>> + 'static {
+        self.0.invoke(move |this| {
             let sql = ::diesel::sql_query(include_str!("../sql/ohlc_raw.sql"));
 
             use crate::schema::ohlc::*;
@@ -180,7 +181,7 @@ impl crate::Database {
 
             info!("OHLC Load: {:?} ms, rescale: {:?} ,ms , retrieved {:?} items", t, t2, vals.len());
             Ok(vals)
-        }).await
+        })
     }
 }
 

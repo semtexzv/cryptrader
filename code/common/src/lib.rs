@@ -8,6 +8,7 @@ pub mod metrics;
 
 pub use serde;
 pub use crate::prelude::*;
+pub use futures;
 
 
 pub const BODY_LIMIT: usize = 4 * 1024 * 1024;
@@ -29,7 +30,7 @@ pub const GROUP_EVAL_WORKERS: &str = "workers";
 
 
 pub fn init() {
-    dotenv::dotenv();
+    let _ = dotenv::dotenv();
     env_logger::init();
     env::set_var("RUST_BACKTRACE", "full");
 }

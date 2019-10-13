@@ -10,9 +10,9 @@ edition = "2018"
 serde = { version = "1.0", features = ["derive"]}
 json = { package = "serde_json", version = "*"}
 
-futures = "*"
-futures03 = {package = "futures-preview", version = "0.3.0-alpha.18", features = ["compat"]}
+futures = {package = "futures-preview", version = "0.3.0-alpha.19", features = ["compat"]}
 
-actix = "0.7"
+ak = "*"
 nuid = "0.2.1"
-nats = { package = "ratsio", version = "*" }
+tokio = "0.2.0-alpha.6"
+nats = { package = "rants", path = "../rants", version = "*" }

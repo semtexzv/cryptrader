@@ -31,7 +31,7 @@ impl Into<common::types::auth::AuthInfo> for Trader {
 
 impl crate::Database {
     pub async fn get_user(&self, uid: i32) -> Result<User, diesel::result::Error> {
-        ActorExt::invoke(self.0.clone(), move |this, ctx| {
+        ActorExt::invoke(self.0.clone(), move |this| {
             use crate::schema::users::dsl::*;
 
             let conn: &ConnType = &this.pool.get().unwrap();
@@ -41,7 +41,7 @@ impl crate::Database {
         }).await
     }
     pub async fn login(&self, login: UserAuthInfo) -> Result<User, diesel::result::Error> {
-        ActorExt::invoke(self.0.clone(), move |this, ctx| {
+        ActorExt::invoke(self.0.clone(), move |this| {
             use crate::schema::users::dsl::*;
 
             let conn: &ConnType = &this.pool.get().unwrap();
@@ -49,7 +49,7 @@ impl crate::Database {
         }).await
     }
     pub async fn new_user(&self, user: UserAuthInfo) -> Result<User, diesel::result::Error> {
-        ActorExt::invoke(self.0.clone(), move |this, ctx| {
+        ActorExt::invoke(self.0.clone(), move |this| {
             let conn: &ConnType = &this.pool.get().unwrap();
             let r = diesel::insert_into(users::table).values(&user).get_result::<User>(conn)?;
             Ok(r)

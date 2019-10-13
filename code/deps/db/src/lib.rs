@@ -1,4 +1,6 @@
 #![feature(box_syntax)]
+#![feature(type_alias_impl_trait)]
+#![feature(arbitrary_self_types)]
 #![recursion_limit = "128"]
 #![allow(unused_imports, unused_variables)]
 
@@ -71,10 +73,10 @@ impl DbWorker {
 }
 
 pub fn start() -> Database {
-    with_size(8)
+    with_size(3)
 }
 
-fn with_size(count : usize) -> Database {
+fn with_size(count: usize) -> Database {
     init_store();
     let url = db_url();
 
@@ -84,9 +86,11 @@ fn with_size(count : usize) -> Database {
         .build(manager)
         .expect("Failed to create connection pool");
 
-    return Database(SyncArbiter::start(count, move || DbWorker { pool: pool.clone() }));
+    println!("Db should be created soon");
+    return Database(DbWorker::start(move |_| DbWorker { pool: pool.clone() }));
 }
-impl Actor for DbWorker { type Context = SyncContext<Self>; }
+
+impl Actor for DbWorker {}
 
 #[derive(Clone)]
 pub struct Database(Addr<DbWorker>);

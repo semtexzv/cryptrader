@@ -3,33 +3,49 @@ use crate::{
     api::ws::BfxUpdate,
     api::rest::v1::SymbolDetail,
 };
-use actix_web::ws;
+
 
 use common::msgs::*;
 use common::types::auth::AuthInfo;
+use hyper_ws::{self as ws, ClientExt};
 
+
+use futures::stream::SplitSink;
 
 pub struct ActixWsClient {
     client: anats::Client,
 
-    ws: Option<ws::ClientWriter>,
-    spawn_handle: Option<SpawnHandle>,
+    ws: Option<SplitSink<ws::Websocket, ws::Message>>,
     ohlc_ids: BTreeMap<usize, TradePair>,
     pairs: BTreeMap<TradePair, SymbolDetail>,
 
-    waiting : bool,
+    waiting: bool,
     last: Instant,
 
 }
 
-impl Actor for ActixWsClient { type Context = Context<Self>; }
+impl Actor for ActixWsClient {}
 
 impl ActixWsClient {
+    #[ak::suspend]
+    async fn reconnect(mut self: ContextRef<Self>) -> Self {
+        if let Some(handle) = self.spawn_handle.take() {
+            self.cancel(handle);
+        }
+        if let Some(ws) = self.ws.take() {}
+        self.last = Instant::now();
+
+        let socket = client().ws("https://api-pub.bitfinex.com/ws/2".parse()?).await?;
+
+    }
+    /*
     fn reconnect(&mut self, ctx: &mut Context<Self>) -> impl ActorFuture<Item=(), Error=(), Actor=Self> {
         warn!("Connecting subclient");
         self.disconnect(ctx);
         self.last = Instant::now();
-        let client = wrap_future(ws::Client::new("wss://api-pub.bitfinex.com/ws/2").connect());
+
+        let socket = client().ws("https://api-pub.bitfinex.com/ws/2".parse()?).await?;
+        let client = wrap_future(ws::Client::new("").connect());
         return client.map(|client, this: &mut Self, ctx| {
             let (rx, mut tx) = client.into();
 
@@ -50,16 +66,11 @@ impl ActixWsClient {
             ()
         }).drop_err();
     }
-
-    fn disconnect(&mut self, ctx: &mut Context<Self>) {
-        if let Some(handle) = self.spawn_handle.take() {
-            ctx.cancel_future(handle);
-        }
-        if let Some(ws) = self.ws.take() {}
-    }
+    */
 
     async fn new(client: anats::Client, pairs: BTreeMap<TradePair, SymbolDetail>) -> Result<Addr<Self>> {
-        Ok(Arbiter::start(|ctx: &mut Context<Self>| {
+        Ok(Self::start(|addr| {
+            /*
             ctx.run_interval(Duration::from_secs(20), |this, ctx: &mut Context<Self>| {
                 if (Instant::now()).duration_since(this.last).as_secs() > 20 && !this.waiting {
                     error!("Did not receive update for more than 30 seconds, reconnecting");
@@ -68,7 +79,7 @@ impl ActixWsClient {
                     this.last = Instant::now();
                 }
             });
-
+            */
 
             let mut client = ActixWsClient {
                 client,
@@ -79,7 +90,7 @@ impl ActixWsClient {
                 ohlc_ids: BTreeMap::new(),
                 pairs,
 
-                waiting : false,
+                waiting: false,
                 last: Instant::now(),
             };
 
@@ -92,6 +103,8 @@ impl ActixWsClient {
 }
 
 
+
+/*
 /// Handle server websocket messages
 impl StreamHandler<ws::Message, ws::ProtocolError> for ActixWsClient {
     fn handle(&mut self, msg: ws::Message, ctx: &mut Context<Self>) {
@@ -171,7 +184,7 @@ impl StreamHandler<ws::Message, ws::ProtocolError> for ActixWsClient {
         debug!("Connected");
     }
 
-    fn error(&mut self, err: actix_web::ws::ProtocolError, ctx: &mut Self::Context) -> Running {
+    fn error(&mut self, err: ws::ProtocolError, ctx: &mut Self::Context) -> Running {
         let reconn = self.reconnect(ctx);
         ctx.spawn(reconn);
         return Running::Continue;
@@ -182,7 +195,7 @@ impl StreamHandler<ws::Message, ws::ProtocolError> for ActixWsClient {
         ctx.spawn(reconn);
     }
 }
-
+*/
 
 pub struct BitfinexClient {
     client: anats::Client,
@@ -192,27 +205,11 @@ pub struct BitfinexClient {
 }
 
 
-impl Actor for BitfinexClient {
-    type Context = Context<Self>;
-
-    fn started(&mut self, ctx: &mut <Self as Actor>::Context) {
-        info!("Starting bitfinex ohlc source");
-    }
-
-    fn stopping(&mut self, ctx: &mut Self::Context) -> Running {
-        info!("Stopping bitfinex ohlc source");
-        Running::Stop
-    }
-
-
-    fn stopped(&mut self, ctx: &mut <Self as Actor>::Context) {
-        info!("Stopped bitfinex ohlc source");
-    }
-}
+impl Actor for BitfinexClient {}
 
 
 impl BitfinexClient {
-    pub async fn new(client: anats::Client) -> Result<Addr<Self>, actix_web::Error> {
+    pub async fn new(client: anats::Client) -> Result<Addr<Self>> {
         info!("Connecting to websocket");
         let symbols = crate::api::rest::v1::get_available_symbols().await?;
 
@@ -231,9 +228,9 @@ impl BitfinexClient {
         }
 
 
-        Ok(Arbiter::start(|ctx: &mut Context<Self>| {
-            client.subscribe(crate::CHANNEL_BALANCE_REQUESTS, None, ctx.address().recipient::<BalanceRequest>());
-            client.subscribe(crate::CHANNEL_TRADE_REQUESTS, None, ctx.address().recipient::<TradeRequest>());
+        Ok(Self::start_async(|addr| async {
+            client.subscribe(crate::CHANNEL_BALANCE_REQUESTS, None, addr).await;
+            client.subscribe(crate::CHANNEL_TRADE_REQUESTS, None, addr).await;
             BitfinexClient {
                 client,
                 ws_clients: clients,
@@ -244,6 +241,7 @@ impl BitfinexClient {
     }
 }
 
+/*
 impl Handler<BalanceRequest> for BitfinexClient {
     type Result = ResponseActFuture<Self, BalanceResponse, ExchangeError>;
 
@@ -293,7 +291,9 @@ impl Handler<BalanceRequest> for BitfinexClient {
         return Box::new(fut);
     }
 }
+*/
 
+/*
 impl Handler<TradeRequest> for BitfinexClient {
     type Result = ResponseActFuture<Self, TradeResponse, ExchangeError>;
 
@@ -316,4 +316,4 @@ impl Handler<TradeRequest> for BitfinexClient {
         return Box::new(fut);
     }
 }
-
+*/

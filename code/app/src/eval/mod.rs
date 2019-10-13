@@ -2,7 +2,6 @@ use crate::prelude::*;
 
 
 pub use strat_eval::EvalError;
-use actix::msgs::StopArbiter;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct EvalRequest {
@@ -28,14 +27,12 @@ pub struct Evaluator {
     db: Database,
 }
 
-impl Actor for Evaluator {
-    type Context = Context<Self>;
-}
+impl Actor for Evaluator {}
 
 impl Evaluator {
     pub fn new(client: anats::Client, db: Database) -> Addr<Self> {
-        Actor::create(|ctx| {
-            client.subscribe(crate::CHANNEL_EVAL_REQUESTS, crate::GROUP_EVAL_WORKERS.to_string(), ctx.address().recipient());
+        Self::start_async(|addr| async move {
+            client.subscribe(crate::CHANNEL_EVAL_REQUESTS, crate::GROUP_EVAL_WORKERS.to_string(), addr.recipient()).await;
             Evaluator {
                 client,
                 db,
@@ -43,6 +40,34 @@ impl Evaluator {
         })
     }
 }
+
+impl Handler<EvalRequest> for Evaluator {
+    type Future = impl Future<Output=Result<TradingPosition, EvalError>>;
+
+    #[ak::suspend]
+    fn handle(mut self: ContextRef<Self>, msg: EvalRequest) -> Self::Future {
+        async move {
+            let strat = self.db.single_strategy(msg.strat_id).await.unwrap();
+
+            // Thousand ohlc candles ought to be enough for everyone
+            let data = self.db
+                .ohlc_history_backfilled(msg.spec.clone(), msg.last - (msg.spec.period().seconds() * 1000))
+                .await.unwrap();
+            //.timeout(std::time::Duration::from_secs(30));
+
+            error!("Starting exec");
+            let data = data.into_iter().map(|x| (x.time, x)).collect();
+
+            error!("Starting Eval a");
+
+            let (res, time) = measure_time(|| strat_eval::eval(data, strat.body));
+
+            error!("Done Eval :{:?} in :{:?}", res, time);
+            res
+        }
+    }
+}
+/*
 
 impl Handler<EvalRequest> for Evaluator {
     type Result = Response<TradingPosition, EvalError>;
@@ -69,4 +94,5 @@ impl Handler<EvalRequest> for Evaluator {
     }
 }
 
+*/
 
