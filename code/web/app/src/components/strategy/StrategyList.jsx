@@ -1,5 +1,5 @@
-import React, { useEffect, useState} from "react";
-import { useDispatch, useSelector} from "react-redux";
+import React, {useEffect, useState} from "react";
+import {useDispatch, useSelector} from "react-redux";
 import {
   makeStyles,
   Paper,
@@ -15,6 +15,7 @@ import {loadAll, postOne} from "../../actions/apiActions";
 import {TYPE_STRATEGY} from "../../api/baseApi";
 import orm from "../../data";
 import EditDialog from "../util/EditDialog";
+import {goTo} from "../../actions/authActions";
 
 const useStyle = makeStyles((theme) => ({
   newButton: {
@@ -44,10 +45,11 @@ function StrategyList(props) {
     dispatch(loadAll(TYPE_STRATEGY));
   }, []);
 
-  const save = () => {
+  function _save() {
     dispatch(postOne(TYPE_STRATEGY, newStrat)).then(() => setOpen(false))
-  };
+  }
 
+  console.log("Render");
   return (<div>
     <Paper className={classes.tableWrapper}>
       <Table>
@@ -71,7 +73,7 @@ function StrategyList(props) {
                   {row.name}
                 </TableCell>
                 <TableCell align="right">
-                  <Button to={`/app/strategies/${row.id}`} color="primary">Edit</Button>
+                  <Button onClick={(e) => dispatch(goTo(`/app/strategies/${row.id}`))} color="primary">Edit</Button>
                 </TableCell>
               </TableRow>
             )
@@ -84,10 +86,13 @@ function StrategyList(props) {
                 title="New strategy"
                 text="Create new strategy"
                 data={newStrat}
-                onData={d => setNewStrat(d)}
+                onData={d => {
+                  console.log(d);
+                  setNewStrat(d);
+                }}
                 onDismiss={save => {
                   if (save) {
-                    save();
+                    _save();
                   } else {
                     setOpen(false);
                   }

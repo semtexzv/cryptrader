@@ -24,7 +24,6 @@ export function redirectToHome() {
 }
 
 export function signin(data) {
-  console.log("Logging in");
   return function (dispatch) {
     return api.signin(data).then(d => {
       dispatch({type: AUTH_OK});

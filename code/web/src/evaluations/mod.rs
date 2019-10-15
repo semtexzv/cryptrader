@@ -31,7 +31,6 @@ pub async fn list_for_strat((req, id): (HttpRequest<State>, Path<i32>)) -> Resul
     let base = BaseReqInfo::from_request(&req).await?;
     require_login!(base);
 
-    // TODO: Ensure user is owner of S
     let evals = db.strategy_evals(id.into_inner()).await?;
     Ok(Json(evals).respond_to(&req)?)
 }

@@ -6,16 +6,14 @@ metadata:
     app: tp
 spec:
   replicas: 1  # only one replica
-  selector: { matchLabels: { app: tp }}
+  selector: { matchLabels: { app: trader }}
   template:
     metadata:
-      labels:
-        name: tp
-        app: tp
+      labels: { name: tp, app: trader }
     spec:
       containers:
         - name: tp
-          image: datawire/telepresence-k8s:0.101  # new image
+          image: datawire/telepresence-k8s:0.102  # new image
           resources:
-            requests: { cpu: 20m, memory: 80M }
-            limits: { cpu: 20m, memory: 80M }
+            #requests: { cpu: 20m, memory: 80M }
+            #limits: { cpu: 20m, memory: 80M }

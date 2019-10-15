@@ -4,7 +4,7 @@ include ops/make/Macros.mk
 
 MAKEFLAGS += -j 4
 
-APPS=bitfinex app web
+APPS=bitfinex eval app web
 
 DOCKER_FILES  = $(addprefix ./target/docker/, $(APPS))
 APP_SOURCES   = $(addprefix ./code/, $(APPS))

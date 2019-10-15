@@ -4,14 +4,6 @@ use crate::prelude::*;
 pub mod prelude;
 pub mod lua;
 
-#[derive(Debug,Fail,Serialize,Deserialize)]
-pub enum EvalError {
-    #[fail(display = "Missing strategy required data")]
-    MissingData,
-    #[fail(display = "Invalid strategy source code : {}", 0)]
-    InvalidStrategy(String),
-}
-
 pub struct StrategyInput {
     pub ohlc: BTreeMap<i64, Ohlc>,
 

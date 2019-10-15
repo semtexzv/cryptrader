@@ -1,13 +1,11 @@
 use crate::prelude::*;
-
 use std::mem;
 use ta::{
     indicators::*,
 };
-
 use rlua::{self, Lua, UserData, UserDataMethods};
 use crate::{StrategyInput, TradingStrategy};
-use crate::EvalError;
+
 
 pub struct LuaStrategy {
     lua: Box<Lua>,

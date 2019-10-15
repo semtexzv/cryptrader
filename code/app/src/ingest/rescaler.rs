@@ -44,7 +44,11 @@ impl Handler<OhlcUpdate> for Rescaler {
                 if self.cache.get(&msg.spec.pair_id()).is_none() {
                     let msg = msg.clone();
                     let time = unixtime() - 60 * 60 * 6;
-                    box wrap_future(self.db.ohlc_history(msg.spec.pair_id().clone(), time as _))
+
+                    let hist = self.db.ohlc_history(msg.spec.pair_id().clone(), time as _);
+
+
+                    box wrap_future(hist.boxed_local().compat())
                         .map(move |v, this: &mut Self, ctx| {
                             this.cache.insert(msg.spec.pair_id().clone(), v);
                         }).from_err()

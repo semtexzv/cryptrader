@@ -8,12 +8,9 @@ edition = "2018"
 path = "../common"
 
 [dependencies]
-clap = { version = "*", default-features=false }
 serde = { version ="*" }
-
-strat-eval = { path = "../deps/strat-eval"}
 
 db = { path = "../deps/db" }
 
-radix_trie = { version = "*", default-features=false }
+multimap = "0.6.0"
 

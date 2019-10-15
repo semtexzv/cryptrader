@@ -1,6 +1,8 @@
 #![feature(box_syntax)]
 #![recursion_limit = "128"]
 #![allow(unused_imports, unused_variables)]
+#![feature(trait_alias)]
+
 
 #[macro_use]
 extern crate common;
@@ -74,7 +76,7 @@ pub fn start() -> Database {
     with_size(8)
 }
 
-fn with_size(count : usize) -> Database {
+fn with_size(count: usize) -> Database {
     init_store();
     let url = db_url();
 
@@ -86,23 +88,11 @@ fn with_size(count : usize) -> Database {
 
     return Database(SyncArbiter::start(count, move || DbWorker { pool: pool.clone() }));
 }
+
 impl Actor for DbWorker { type Context = SyncContext<Self>; }
 
 #[derive(Clone)]
 pub struct Database(Addr<DbWorker>);
 
-
-use diesel::query_dsl::select_dsl::SelectDsl;
-use diesel::query_builder::{AsQuery, Query};
-use diesel::deserialize::QueryableByName;
-use diesel::associations::{HasTable, BelongsTo, Identifiable};
-
-use crate::repo::GetAllDsl;
-
 impl_invoke!(DbWorker);
 
-
-use diesel::pg::Pg;
-use diesel::query_builder::QueryFragment;
-use diesel::query_builder::QueryId;
-use diesel::types::HasSqlType;

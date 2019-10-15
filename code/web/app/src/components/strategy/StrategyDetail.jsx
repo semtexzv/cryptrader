@@ -1,4 +1,4 @@
-import React, {Component, useEffect} from "react";
+import React, {Component, useEffect, useState} from "react";
 import {connect, useDispatch, useSelector} from "react-redux";
 import PropTypes from "prop-types";
 
@@ -48,7 +48,7 @@ function makeDetailSelector(id) {
     return {
       strategy: getStrategySelector(id)(state.data),
       evaluations: sess.Evaluation.all().toRefArray().filter(e => e.strategy_id == id),
-      assignments: sess.Assignment.all().toRefArray().filter(e => e.strategy_id == id),
+      assignments: sess.Assignment.all().toModelArray().filter(e => e.strategy_id == id),
     };
   }
 }
@@ -58,8 +58,10 @@ function StrategyDetail(props) {
   const dispatch = useDispatch();
   const classes = useStyle(props);
   const {strategy, evaluations, assignments} = useSelector(makeDetailSelector(props.id));
+
+
   useEffect(() => {
-    if (!props.strategy) {
+    if (!strategy) {
       dispatch(loadOne(TYPE_STRATEGY, props.id));
     }
     dispatch(loadAll(TYPE_ASSIGNMENT));
@@ -67,9 +69,10 @@ function StrategyDetail(props) {
   }, [props.id]);
 
 
+
   const onChange = (text) => {
-    props.strategy.body = text;
-    console.log(props)
+    strategy.body = text
+    //console.log(props)
   };
 
 
@@ -104,9 +107,9 @@ function StrategyDetail(props) {
               tabSize: 2,
             }}/>
           <CardActions className={classes.actions}>
-            /*<Button color="primary"
-                    onClick={() => dispatch(deleteOne(TYPE_STRATEGY, this.props.strategy.id))}>Delete</Button>
-*/
+            <Button color="primary"
+                    onClick={() => dispatch(deleteOne(TYPE_STRATEGY, strategy.id))}>Delete</Button>
+
             <Button color="primary"
                     onClick={() => dispatch(postOne(TYPE_STRATEGY, strategy.ref))}>Save</Button>
           </CardActions>
@@ -127,8 +130,8 @@ function StrategyDetail(props) {
               {assignments.map(
                 s => (
                   <TableRow key={s.id}>
-                    <TableCell>{s.exchange}</TableCell>
-                    <TableCell>{s.pair}</TableCell>
+                    <TableCell>{s.pair ? s.pair.exchange : '' }</TableCell>
+                    <TableCell>{s.pair ? s.pair.pair : '' }</TableCell>
                     <TableCell>{s.period}</TableCell>
                   </TableRow>
                 )

@@ -83,7 +83,7 @@ impl Ohlc {
 }
 
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize, Serialize, PartialOrd, Ord)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize, Serialize, PartialOrd, Ord, Hash)]
 pub enum OhlcPeriod {
     #[serde(rename = "1m")]
     Min1,

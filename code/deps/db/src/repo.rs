@@ -18,8 +18,7 @@ use diesel::pg::Pg;
 
 pub struct Repository<DB: Backend, C: Connection<Backend=DB>>(PhantomData<(DB, C)>);
 
-
-//type IdOf<'a, T> = <&'a T as Identifiable>::Id;
+type IdOf<'a, T> = <&'a T as Identifiable>::Id;
 type TablePk<T> = <<T as HasTable>::Table as Table>::PrimaryKey;
 type TableOf<T> = <T as HasTable>::Table;
 
