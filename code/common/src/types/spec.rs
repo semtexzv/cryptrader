@@ -2,7 +2,7 @@ use crate::prelude::*;
 use super::ohlc::OhlcPeriod;
 
 
-#[derive(Debug, Clone, PartialOrd, PartialEq, Ord, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialOrd, PartialEq, Ord, Eq, Serialize, Deserialize, Hash)]
 pub struct TradePair(pub String, pub String);
 
 
@@ -63,37 +63,8 @@ impl ::std::str::FromStr for TradePair {
     }
 }
 
-/*
-impl Serialize for TradePair {
-    fn serialize<S>(&self, serializer: S) -> Result<<S as Serializer>::Ok, <S as Serializer>::Error> where
-        S: Serializer {
-        serializer.serialize_str(format!("{}:{}", self.0, self.1));
-    }
-}
 
-impl<'de> Deserialize<'de> for TradePair {
-    fn deserialize<D>(deserializer: D) -> Result<Self, <D as Deserializer<'de>>::Error> where
-        D: Deserializer<'de> {
-        struct V;
-        impl<'a> Visitor<'a> for V {
-            type Value = TradePair;
-
-
-            fn expecting(&self, formatter: &mut fmt::Formatter<'a>) -> fmt::Result<()> {
-                write!(formatter, "A str")
-            }
-
-            fn visit_str<E>(self, v: &str) -> Result<Self::Value, E> where
-                E: serde::de::Error, {
-                TradePair::from_str()
-            }
-        }
-        deserializer.deserialize_str()
-    }
-}
-*/
-
-#[derive(Debug, Clone, Deserialize, Serialize, PartialOrd, PartialEq, Ord, Eq, Hash)]
+#[derive(Debug, Clone, Copy, Deserialize, Serialize, PartialOrd, PartialEq, Ord, Eq, Hash)]
 pub enum Exchange {
     #[serde(rename = "bitfinex")]
     Bitfinex,
@@ -122,7 +93,7 @@ impl FromStr for Exchange {
     }
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize, PartialOrd, PartialEq, Ord, Eq)]
+#[derive(Debug, Clone, Deserialize, Serialize, PartialOrd, PartialEq, Ord, Eq, Hash)]
 pub struct PairId {
     exch: Exchange,
     pair: TradePair,
@@ -162,7 +133,7 @@ impl fmt::Display for PairId {
 }
 
 
-#[derive(Debug, Clone, Deserialize, Serialize, PartialOrd, PartialEq, Ord, Eq)]
+#[derive(Debug, Clone, Deserialize, Serialize, PartialOrd, PartialEq, Ord, Eq, Hash)]
 pub struct OhlcSpec {
     pair: PairId,
     period: OhlcPeriod,

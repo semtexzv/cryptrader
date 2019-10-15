@@ -32,7 +32,6 @@ const exchanges = ["bitfinex"];
 
 function selector(state) {
   let sess = orm.session(state.data.db);
-  console.log("Mapping traderlist");
   return sess.Trader.all().toRefArray();
 }
 
@@ -118,7 +117,7 @@ function TraderList(props) {
         data={newData}
         title="New trader"
         text="Create a new trading account"
-        onData={(d) => setNewData(d)}
+        onData={(d) => setNewData(Object.assign({}, d ))}
         onDelete={onDeleteCb}
         attrs={[
           {name: "name", title: "Name", type: "text"},
@@ -133,7 +132,7 @@ function TraderList(props) {
         onDismiss={(save) => {
           setOpen(false);
           if (save) {
-            dispatch(postOne(TYPE_TRADER, this.state.newTrader)).then(() => setOpen(false))
+            dispatch(postOne(TYPE_TRADER,  newData)).then(() => setOpen(false))
           }
         }}
 

@@ -31,8 +31,8 @@ items:
             - name: app
               image: ${BITFINEX_IMAGE}
               imagePullPolicy: Always
-              command: ["/app", "bitfinex"]
+              command: ["/app"]
               env: [{name: "RUST_LOG", value: ${RUST_LOG}}, {name: "RUST_BACKTRACE", value: "full"}]
               resources:
-                requests: { cpu: 100m, memory: 100M }
-                limits: {cpu: 100m, memory: 100M }
+                #requests: { cpu: 100m, memory: 100M }
+                #limits: {cpu: 100m, memory: 100M }

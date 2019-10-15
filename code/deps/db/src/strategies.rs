@@ -15,13 +15,13 @@ pub struct StrategyData {
 
 
 impl crate::Database {
-    pub async fn strategy_data(&self, sid: i32) -> Result<(crate::Strategy, crate::User)> {
-        ActorExt::invoke(self.0.clone(), move |this, ctx| {
+    pub fn strategy_data(&self, sid: i32) -> LocalBoxFuture<Result<(crate::Strategy, crate::User)>> {
+        self.0.invoke(move |this, ctx| {
             debug!("Receiving strategy data");
             let conn: &ConnType = &this.pool.get().unwrap();
             Strategy::identified_by(&sid)
                 .inner_join(schema::users::table).get_result(&this.conn())
-        }).await
+        })
     }
 
     pub async fn single_strategy(&self, sid: i32) -> Result<crate::Strategy> {

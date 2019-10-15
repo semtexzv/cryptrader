@@ -6,6 +6,8 @@ pub mod types;
 pub mod prelude;
 pub mod metrics;
 
+pub use futures01;
+pub use log;
 pub use serde;
 pub use crate::prelude::*;
 
@@ -32,4 +34,23 @@ pub fn init() {
     dotenv::dotenv();
     env_logger::init();
     env::set_var("RUST_BACKTRACE", "full");
+}
+
+pub fn launch<F, Fut>(f: F)
+    where F: FnOnce() -> Fut + 'static,
+          Fut: std::future::Future<Output=()> + 'static
+{
+    actix::System::run(move || {
+        let _server = actix_web::server::new(|| {
+            metrics::make_exporting_app()
+        }).bind("0.0.0.0:9000").unwrap().start();
+
+        let fut = f();
+        let fut = async {
+            fut.await;
+            Ok::<_, ()>(())
+        }.boxed_local();
+
+        actix::spawn(fut.compat());
+    });
 }

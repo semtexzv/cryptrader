@@ -33,21 +33,19 @@ pub async fn post((req, path, data): (HttpRequest<State>, Path<(Exchange, String
     let db: Database = req.state().db.clone();
     let base = BaseReqInfo::from_request(&req).await?;
     require_login!(base);
-    /*
+    let pair_id = PairId::new(exch, TradePair::from_str(&pair).unwrap());
+
     let assign = Assignment {
-        exchange: exch,
-        pair: pair,
-        period: period,
+        pair_id : db.pair_id(pair_id).await?,
+        period: period.to_string(),
         user_id: base.auth.uid,
         strategy_id: data.strategy_id,
         trader_id: data.trader_id,
     };
 
     let res = db.save_assignment(assign).await?;
-    let res = unimplemented!();
     return Ok(Json(res).respond_to(&req).unwrap());
-    */
-    unimplemented!()
+
 }
 
 pub async fn delete((req, path): (HttpRequest<State>, Path<(Exchange, String, OhlcPeriod)>)) -> Result<impl Responder> {

@@ -1,6 +1,6 @@
 use crate::prelude::*;
 
-use common::futures::Future;
+use common::futures01::Future;
 use actix_web::{http::Method, App, Json};
 use actix_web::{AsyncResponder, HttpRequest};
 

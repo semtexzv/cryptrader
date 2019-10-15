@@ -5,6 +5,7 @@ items:
     kind: ConfigMap
     metadata:
       name: trader-pg-config
+      labels: { app: trader }
     data:
       POSTGRES_DB: trader
       POSTGRES_USER: trader
@@ -15,6 +16,7 @@ items:
     apiVersion: v1
     metadata:
       name: trader-pg-db
+      labels: { app: trader }
     spec:
       storageClassName: do-block-storage
       accessModes:
@@ -59,12 +61,8 @@ items:
                 - mountPath: /pgdata
                   name: postgresdb
               resources:
-                requests:
-                  cpu: 200m
-                  memory: 400Mi
-                limits:
-                  cpu: 200m
-                  memory: 400Mi
+                requests: { cpu: 200m, memory: 500Mi }
+                limits: { cpu: 200m, memory: 500Mi }
           volumes:
             - name: postgresdb
               persistentVolumeClaim:

@@ -4,6 +4,9 @@ server:
   resources:
     requests: { cpu: 300m, memory: 400M }
     limits: { cpu: 300m, memory: 400M   }
+  global:
+    scrape_interval: 2m
+    evaluation_interval: 2m
 
 alertmanager:
   enabled: false

@@ -29,13 +29,17 @@ impl Handler<PositionRequest> for Trader {
     type Result = ResponseActFuture<Self, PositionResponse, ExchangeError>;
 
     fn handle(&mut self, msg: PositionRequest, ctx: &mut Self::Context) -> Self::Result {
-        let client = self.client.clone();
-        info!("Position request : {:?}", msg);
-        Box::new(async move {
-            let balance = BalanceRequest::new(msg.exch, msg.api_key, msg.api_secret, msg.pair.pair().clone());
-            let balance: BalanceResponse = client.request(crate::CHANNEL_BALANCE_REQUESTS, balance).compat().await.unwrap()?;
-            Err(ExchangeError::InvalidFunds("".to_string()))
-        }.boxed_local().compat().into_actor(self))
+        let balance = BalanceRequest::new(msg.pair, msg.api_key, msg.api_secret);
+        let balance = self.client.request(common::CHANNEL_BALANCE_REQUESTS, balance);
+
+        let balance = wrap_future(balance);
+
+        Box::new(balance.then(move |balance, this: &mut Self, ctx| {
+            let balance = balance.unwrap();
+            panic!("Balance : {:?}", balance);
+
+            afut::err(ExchangeError::InvalidFunds("".to_string()))
+        }))
     }
 }
 

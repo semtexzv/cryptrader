@@ -31,9 +31,9 @@ items:
         spec:
           containers:
             - name: app
-              image: ${APP_IMAGE}
+              image: ${EVAL_IMAGE}
               imagePullPolicy: Always
-              command: ["/app", "evaluator"]
+              command: ["/app"]
               env: *env
               #resources: { requests: { cpu: 100m, memory: 100M }, limits: { cpu: 100m, memory: 100M } }
 

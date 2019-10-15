@@ -5,13 +5,13 @@ use std::sync::Arc;
 use std::marker::PhantomData;
 use std::collections::HashMap;
 
-use serde::{Serialize, Deserialize, de::DeserializeOwned};
+use serde::{Serialize, de::DeserializeOwned};
 use actix::prelude::*;
 use nats::nats_client::{NatsClient, NatsClientOptions};
 use futures03::compat::Future01CompatExt;
 use futures03::{TryFutureExt, FutureExt};
-use futures::{Future, BoxFuture, Stream};
-use futures::future::{ok, result};
+use futures::future::Future as _;
+use futures::stream::Stream as _;
 
 pub async fn connect(name: impl Into<String>, addr: impl Into<String>) -> Arc<NatsClient> {
     let options = NatsClientOptions::builder()
@@ -91,7 +91,7 @@ impl<T: RemoteMessage> Handler<Subscribe<T>> for ClientWorker {
         use futures::future::ok;
 
 
-        let folder = move |(client, rec): (Arc<NatsClient>, Recipient<T>), i: nats::ops::Message| -> BoxFuture<(_, _), _> {
+        let folder = move |(client, rec): (Arc<NatsClient>, Recipient<T>), i: nats::ops::Message| -> Box<futures::future::Future<Item=_,Error=_>> {
             let req = json::from_slice(&i.payload).expect("Msg deserialization");
             //println!("Sub recvd : {:?} => {:?} ", i, req);
             if let Some(reply_to) = i.reply_to {
@@ -158,7 +158,7 @@ impl<T: RemoteMessage> Handler<Publish<T>> for ClientWorker {
                 let stream = client.subscribe(sub).compat().await.expect("Subscribe");
                 client.unsubscribe(unsub).compat().await.expect("Unsubscribe");
                 client.publish(publish).compat().await.expect("Publish");
-                match stream.into_future().compat().await {
+                match futures::stream::Stream::into_future(stream).compat().await {
                     Ok((Some(reply), _)) => {
                         //println!("Returning value");
                         let reply: T::Result = json::from_slice(&reply.payload).unwrap();
@@ -168,7 +168,7 @@ impl<T: RemoteMessage> Handler<Publish<T>> for ClientWorker {
                         println!("Returning error, stream closed");
                         Err(MailboxError::Closed)
                     }
-                    Err((e,_)) => {
+                    Err((e, _)) => {
                         println!("Returning error, reply closed : {:?}", e);
                         Err(MailboxError::Closed)
                     }
@@ -188,6 +188,11 @@ impl<T: RemoteMessage> Handler<Publish<T>> for ClientWorker {
 pub struct Client {
     addr: Addr<ClientWorker>
 }
+
+use futures::{
+    BoxFuture,
+    future::result,
+};
 
 impl Client {
     pub async fn new(addr: impl Into<String>) -> Self {
@@ -214,7 +219,7 @@ impl Client {
         let _ = self.addr.do_send(Publish { data, subject: topic.into(), is_req: false });
     }
 
-    pub fn request<T>(&self, topic: impl Into<String>, data: T) -> Box<dyn Future<Item=T::Result, Error=MailboxError>>
+    pub fn request<T>(&self, topic: impl Into<String>, data: T) -> Box<dyn futures::future::Future<Item=T::Result, Error=MailboxError>>
         where T: RemoteMessage
     {
         let addr = self.addr.clone();

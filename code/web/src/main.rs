@@ -50,17 +50,11 @@ pub fn static_file(req: HttpRequest<State>) -> Result<impl Responder> {
     return static_file_named(&name);
 }
 
-pub fn run() {
-    actix::System::run(|| {
+fn main() {
+    common::init();
+    common::launch(|| {
         let db = db::start();
         server::new(move || {
-
-            /*
-            let server = common::actix_web::server::new(||{
-                common::metrics::make_exporting_app()
-            }).bind("0.0.0.0:9000").unwrap().start();
-            */
-
             let mut app = App::with_state(State {
                 db: db.clone(),
             });
@@ -87,11 +81,6 @@ pub fn run() {
                 .resource("/static/{tail:.*}", |r| r.method(http::Method::GET).with(static_file))
                 .default_resource(|r| r.h(http::NormalizePath::default()))
         }).bind("0.0.0.0:8000").unwrap().start();
+        async {}
     });
-}
-
-fn main() {
-    common::init();
-
-    run();
 }

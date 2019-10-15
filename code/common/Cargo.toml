@@ -20,8 +20,9 @@ failure_derive="*"
 
 bytes = { version = "*", features = ["serde"] }
 
-futures03 = {package = "futures-preview", version = "0.3.0-alpha.18", features = ["compat"]}
-futures = "*"
+futures03 = { package = "futures-preview", version = "0.3.0-alpha.18", features = ["compat"]}
+futures01 = { package = "futures", version = "*" }
+
 itertools="*"
 
 url = "*"

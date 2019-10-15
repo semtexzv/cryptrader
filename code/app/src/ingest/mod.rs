@@ -1,5 +1,5 @@
 use crate::prelude::*;
-use common::future::BoxFuture;
+use common::futures01::future::BoxFuture;
 
 use std::collections::btree_map::Entry;
 use common::msgs::*;
@@ -24,7 +24,6 @@ impl Handler<IngestUpdate> for Ingest {
     type Result = Result<(), ()>;
 
     fn handle(&mut self, msg: IngestUpdate, ctx: &mut Context<Self>) -> Self::Result {
-        info!("Received ingest update : {:?} with : {:?} points", msg.spec, msg.ohlc.len());
         warn!("Received ingest update : {:?} with : {:?} points", msg.spec, msg.ohlc.len());
         COUNTER_OHLC.with_label_values(&[&msg.spec.exchange().to_string(), &msg.spec.pair_id().to_string()]).inc_by(msg.ohlc.len() as _);
         self.apply_update(msg, ctx).unwrap();

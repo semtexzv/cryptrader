@@ -3,8 +3,8 @@ use crate::Database;
 use common::types::Exchange;
 
 impl Database {
-    pub fn all_assignments_with_traders(&self) -> LocalBoxFuture<Result<Vec<(Assignment, Option<Trader>)>>> {
-        ActorExt::invoke(self.0.clone(), move |this, ctx| {
+    pub fn all_assignments_with_traders(&self) -> LocalBoxFuture<'static, Result<Vec<(Assignment, Option<Trader>)>>> {
+        self.0.invoke(move |this, ctx| {
             use crate::schema::assignments;
             use crate::schema::traders;
 
@@ -15,7 +15,7 @@ impl Database {
                 .load(conn)?;
 
             Ok(res)
-        }).boxed_local()
+        })
     }
 
     pub async fn assignments(&self, uid: i32) -> Result<Vec<Assignment>> {
@@ -42,8 +42,8 @@ impl Database {
         }).await
     }
 
-    pub async fn delete_assignment(&self, pair: PairId, uid: i32) -> Result<()> {
-        ActorExt::invoke(self.0.clone(), move |this, ctx| {
+    pub fn delete_assignment(&self, pair: PairId, uid: i32) -> LocalBoxFuture<'static,Result<()>> {
+        self.0.invoke(move |this, ctx| {
             use schema::assignments::dsl::*;
             let conn: &ConnType = &this.pool.get().unwrap();
 
@@ -55,6 +55,6 @@ impl Database {
                 .execute(conn)?;
 
             Ok(())
-        }).await
+        })
     }
 }

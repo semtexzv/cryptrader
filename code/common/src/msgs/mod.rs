@@ -1,13 +1,14 @@
 use crate::prelude::*;
 use crate::types::*;
 
+pub use actix::msgs::StopArbiter;
+
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PositionRequest {
-    pub exch: String,
     pub api_key: String,
     pub api_secret: String,
     pub pair: PairId,
-    pub price_approx: f64,
     pub position: TradingPosition,
 }
 
@@ -24,17 +25,46 @@ impl Message for PositionRequest {
 }
 
 impl PositionRequest {
-    pub fn new(exch: impl Into<String>, api_key: impl Into<String>, api_secret: impl Into<String>, pair: PairId, price: f64, position: TradingPosition) -> Self {
+    pub fn new(api_key: impl Into<String>, api_secret: impl Into<String>, pair: PairId, position: TradingPosition) -> Self {
         Self {
-            exch: exch.into(),
             api_key: api_key.into(),
             api_secret: api_secret.into(),
             pair,
-            price_approx: price,
             position,
         }
     }
 }
+
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct EvalRequest {
+    pub strat_id: i32,
+    pub pair_id : i32,
+    pub period : OhlcPeriod,
+    pub last: i64,
+}
+
+impl Message for EvalRequest { type Result = Result<TradingPosition, EvalError>; }
+
+impl EvalRequest {
+    pub fn new(strat_id: i32, pair_id : i32, period : OhlcPeriod, last: i64) -> Self {
+        EvalRequest {
+            strat_id,
+            pair_id,
+            period,
+            last,
+        }
+    }
+}
+
+#[derive(Debug, Fail, Serialize, Deserialize)]
+pub enum EvalError {
+    #[fail(display = "Missing strategy required data")]
+    MissingData,
+    #[fail(display = "Invalid strategy source code : {}", 0)]
+    InvalidStrategy(String),
+}
+
 
 #[derive(Debug, Clone, Fail, Deserialize, Serialize)]
 pub enum ExchangeError {
@@ -48,11 +78,9 @@ pub enum ExchangeError {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct BalanceRequest {
-    pub exch: String,
+    pub pair_id: PairId,
     pub api_key: String,
     pub api_secret: String,
-
-    pub pair: TradePair,
 }
 
 impl Message for BalanceRequest {
@@ -60,12 +88,11 @@ impl Message for BalanceRequest {
 }
 
 impl BalanceRequest {
-    pub fn new(exch: impl Into<String>, api_key: impl Into<String>, api_secret: impl Into<String>, pair: TradePair) -> Self {
+    pub fn new(pair_id: impl Into<PairId>, api_key: impl Into<String>, api_secret: impl Into<String>) -> Self {
         BalanceRequest {
-            exch: exch.into(),
+            pair_id : pair_id.into(),
             api_key: api_key.into(),
             api_secret: api_secret.into(),
-            pair,
         }
     }
 }

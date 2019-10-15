@@ -1,5 +1,5 @@
 [workspace]
-members = ["code/app","code/web/", "code/bitfinex", "code/common","code/deps/*"]
+members = ["code/app","code/web/", "code/bitfinex","code/eval", "code/common","code/deps/*"]
 
 [profile.dev]
 opt-level=0

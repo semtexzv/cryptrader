@@ -1,12 +1,14 @@
 use crate::prelude::*;
 use crate::schema::{self, ohlc, Pair};
 use common::types::Exchange;
+use diesel::select;
 
 
 #[derive(PartialEq, Debug, Clone, Queryable, QueryableByName)]
 #[table_name = "ohlc"]
 pub struct LoadOhlc {
     pub time: i64,
+    pub pair_id: i32,
     pub open: f64,
     pub high: f64,
     pub low: f64,
@@ -59,6 +61,20 @@ select * from ohlc join bound_vals
 
 
 impl crate::Database {
+    pub fn pair_id(&self, pair_id: PairId) -> LocalBoxFuture<'static, Result<i32>> {
+        self.0.invoke(move |this, ctx| {
+            Ok(select(schema::pair_id(pair_id.exch().to_string(), pair_id.pair().to_string()))
+                .load(&this.conn())?[0]
+            )
+        })
+    }
+    pub fn pair_data(&self, pair_id: i32) -> LocalBoxFuture<'static, Result<PairId>> {
+        self.0.invoke(move |this, ctx| {
+            let p : Pair = Pair::identified_by(&pair_id).get_result(&this.conn())?;
+            let p : PairId = p.into();
+            Ok(p)
+        })
+    }
     pub async fn pairs(&self) -> Result<Vec<Pair>> {
         self.0.invoke(move |this, ctx| {
             Pair::get_all().load(&this.conn())
@@ -119,8 +135,8 @@ impl crate::Database {
         }).boxed_local()
     }
 
-    pub async fn ohlc_history(&self, pid: PairId, since: i64) -> Result<BTreeMap<i64, Ohlc>> {
-        ActorExt::invoke(self.0.clone(), move |this, ctx| {
+    pub fn ohlc_history(&self, pid: PairId, since: i64) -> LocalBoxFuture<'static, Result<BTreeMap<i64, Ohlc>>> {
+        self.0.invoke(move |this, ctx| {
             use crate::schema::ohlc::*;
 
             let conn: &ConnType = &this.pool.get().unwrap();
@@ -147,40 +163,34 @@ impl crate::Database {
                 })).collect();
 
             Ok(vals)
-        }).await
+        })
     }
 
-    pub async fn ohlc_history_backfilled(&self, spec: OhlcSpec, since: i64) -> Result<Vec<Ohlc>> {
-        ActorExt::invoke(self.0.clone(), move |this, ctx| {
-            let sql = ::diesel::sql_query(include_str!("../sql/ohlc_raw.sql"));
-
-            use crate::schema::ohlc::*;
-
-            let conn: &ConnType = &this.pool.get().unwrap();
+    pub fn ohlc_history_backfilled(&self, pair_id: i32, period: OhlcPeriod, since: i64) -> LocalBoxFuture<'static, Result<Vec<Ohlc>>> {
+        self.0.invoke(move |this, ctx| {
+            use crate::schema::ohlc::dsl::*;
 
             let min_time = since as i64;
 
             let (vals, t): (Vec<Ohlc>, _) = measure_time(|| {
-                sql.bind::<Text, _>(&spec.exch().to_string())
-                    .bind::<Text, _>(&spec.pair().to_string())
-                    .bind::<BigInt, _>(spec.period().seconds() as i64)
-                    .bind::<BigInt, _>(since as i64)
-                    .load::<LoadOhlc>(conn).expect("Could not query db")
+                ohlc.filter(time.gt(since as i64))
+                    .order_by(time.asc())
+                    .load::<LoadOhlc>(&this.conn()).expect("Could not query db")
                     .iter()
                     .map(|c| c.clone().into()).collect()
             });
 
             let (vals, t2): (Vec<Ohlc>, _) = measure_time(|| {
                 debug!("Raw data :{:?}", vals.len());
-                let vals = Ohlc::rescale(vals.into_iter(), spec.period());
+                let vals = Ohlc::rescale(vals.into_iter(), period);
                 debug!("Rescaled data :{:?}", vals.len());
-                let vals = Ohlc::backfill(vals.into_iter(), spec.period());
+                let vals = Ohlc::backfill(vals.into_iter(), period);
                 vals
             });
 
             info!("OHLC Load: {:?} ms, rescale: {:?} ,ms , retrieved {:?} items", t, t2, vals.len());
             Ok(vals)
-        }).await
+        })
     }
 }
 

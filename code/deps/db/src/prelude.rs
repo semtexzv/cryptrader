@@ -20,4 +20,5 @@ pub use common::futures03::future::BoxFuture;
 
 pub(crate) type Result<I, E = diesel::result::Error> = std::result::Result<I, E>;
 
+use diesel::associations::{BelongsTo, HasTable};
 

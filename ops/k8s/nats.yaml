@@ -30,6 +30,4 @@ items:
             - name: app
               image: nats:2.0.4-linux
               imagePullPolicy: Always
-              resources:
-                requests: { cpu: 100m, memory: 100M }
-                limits: {cpu: 100m, memory: 100M }
+              #resources: { requests: { cpu: 100m, memory: 100M },  limits: {cpu: 100m, memory: 100M } }

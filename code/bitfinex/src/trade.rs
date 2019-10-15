@@ -258,26 +258,26 @@ impl Handler<BalanceRequest> for BitfinexClient {
             println!("BalanceRequest RES: {:?}", w);
             let w = w.map_err(|e| ExchangeError::InvalidInfo(e.to_string()));
 
-            let pair = pairs.get(&req.pair);
+            let pair = pairs.get(&req.pair_id.pair());
             let min_amount = pair.map(|s| s.minimum_order_size).unwrap_or(0.0);
 
             w.map(|w| {
                 let target = w
                     .iter()
-                    .find(|f| f.currency.eq_ignore_ascii_case(req.pair.tar()) && f.typ == "exchange")
+                    .find(|f| f.currency.eq_ignore_ascii_case(req.pair_id.pair().tar()) && f.typ == "exchange")
                     .map(|w| {
                         w.available * 0.98
                     }).unwrap_or(0.0);
 
                 let source = w
                     .iter()
-                    .find(|f| f.currency.eq_ignore_ascii_case(req.pair.src()) && f.typ == "exchange")
+                    .find(|f| f.currency.eq_ignore_ascii_case(req.pair_id.pair().src()) && f.typ == "exchange")
                     .map(|w| {
                         w.available * 0.98
                     }).unwrap_or(0.0);
 
 
-                println!("Returning available for : {:?}, src: {:?} tar: {:?}", req.pair, source, target);
+                println!("Returning available for : {:?}, src: {:?} tar: {:?}", req.pair_id, source, target);
                 BalanceResponse {
                     target,
                     source,

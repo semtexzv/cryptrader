@@ -26,14 +26,15 @@ items:
       selector: { matchLabels: { app: trader, layer: core }}
       template:
         metadata:
+          name : core
           labels: { app: trader, layer: core }
         spec:
           containers:
             - name: app
               image: ${APP_IMAGE}
               imagePullPolicy: Always
-              command: ["/app", "core"]
+              command: ["/app"]
               env: *env
               resources:
-                requests: { cpu: 100m, memory: 60M }
-                limits: { cpu: 100m, memory: 60M }
+                #requests: { cpu: 100m, memory: 80M }
+                #limits: { cpu: 100m, memory: 80M }

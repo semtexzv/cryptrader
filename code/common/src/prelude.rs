@@ -51,7 +51,8 @@ pub use uuid;
 pub use anats;
 pub use prometheus;
 
-pub use futures::{self, prelude::*, future};
+pub use futures01::{self, prelude::*, future};
+//pub use futures01::future::Future as _;
 pub use futures03::compat::Future01CompatExt as _;
 pub use futures03::{self, FutureExt as _, TryFutureExt as _};
 
@@ -103,8 +104,6 @@ pub fn clone<T: Clone>(x: &T) -> T { x.clone() }
 
 pub fn deref<T: Copy>(x: &T) -> T { *x }
 
-pub type BoxFuture<I, E = failure::Error> = Box<dyn Future<Item=I, Error=E> + Send>;
-
 pub trait BTreeMapExt<K, V> {
     fn pop_first(&mut self) -> Option<(K, V)>;
     fn pop_last(&mut self) -> Option<(K, V)>;
@@ -132,7 +131,7 @@ pub fn measure_time<R, F>(f: F) -> (R, i64)
     return (res, t2.duration_since(t1).as_millis() as _);
 }
 
-
+/*
 pub struct DropErr<F> {
     f: F,
 }
@@ -212,8 +211,11 @@ pub trait FutureExt: Future + Sized {
 }
 
 impl<F> FutureExt for F where F: Future + Sized {}
-
 pub use self::FutureExt as _;
+*/
+
+
+
 use crate::types::TradePair;
 use actix::dev::ToEnvelope;
 

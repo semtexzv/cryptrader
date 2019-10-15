@@ -21,7 +21,7 @@ export const TYPE_ASSIGNMENT = {
     field: "assignments",
     modelName: "Assignment",
     id: (e) => {
-        return `${e.exchange}/${e.pair}/${e.period}`
+        return `/${e.pair_id}/${e.period}`
     },
 
 };
@@ -31,7 +31,7 @@ export const TYPE_PAIR = {
     field: "pairs",
     modelName: "Pair",
     id: (e) => {
-        return e
+        return e.id
     }
 };
 

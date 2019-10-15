@@ -120,6 +120,7 @@ function AssignmentList(props) {
   const attrs = editorAttrs(pairs, periods, strategies, traders, setNewData);
 
   useEffect(() => {
+    dispatch(loadAll(TYPE_PAIR));
     dispatch(loadAll(TYPE_ASSIGNMENT));
     dispatch(loadAll(TYPE_STRATEGY));
     dispatch(loadAll(TYPE_TRADER));
@@ -150,11 +151,11 @@ function AssignmentList(props) {
           {assignments.map(
             row => (
               <TableRow key={row.id}>
-                <TableCell>{row.exchange}</TableCell>
-                <TableCell>{row.pair}</TableCell>
+                <TableCell>{row.pair ? row.pair.exchange : 'exchange'}</TableCell>
+                <TableCell>{row.pair ? row.pair.pair : 'a'}</TableCell>
                 <TableCell>{row.period}</TableCell>
                 <TableCell>{row.strategy ? row.strategy.name : ""}</TableCell>
-                <TableCell>{row.trader ? row.trader.name : ""}</TableCell>
+                <TableCell>{row.trader ? row.trader.name : (<i>None</i>)}</TableCell>
                 <TableCell align="right">
                   <Button color="primary" onClick={() => {
                     dispatch(deleteOne(TYPE_ASSIGNMENT, row)).then(() => setOpen(false));
